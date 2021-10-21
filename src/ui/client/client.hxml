@@ -1,0 +1,11 @@
+-cp haxe
+--main Main
+
+-lib haxeui-core
+-lib haxeui-html5
+
+-js index.js
+
+--next
+
+--cmd sed -i '1i import {core_data} from \"../../canisters/core_data\"' index.js

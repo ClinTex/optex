@@ -1,0 +1,76 @@
+<wizard width="500" title="Import Data">
+    <vbox width="100%" id="selectType" text="Details" style="padding:5px;">
+        <frame width="100%" text="Details">
+            <vbox width="100%" style="padding:5px;">
+                <textfield id="dataSourceName" text="Test" width="100%" placeholder="Enter data source name" />
+
+                <spacer height="5" />
+
+                <hbox width="100%">
+                    <label text="Type" verticalAlign="center" width="100%" />
+                    <dropdown width="200">
+                        <data>
+                            <item text="Comma Seperate File (CSV)" type="csv" />
+                        </data>
+                    </dropdown>
+                </hbox>
+
+                <spacer height="5" />
+                <component height="1" width="100%" style="background-color: #dddddd" />
+                <spacer height="5" />
+
+                <hbox id="csvSelector" width="100%">
+                    <label text="Select CSV File" verticalAlign="center" width="100%" />
+                    <file-selector id="selectCSVFileButton" text="Select CSV" />
+                </hbox>
+            </vbox>
+        </frame>    
+    </vbox>
+
+    <vbox width="100%" id="defineData" text="Definition" style="padding:5px;">
+        <frame width="100%" text="Definition">
+            <vbox width="100%" style="padding:5px;">
+                <tableview id="fieldDefinitionsTable" width="100%" height="200">
+                    <header width="100%">
+                        <column id="fieldEnabled" text=" " width="32" />
+                        <column id="fieldName" text="Field Name" width="100%" />
+                        <column id="fieldType" text="Data Type" width="100" />
+                    </header>
+
+                    <item-renderer height="100%">
+                        <checkbox id="fieldEnabled" verticalAlign="center" horizontalAlign="center" />
+                    </item-renderer>
+                    <item-renderer>
+                        <textfield id="fieldName" width="100%" />
+                    </item-renderer>
+                    <item-renderer>
+                        <dropdown text="Text" id="fieldType" width="100%">
+                            <data>
+                                <item value="string" text="Text" />
+                                <item value="number" text="Number" />
+                                <item value="boolean" text="Yes/No" />
+                            </data>
+                        </dropdown>
+                    </item-renderer>
+                </tableview>
+            </vbox>
+        </frame>        
+    </vbox>
+
+    <vbox width="100%" id="summary" text="Summary" style="padding:5px;">
+        <frame width="100%" text="Summary">
+            <vbox width="100%" style="padding:5px;">
+                <grid width="100%">
+                    <label text="Data Source Name:" />
+                    <label id="summaryDataSourceName" />
+
+                    <label text="Fields:" />
+                    <label id="summaryFields" />
+
+                    <label text="Records:" />
+                    <label id="summaryRecords" />
+                </grid>
+            </vbox>
+        </frame>        
+    </vbox>
+</wizard>

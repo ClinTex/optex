@@ -1,0 +1,21 @@
+<vbox width="100%" height="100%">
+    <menu-bar width="100%">
+        <label text="Client" verticalAlign="center" />
+        <spacer width="100%" />
+        <button text="Refresh" />
+    </menu-bar>
+
+    <vbox width="100%" style="padding: 15px;">
+        <frame width="100%" text="Items">
+            <vbox width="100%">
+                <tableview id="table" width="100%" height="200">
+                    <header width="100%">
+                        <column text="First Name" id="firstName" width="33%" />
+                        <column text="Last Name" id="lastName" width="34%" />
+                        <column text="Email Address" id="emailAddress" width="33%" />
+                    </header>
+                </tableview>
+            </vbox>    
+        </frame>
+    </vbox>
+</vbox>

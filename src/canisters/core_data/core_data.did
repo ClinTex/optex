@@ -1,0 +1,16 @@
+type ImmutableFieldDefinition = 
+ record {
+   fieldName: text;
+   fieldType: text;
+ };
+type ImmutableDataSource = 
+ record {
+   data: vec vec text;
+   dataSourceName: text;
+   fieldDefinitions: vec ImmutableFieldDefinition;
+ };
+service : {
+  createDataSource: (ImmutableDataSource) -> ();
+  listDataSourceNames: () -> (vec text) query;
+  listDataSources: () -> (vec ImmutableDataSource) query;
+}

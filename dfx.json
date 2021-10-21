@@ -1,0 +1,46 @@
+{
+    "canisters": {
+        "core_data": {
+            "main": "src/core/data/main.mo",
+            "type": "motoko"
+        },
+        "admin_ui": {
+            "dependencies": [
+                "core_data"
+            ],
+            "frontend": {
+                "entrypoint": "src/ui/admin/index.html"
+            },
+            "source": [
+                "dist/admin"
+            ],
+            "type": "assets"
+        },
+        "client_ui": {
+            "dependencies": [
+                "core_data"
+            ],
+            "frontend": {
+                "entrypoint": "src/ui/client/index.html"
+            },
+            "source": [
+                "dist/client"
+            ],
+            "type": "assets"
+        }
+    },
+    "defaults": {
+        "build": {
+            "args": "",
+            "packtool": ""
+        }
+    },
+    "dfx": "0.8.3",
+    "networks": {
+        "local": {
+            "bind": "127.0.0.1:8000",
+            "type": "ephemeral"
+        }
+    },
+    "version": 1
+}

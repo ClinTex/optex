@@ -1,0 +1,66 @@
+<vbox width="100%" height="100%">
+    <style>
+        .bottom-buttons  {
+        }
+
+        .bottom-buttons .button {
+            background-color: #eeeeee;
+            border: none;
+            border-radius:0px;
+        }
+
+        .bottom-buttons .button:hover {
+            background-color: #f5f5f5;
+        }
+
+        .bottom-buttons .button:down {
+            background-color: #d2d2d2;
+        }
+    </style>
+
+    <hbox width="100%" height="100%">
+        <vbox width="200" height="100%" style="spacing:0;border-right: 1px solid #ababab;">
+            <vbox  width="100%" style="padding:7px;background-color: #eeeeee;__padding-right: 1px;border-bottom:1px solid #ababab;border-right:1px solid #ababab">
+                <textfield placeholder="Filter data sources" width="100%" />
+            </vbox>
+            <listview id="dataSourceSelector" styleName="left-menu" width="100%" height="100%" selectedIndex="0">
+                <item-renderer width="100%" layoutName="horizontal">
+                    <image id="icon" verticalAlign="center" />
+                    <label width="100%" id="name" verticalAlign="center" />
+                    <label id="rows" verticalAlign="center" style="color: #888888;background-color:#dfdfdf;border-radius: 6px;padding: 2px 4px;" />
+                </item-renderer>
+            </listview>
+            <hbox width="100%" height="67" style="padding:0px;spacing:0px;border-right: 1px solid #ababab;border-top: 1px solid #ababab;padding-right:1px;padding-top: 1px;border-bottom:1px solid #ababab;padding-bottom:1px;" styleName="bottom-buttons">
+                <button id="addDataSourceButton" text="Add" width="33%" height="100%" />
+                <component width="1" height="100%" style="background-color: #ababab" />
+                <button text="Update" width="34%" height="100%" />
+                <component width="1" height="100%" style="background-color: #ababab" />
+                <button text="Remove" width="33%" height="100%" />
+            </hbox>
+        </vbox>    
+
+        <vbox id="detailsContainer" width="100%" height="100%" style="padding: 10px;">
+            <!--
+            <tableview id="dataSourcesDataTable" width="100%" height="200">
+                <header width="100%">
+                    <column text="Name" id="First_Name" width="100%" />
+                </header>
+            </tableview>
+
+            <button text="Create Data Source" id="createDataSource" hidden="true" />
+            <button text="List Data Sources" id="listDataSources" hidden="true" />
+            <button text="Test" id="test" hidden="true" />
+            <button text="Test Wizard" id="testWizard" hidden="true" />
+
+            <tableview id="dataSourcesTable" width="400" height="200" hidden="true">
+                <header width="100%">
+                    <column text="Name" id="name" width="55%" />
+                    <column text="Type" id="type" width="15%" style="text-align:center;" />
+                    <column text="Fields" id="fields" width="15%" style="text-align:center;" />
+                    <column text="Rows" id="rows" width="15%" style="text-align:center;" />
+                </header>
+            </tableview>
+            -->
+        </vbox>
+    </hbox>
+</vbox>
