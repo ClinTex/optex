@@ -108,7 +108,7 @@ class DataView extends VBox {
     }
 
     @:bind(tableSelector, UIEvent.CHANGE)
-    private function onTableSelectorChange_NEW(e:UIEvent) {
+    private function onTableSelectorChange(e:UIEvent) {
         if (tableSelector.selectedItem == null) {
             return;
         }

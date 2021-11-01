@@ -31661,7 +31661,7 @@ var views_DataView = function() {
 	c2.addComponent(c4);
 	c1.addComponent(c2);
 	var c5 = new haxe_ui_containers_ListView();
-	c5.set_id("dataSourceSelector");
+	c5.set_id("tableSelector");
 	c5.set_percentWidth(100.);
 	c5.set_percentHeight(100.);
 	c5.set_styleNames("left-menu");
@@ -31692,7 +31692,7 @@ var views_DataView = function() {
 	c10.set_styleNames("bottom-buttons");
 	c10.set_styleString("padding:0px;spacing:0px;border-right: 1px solid #ababab;border-top: 1px solid #ababab;padding-right:1px;padding-top: 1px;border-bottom:1px solid #ababab;padding-bottom:1px;");
 	var c11 = new haxe_ui_components_Button();
-	c11.set_id("addDataSourceButton");
+	c11.set_id("addDataButton");
 	c11.set_percentWidth(33.);
 	c11.set_percentHeight(100.);
 	c11.set_text("Add");
@@ -31717,7 +31717,7 @@ var views_DataView = function() {
 	c14.set_styleString("background-color: #ababab");
 	c10.addComponent(c14);
 	var c15 = new haxe_ui_components_Button();
-	c15.set_id("removeDataSourceButton");
+	c15.set_id("removeDataButton");
 	c15.set_percentWidth(33.);
 	c15.set_percentHeight(100.);
 	c15.set_text("Remove");
@@ -31763,12 +31763,12 @@ var views_DataView = function() {
 	this.set_percentWidth(100.);
 	this.set_percentHeight(100.);
 	this.bindingRoot = true;
-	this.removeDataSourceButton = c15;
+	this.tableSelector = c5;
+	this.removeDataButton = c15;
 	this.detailsContainer = c16;
 	this.databaseSelector = c3;
-	this.dataSourceSelector = c5;
 	this.dataSourceDataTable = c17;
-	this.addDataSourceButton = c11;
+	this.addDataButton = c11;
 	views_DataView.instance = this;
 	this.refresh();
 	var c = this.databaseSelector;
@@ -31777,23 +31777,23 @@ var views_DataView = function() {
 	} else {
 		console.log("haxe/ui/macros/Macros.hx:301:","WARNING: could not find component to regsiter event (" + "databaseSelector" + ")");
 	}
-	var c = this.dataSourceSelector;
+	var c = this.tableSelector;
 	if(c != null) {
-		c.registerEvent("change",$bind(this,this.onDataSourceSelectorChange_NEW));
+		c.registerEvent("change",$bind(this,this.onTableSelectorChange));
 	} else {
-		console.log("haxe/ui/macros/Macros.hx:301:","WARNING: could not find component to regsiter event (" + "dataSourceSelector" + ")");
+		console.log("haxe/ui/macros/Macros.hx:301:","WARNING: could not find component to regsiter event (" + "tableSelector" + ")");
 	}
-	var c = this.addDataSourceButton;
+	var c = this.addDataButton;
 	if(c != null) {
-		c.registerEvent("click",$bind(this,this.onAddDataSourceButton));
+		c.registerEvent("click",$bind(this,this.onAddDataButton));
 	} else {
-		console.log("haxe/ui/macros/Macros.hx:301:","WARNING: could not find component to regsiter event (" + "addDataSourceButton" + ")");
+		console.log("haxe/ui/macros/Macros.hx:301:","WARNING: could not find component to regsiter event (" + "addDataButton" + ")");
 	}
-	var c = this.removeDataSourceButton;
+	var c = this.removeDataButton;
 	if(c != null) {
-		c.registerEvent("click",$bind(this,this.onRemoveDataSourceButton));
+		c.registerEvent("click",$bind(this,this.onRemoveDataButton));
 	} else {
-		console.log("haxe/ui/macros/Macros.hx:301:","WARNING: could not find component to regsiter event (" + "removeDataSourceButton" + ")");
+		console.log("haxe/ui/macros/Macros.hx:301:","WARNING: could not find component to regsiter event (" + "removeDataButton" + ")");
 	}
 };
 $hxClasses["views.DataView"] = views_DataView;
@@ -31865,17 +31865,17 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 				}
 				++n;
 			}
-			_gthis.dataSourceSelector.set_dataSource(ds);
-			_gthis.dataSourceSelector.set_selectedIndex(-1);
-			_gthis.dataSourceSelector.set_selectedIndex(indexToSelect);
+			_gthis.tableSelector.set_dataSource(ds);
+			_gthis.tableSelector.set_selectedIndex(-1);
+			_gthis.tableSelector.set_selectedIndex(indexToSelect);
 			_gthis._tableToSelect = null;
 		});
 	}
-	,onDataSourceSelectorChange_NEW: function(e) {
-		if(this.dataSourceSelector.get_selectedItem() == null) {
+	,onTableSelectorChange: function(e) {
+		if(this.tableSelector.get_selectedItem() == null) {
 			return;
 		}
-		var selectedItem = this.dataSourceSelector.get_selectedItem();
+		var selectedItem = this.tableSelector.get_selectedItem();
 		this.refreshTableData(selectedItem.table);
 	}
 	,refreshTableData: function(table) {
@@ -31920,7 +31920,7 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,safeId: function(fieldName) {
 		return StringTools.replace(StringTools.replace(fieldName,"\"","")," ","_");
 	}
-	,onAddDataSourceButton: function(e) {
+	,onAddDataButton: function(e) {
 		core_data_DatabaseManager.get_instance().listDatabases().then(function(dbs) {
 			var sidebar = new sidebars_ImportDataSourceSidebar();
 			sidebar.set_databases(dbs);
@@ -31929,18 +31929,18 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 			sidebar.show();
 		});
 	}
-	,onRemoveDataSourceButton: function(e) {
+	,onRemoveDataButton: function(e) {
 		var _gthis = this;
-		if(this.dataSourceSelector.get_selectedItem() == null) {
+		if(this.tableSelector.get_selectedItem() == null) {
 			return;
 		}
-		var message = "Are you sure you wisth to remove the '" + Std.string(this.dataSourceSelector.get_selectedItem().table.name) + "' table?\n\nThis cannot be undone";
+		var message = "Are you sure you wisth to remove the '" + Std.string(this.tableSelector.get_selectedItem().table.name) + "' table?\n\nThis cannot be undone";
 		haxe_ui_containers_dialogs_Dialogs.messageBox(message,"Confirm Removal","question",null,function(button) {
 			var larr = haxe_ui_containers_dialogs_DialogButton.toString(button).split("|");
 			if(larr.indexOf(haxe_ui_containers_dialogs_DialogButton.toString("{{dialog.yes}}")) != -1) {
 				var working = new components_WorkingIndicator();
 				working.showWorking();
-				_gthis._database.removeTable(_gthis.dataSourceSelector.get_selectedItem().table.name).then(function(r) {
+				_gthis._database.removeTable(_gthis.tableSelector.get_selectedItem().table.name).then(function(r) {
 					working.workComplete();
 					_gthis.refresh(_gthis._database.name);
 				});
@@ -31966,12 +31966,12 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,self: function() {
 		return new views_DataView();
 	}
-	,removeDataSourceButton: null
+	,tableSelector: null
+	,removeDataButton: null
 	,detailsContainer: null
 	,databaseSelector: null
-	,dataSourceSelector: null
 	,dataSourceDataTable: null
-	,addDataSourceButton: null
+	,addDataButton: null
 	,__class__: views_DataView
 });
 var views_PortletsView = function() {
