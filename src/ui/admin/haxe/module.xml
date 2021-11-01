@@ -1,10 +1,9 @@
-<module>
+<module preload="all">
     <resources>
         <resource path="assets/icons" prefix="icons" />
     </resources>
     <components>
         <class package="components" />
         <class package="views" />
-        <class package="wzards" />
     </components>
 </module>

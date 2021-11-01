@@ -3,83 +3,196 @@ import Map   "mo:base/HashMap";
 import Array "mo:base/Array";
 
 import Types "../types";
+import DBMS "DBMS";
 
 actor Data {
-    let dataSources = Map.HashMap<Text, Types.DataSource>(0, Text.equal, Text.hash);
+    let DatabaseManager = DBMS.DatabaseManager();
 
-    public shared(msg) func createDataSource(dataSource:Types.ImmutableDataSource):async() {
-        dataSources.put(dataSource.dataSourceName, mutableDataSource(dataSource));
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Databases
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    public query func listDatabases():async [DBMS.DatabaseInfo] {
+        var dbs:[DBMS.DatabaseInfo] = [];
+        for (db in DatabaseManager.databases.vals()) {
+            dbs := Array.append(dbs, [db.getInfo()]);
+        };
+        return dbs;
     };
 
-    public query func listDataSourceNames():async [Text] {
-        var names:[Text] = [];
-        for (key in dataSources.keys()) {
-            names := Array.append(names, [key]);
-        };
-        return names;
-    };
-
-    public query func listDataSources():async [Types.ImmutableDataSource] {
-        var list:[Types.ImmutableDataSource] = [];
-        for (ds in dataSources.vals()) {
-            list := Array.append(list, [immutableDataSource(ds)]);
-        };
-        return list;
-    };
-
-    private func mutableFieldDefinition(fieldDefinition:Types.ImmutableFieldDefinition):Types.FieldDefinition {
-        return {
-            var fieldName = fieldDefinition.fieldName;
-            var fieldType = fieldDefinition.fieldType;
-        }
-    };
-
-    private func mutableDataSource(dataSource:Types.ImmutableDataSource):Types.DataSource {
-        // convert field definitions to mutable
-        var fieldDefinitions:[Types.FieldDefinition] = [];
-        for (f in dataSource.fieldDefinitions.vals()) {
-            fieldDefinitions := Array.append<Types.FieldDefinition>(fieldDefinitions, [mutableFieldDefinition(f)]);
+    public shared(msg) func createDatabase(databaseName:Text):async Types.Result {
+        if (DatabaseManager.existsDatabase(databaseName) == true) {
+            return {
+                errored = true;
+                errorCode = DBMS.ErrorCode.AlreadyExists;
+                errorText = "database '" # databaseName # "' already exists";
+            };
         };
 
-        // convert data to mutable
-        var data:[[var Text]] = [];
-        for (row in dataSource.data.vals()) {
-            var temp:[var Text] = Array.thaw(row);
-            data := Array.append<[var Text]>(data, [temp]);
-        };
+        var db = DatabaseManager.createDatabase(databaseName);
 
         return {
-            var dataSourceName = dataSource.dataSourceName;
-            var fieldDefinitions = fieldDefinitions;
-            var data = data;
+            errored = false;
+            errorText = "";
+            errorCode = 0;
         };
     };
 
-    private func immutableFieldDefinition(fieldDefinition:Types.FieldDefinition):Types.ImmutableFieldDefinition {
+    public shared(msg) func removeDatabase(databaseName:Text):async Types.Result {
+        if (DatabaseManager.existsDatabase(databaseName) == false) {
+            return {
+                errored = true;
+                errorCode = DBMS.ErrorCode.DoesNotExist;
+                errorText = "database '" # databaseName # "' does not exist";
+            };
+        };
+
+        var db = DatabaseManager.removeDatabase(databaseName);
+
         return {
-            fieldName = fieldDefinition.fieldName;
-            fieldType = fieldDefinition.fieldType;
-        }
+            errored = false;
+            errorText = "";
+            errorCode = 0;
+        };
     };
 
-    private func immutableDataSource(dataSource:Types.DataSource):Types.ImmutableDataSource {
-        // convert field definitions to immutable
-        var fieldDefinitions:[Types.ImmutableFieldDefinition] = [];
-        for (f in dataSource.fieldDefinitions.vals()) {
-            fieldDefinitions := Array.append<Types.ImmutableFieldDefinition>(fieldDefinitions, [immutableFieldDefinition(f)]);
-        };
+    public query func hasDatabase(databaseName:Text):async Bool {
+        return DatabaseManager.existsDatabase(databaseName);
+    };
 
-        // convert data to immutable
-        var data:[[Text]] = [];
-        for (row in dataSource.data.vals()) {
-            var temp:[Text] = Array.freeze(row);
-            data := Array.append<[Text]>(data, [temp]);
-        };
+    public query func getDatabaseInfo(databaseName:Text):async DBMS.DatabaseInfo {
+        return DatabaseManager.getDatabaseInfo(databaseName);
+    };
 
-        return {
-            dataSourceName = dataSource.dataSourceName;
-            fieldDefinitions = fieldDefinitions;
-            data = data;
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Tables
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    public shared(msg) func createTable(databaseName:Text, tableName:Text, fieldDefinitions:[DBMS.TableFieldInfo]):async Types.Result {
+        switch(DatabaseManager.getDatabase(databaseName)) {
+            case null {
+                return {
+                    errored = true;
+                    errorCode = DBMS.ErrorCode.DoesNotExist;
+                    errorText = "database '" # databaseName # "' does not exist";
+                };
+            };
+            case (?db) {
+                if (db.existsTable(tableName) == true) {
+                    return {
+                        errored = true;
+                        errorCode = DBMS.ErrorCode.AlreadyExists;
+                        errorText = "table '" # tableName # "' already exists";
+                    };
+                };
+                var table = db.createTable(tableName, fieldDefinitions);
+                return {
+                    errored = false;
+                    errorText = "";
+                    errorCode = 0;
+                };
+            };
         };
-    }
+    };
+
+    public shared(msg) func removeTable(databaseName:Text, tableName:Text):async Types.Result {
+        switch(DatabaseManager.getDatabase(databaseName)) {
+            case null {
+                return {
+                    errored = true;
+                    errorCode = DBMS.ErrorCode.DoesNotExist;
+                    errorText = "database '" # databaseName # "' does not exist";
+                };
+            };
+            case (?db) {
+                if (db.existsTable(tableName) == false) {
+                    return {
+                        errored = true;
+                        errorCode = DBMS.ErrorCode.DoesNotExist;
+                        errorText = "table '" # tableName # "' does not exist";
+                    };
+                };
+                var table = db.removeTable(tableName);
+                return {
+                    errored = false;
+                    errorText = "";
+                    errorCode = 0;
+                };
+            };
+        };
+    };
+
+    public query func hasTable(databaseName:Text, tableName:Text):async Bool {
+        switch(DatabaseManager.getDatabase(databaseName)) {
+            case null {
+                return false;
+            };
+            case (?db) {
+                return db.existsTable(tableName);
+            };
+        };
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Data
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    public shared(msg) func addTableData(databaseName:Text, tableName:Text, data:[[Text]]):async Types.Result {
+        switch(DatabaseManager.getDatabase(databaseName)) {
+            case null {
+                return {
+                    errored = true;
+                    errorCode = DBMS.ErrorCode.DoesNotExist;
+                    errorText = "database '" # databaseName # "' does not exist";
+                };
+            };
+            case (?db) {
+                switch(db.getTable(tableName)) {
+                    case null {
+                        return {
+                            errored = true;
+                            errorCode = DBMS.ErrorCode.DoesNotExist;
+                            errorText = "table '" # tableName # "' does not exist";
+                        };
+                    };
+
+                    case (?table) {
+                        table.addRows(data);
+
+                        return {
+                            errored = false;
+                            errorText = "";
+                            errorCode = 0;
+                        };
+                    };
+                };
+            };
+        };
+    };
+
+    public query func getTableData(databaseName:Text, tableName:Text, start:Nat, end:Nat):async DBMS.TableFragment {
+        switch(DatabaseManager.getDatabase(databaseName)) {
+            case null {
+                return {
+                    fieldDefinitions = [];
+                    data = [];
+                    total = 0;
+                    count = 0; 
+                };
+            };
+            case (?db) {
+                switch(db.getTable(tableName)) {
+                    case null {
+                        return {
+                            fieldDefinitions = [];
+                            data = [];
+                            total = 0;
+                            count = 0; 
+                        };
+                    };
+
+                    case (?table) {
+                        return table.getRows(start, end);
+                    };
+                };
+            };
+        };
+    };
 }

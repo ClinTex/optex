@@ -1,6 +1,6 @@
 package core.data.parsers;
 
-import core.Types.TFieldDefinition;
+import core.data.CoreData.TableFieldInfo;
 
 class DataParser {
     public function new() {
@@ -10,7 +10,7 @@ class DataParser {
 
     }
 
-    public function getFieldDefinitions():Array<TFieldDefinition> {
+    public function getFieldDefinitions():Array<TableFieldInfo> {
         return [];
     }
 

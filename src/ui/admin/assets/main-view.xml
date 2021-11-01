@@ -1,8 +1,8 @@
 <vbox width="100%" height="100%" style="padding:0px;spacing:0px;" styleName="default-background">
     <menu-bar id="mainMenu" width="100%">
-        <label text="Admin" verticalAlign="center" />
-        <spacer width="100%" />
-        <button text="Logout" />
+        <menu text="Admin" id="adminMenu">
+            <menu-item id="removeCurrentDatabase" text="Remove Current Database" />
+        </menu>
     </menu-bar>
 
 

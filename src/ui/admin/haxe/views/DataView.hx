@@ -1,17 +1,20 @@
 package views;
 
+import haxe.ui.containers.dialogs.Dialog.DialogButton;
+import haxe.ui.containers.dialogs.MessageBox.MessageBoxType;
+import haxe.ui.containers.dialogs.Dialogs;
+import sidebars.ImportDataSourceSidebar;
+import js.Syntax;
+import components.WorkingIndicator;
 import haxe.ui.containers.TableView;
 import js.lib.Reflect;
-import haxe.ui.components.Column;
-import haxe.ui.containers.Header;
 import haxe.ui.events.UIEvent;
-import wizards.ImportDataSourceWizard;
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.containers.VBox;
 import haxe.ui.events.MouseEvent;
-import core.data.CoreData;
-import core.data.DataSourceManager;
-import core.data.DataSource;
+import core.data.Database;
+import core.data.Table;
+import core.data.DatabaseManager;
 
 using StringTools;
 
@@ -19,152 +22,164 @@ using StringTools;
 class DataView extends VBox {
     public static var instance:DataView;
 
+    private inline function num(i:Dynamic) {
+        return Syntax.code("Number({0})", i);
+    }
+
     public function new() {
         super();
         instance = this;
         refresh();
     }
 
-    public function refresh(itemToSelect:String = null) {
-        DataSourceManager.instance.refreshDataSources().then(function(result) {
-            for (ds in result) {
-                trace(ds.name + " => " + ds.rowCount);
+    private var _databaseToSelect:String = null;
+    private var _tableToSelect:String = null;
+    public function refresh(selectedDatabase:String = null, selectedTable:String = null) {
+        _databaseToSelect = selectedDatabase;
+        _tableToSelect = selectedTable;
+        DatabaseManager.instance.listDatabases().then(function(dbs) {
+            var ds = new ArrayDataSource<Dynamic>();
+            var indexToSelect = 0;
+            var n = 0;
+            for (db in dbs) {
+                ds.add({
+                    text: db.name,
+                    db: db
+                });
+                if (selectedDatabase != null && db.name == selectedDatabase) {
+                    indexToSelect = n;
+                }
+                n++;
             }
-            populateUI(itemToSelect);
+            databaseSelector.dataSource = ds;
+            databaseSelector.selectedIndex = -1;
+            databaseSelector.selectedIndex = indexToSelect;
+
+            _databaseToSelect = null;
         });
     }
 
-    private function populateUI(itemToSelect:String = null) {
-        var indexToSelect = 0;
-        var dataSources = new ArrayDataSource<Dynamic>();
+    public function removeCurrentDatabase() {
+        var selectedItem = databaseSelector.selectedItem;
+        if (selectedItem == null) {
+            return;
+        }
+
+        var working = new WorkingIndicator();
+        working.showWorking();
+        DatabaseManager.instance.removeDatabase(selectedItem.db.name).then(function(r) {
+            working.workComplete();
+            refresh();
+        });
+    }
+
+    private var _database:Database;
+    @:bind(databaseSelector, UIEvent.CHANGE)
+    private function onDatabaseSelectorChanged(e:UIEvent) {
+        var selectedItem = databaseSelector.selectedItem;
+        if (selectedItem == null) {
+            return;
+        }
+
+        var dbName = selectedItem.db.name;
+        _database = new Database(dbName);
+        _database.listTables().then(function(tables) {
+            var ds = new ArrayDataSource<Dynamic>();
+            var indexToSelect = 0;
+            var n = 0;
+            for (table in tables) {
+                ds.add({
+                    name: table.name,
+                    type: "static",
+                    rows: table.getRowCount(),
+                    table: table
+                });
+                if (_tableToSelect != null && _tableToSelect == table.name) {
+                    indexToSelect = n;
+                }
+                n++;
+            }
+
+            tableSelector.dataSource = ds;
+            tableSelector.selectedIndex = -1;
+            tableSelector.selectedIndex = indexToSelect;
+            _tableToSelect = null;
+        });
+    }
+
+    @:bind(tableSelector, UIEvent.CHANGE)
+    private function onTableSelectorChange_NEW(e:UIEvent) {
+        if (tableSelector.selectedItem == null) {
+            return;
+        }
+
+        var selectedItem = tableSelector.selectedItem;
+        refreshTableData(selectedItem.table);
+    }
+
+    private function refreshTableData(table:Table) {
+        dataSourceDataTable.clearContents(true);
+
+        var fieldDefs = table.fieldDefinitions;
+        var maxCols = 10;
         var n = 0;
-        for (ds in DataSourceManager.instance.dataSources) {
-            dataSources.add({
-                name: ds.name,
-                type: "static",
-                fields: ds.fieldDefinitionCount,
-                rows: ds.rowCount,
-                dataSource: ds
-            });
-            if (itemToSelect != null && ds.name == itemToSelect) {
-                indexToSelect = n;
+        for (fd in fieldDefs) {
+            var column = dataSourceDataTable.addColumn(safeId(fd.fieldName));
+            column.width = 200;
+            if (n > maxCols) {
+                break;
             }
             n++;
         }
 
-        dataSourceSelector.dataSource = dataSources;
-        dataSourceSelector.selectedIndex = indexToSelect;
+        table.getRows(0, 100).then(function(f) {
+            trace(f.count);
+            var ds = new ArrayDataSource<Dynamic>();
+            for (d in f.data) {
+                var fieldIndex = 0;
+                var item:Dynamic = {};
+                for (fd in fieldDefs) {
+                    Reflect.setField(item, safeId(fd.fieldName), d[fieldIndex]);
+                    fieldIndex++;
+                }
+                ds.add(item);
+            }
+
+            dataSourceDataTable.dataSource = ds;
+        });
     }
 
-    @:bind(addDataSourceButton, MouseEvent.CLICK)
-    private function onAddDataSourceButton(e:MouseEvent) {
-        var s = new ImportDataSourceWizard();
-        s.show();
+    private inline function safeId(fieldName:String) {
+        return fieldName.replace("\"", "").replace(" ", "_");
     }
 
-    private var _table:TableView = null;
-    @:bind(dataSourceSelector, UIEvent.CHANGE)
-    private function onDataSourceSelectorChange(e:UIEvent) {
-        if (dataSourceSelector.selectedItem == null) {
+    @:bind(addDataButton, MouseEvent.CLICK)
+    private function onAddDataButton(e:MouseEvent) {
+        DatabaseManager.instance.listDatabases().then(function(dbs) {
+            var sidebar = new ImportDataSourceSidebar();
+            sidebar.databases = dbs;
+            sidebar.position = "right";
+            sidebar.modal = true;
+            sidebar.show();
+        });
+    }
+
+    @:bind(removeDataButton, MouseEvent.CLICK)
+    private function onRemoveDataButton(e:MouseEvent) {
+        if (tableSelector.selectedItem == null) {
             return;
         }
 
-        if (_table != null) {
-            detailsContainer.removeComponent(_table);
-        }
-
-        _table = new TableView();
-        _table.percentWidth = 100;
-        _table.percentHeight = 100;
-
-        var ds:DataSource = dataSourceSelector.selectedItem.dataSource;
-
-        var header = new Header();
-        header.percentWidth = 100;
-        var pp = 100 / ds.fieldDefinitionCount;
-        for (fd in ds.fieldDefinitions) {
-            var column = new Column();
-            column.id = fd.fieldName.replace(" ", "_");
-            column.text = fd.fieldName;
-            column.percentWidth = pp;
-            header.addComponent(column);
-        }
-
-        _table.addComponent(header);
-
-        var source = new ArrayDataSource<Dynamic>();
-        for (r in ds.rows()) {
-            var item = {};
-            for (fd in ds.fieldDefinitions) {
-                Reflect.setField(item, fd.fieldName.replace(" ", "_"), r.value(fd.fieldName));
+        var message = "Are you sure you wisth to remove the '" + tableSelector.selectedItem.table.name + "' table?\n\nThis cannot be undone";
+        Dialogs.messageBox(message, "Confirm Removal", MessageBoxType.TYPE_QUESTION, function(button) {
+            if (button == DialogButton.YES) {
+                var working = new WorkingIndicator();
+                working.showWorking();
+                _database.removeTable(tableSelector.selectedItem.table.name).then(function(r) {
+                    working.workComplete();
+                    refresh(_database.name);
+                });
             }
-            source.add(item);
-            trace(item);
-        }
-        _table.dataSource = source;
-        detailsContainer.addComponent(_table);
-    }
-
-
-
-
-
-
-
-
-/*
-
-    @:bind(createDataSource, MouseEvent.CLICK)
-    private function onCreateDataSource(e:MouseEvent) {
-        var ds = new DataSource();
-        ds.name = "MyNewDataSource";
-        ds.update().then(function(r) {
-            trace("updated");
         });
     }
-
-    @:bind(listDataSources, MouseEvent.CLICK)
-    private function onListDataSources(e:MouseEvent) {
-        CoreData.listDataSources().then(function(r) {
-            trace(r);
-        });
-    }
-
-    @:bind(testWizard, MouseEvent.CLICK)
-    private function onTestWizard(e:MouseEvent) {
-        var s = new ImportDataSourceWizard();
-        s.show();
-    }
-
-    @:bind(test, MouseEvent.CLICK)
-    private function onTest(e:MouseEvent) {
-        var ds = new DataSource();
-        ds.name = "MyOtherNewDataSource";
-        ds.defineField("firstName", FieldType.String);
-        ds.defineField("lastName", FieldType.String);
-        ds.defineField("age", FieldType.Number);
-        ds.defineField("male", FieldType.Boolean);
-
-        ds.addRow("Ian", "Harrigan", 101, true);
-
-        ds.row(0).value("firstName", "bob");
-
-        for (row in ds.rows()) {
-            trace("firstName = " + row.value("firstName"));
-            trace("lastName = " + row.value("lastName"));
-            trace("age = " + row.value("age"));
-            trace("male = " + row.value("male"));
-            trace(row);
-        }
-
-        trace(ds.row(0).value("firstName") == "bob");
-        trace(ds.row(0).value("age") > 100);
-        trace(ds.row(0).value("age") + 1);
-        trace(ds.row(0).value("male") == true);
-
-        ds.commit().then(function(r) {
-            trace("commited");
-        });
-    }
-    */
 }

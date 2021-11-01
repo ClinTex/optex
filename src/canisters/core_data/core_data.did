@@ -1,3 +1,32 @@
+type TableInfo = 
+ record {
+   fieldDefinitions: vec TableFieldInfo;
+   recordCount: nat;
+   tableName: text;
+ };
+type TableFragmentField = 
+ record {
+   fieldName: text;
+   fieldType: int;
+ };
+type TableFragment = 
+ record {
+   count: int;
+   data: vec vec text;
+   fieldDefinitions: vec TableFragmentField;
+   total: int;
+ };
+type TableFieldInfo = 
+ record {
+   fieldName: text;
+   fieldType: int;
+ };
+type Result = 
+ record {
+   errorCode: nat;
+   errorText: text;
+   errored: bool;
+ };
 type ImmutableFieldDefinition = 
  record {
    fieldName: text;
@@ -9,8 +38,25 @@ type ImmutableDataSource =
    dataSourceName: text;
    fieldDefinitions: vec ImmutableFieldDefinition;
  };
+type DatabaseInfo = 
+ record {
+   databaseName: text;
+   tables: vec TableInfo;
+ };
 service : {
+  addTableData: (text, text, vec vec text) -> (Result);
   createDataSource: (ImmutableDataSource) -> ();
+  createDatabase: (text) -> (Result);
+  createTable: (text, text, vec TableFieldInfo) -> (Result);
+  getDatabaseInfo: (text) -> (DatabaseInfo) query;
+  getTableData: (text, text, nat, nat) -> (TableFragment) query;
+  hasDatabase: (text) -> (bool) query;
+  hasTable: (text, text) -> (bool) query;
   listDataSourceNames: () -> (vec text) query;
   listDataSources: () -> (vec ImmutableDataSource) query;
+  listDatabases: () -> (vec DatabaseInfo) query;
+  removeDatabase: (text) -> (Result);
+  removeTable: (text, text) -> (Result);
+  test: () -> (TableFragment);
+  test2: () -> (text) query;
 }

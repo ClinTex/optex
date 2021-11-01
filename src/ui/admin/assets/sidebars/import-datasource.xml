@@ -1,0 +1,81 @@
+<sidebar width="450" height="100%">
+    <vbox width="100%" height="100%">
+        <label text="Import Data" style="font-size: 22px;color:#888888;" horizontalAlign="right" />
+        <rule />
+        <vbox width="100%" height="100%" style="padding: 10px;spacing: 10px;">
+
+            <frame text="Core" width="100%">
+                <grid columns="2" width="100%">
+                    <optionbox width="175" id="createNewCoreOption" group="coreOption" text="Create new data core" verticalAlign="center" selected="true" />
+                    <textfield id="newCoreName" placeholder="Data core name" width="100%"/>
+
+                    <optionbox width="175" id="addToExistingCoreOption" group="coreOption" text="Add to existing data core" verticalAlign="center" hidden="true" />
+                    <dropdown id="existingCoreSelector" width="100%" disabled="true" hidden="true" />
+                </grid> 
+            </frame>    
+
+            <frame text="Table" width="100%" height="100%">
+                <vbox width="100%" height="100%">
+                    <grid columns="2" width="100%">
+                        <label text="Import type" verticalAlign="center" />
+                        <dropdown id="importTypeSelector" width="100%">
+                            <data>
+                                <item text="Comma Seperated File (CSV)" />
+                            </data>
+                        </dropdown>
+
+                        <spacer />
+                        <box width="100%">
+                            <file-selector id="importFileSelector" text="Select File" horizontalAlign="right" />
+                        </box>    
+
+                        <optionbox width="175" id="createNewTableOption" group="tableOption" text="Create new table" verticalAlign="center" selected="true" />
+                        <textfield id="newTableName" placeholder="Table name" width="100%"/>
+
+                        <optionbox width="175" id="addToExistingTableOption" group="tableOption" text="Add to existing table" verticalAlign="center" hidden="true" />
+                        <dropdown id="existingTableSelector" width="100%" disabled="true" hidden="true" />
+                    </grid> 
+
+                    <style>
+                        #importTableFields .textfield {
+                            border: none;
+                            filter: none;
+                            background-color: none;
+                        }
+                    </style>
+
+                    <tableview id="importTableFields" width="100%" height="100%">
+                        <header width="100%">
+                            <column id="fieldEnabled" text=" " width="32" />
+                            <column id="fieldName" text="Field Name" width="100%" />
+                            <column id="fieldType" text="Data Type" width="100" />
+                        </header>
+
+                        <item-renderer height="100%">
+                            <checkbox id="fieldEnabled" verticalAlign="center" horizontalAlign="center" />
+                        </item-renderer>
+                        <item-renderer>
+                            <textfield id="fieldName" verticalAlign="center" width="100%" />
+                        </item-renderer>
+                        <item-renderer>
+                            <dropdown text="Text" id="fieldType" width="100%">
+                                <data>
+                                    <item value="string" text="Text" />
+                                    <item value="number" text="Number" />
+                                    <item value="boolean" text="Yes/No" />
+                                </data>
+                            </dropdown>
+                        </item-renderer>
+                    </tableview>
+
+                    <label id="importTableRowCount" hidden="true" horizontalAlign="right" />
+                </vbox>    
+            </frame>    
+
+            <hbox horizontalAlign="right">
+                <button id="cancelButton" text="Cancel" />
+                <button id="createButton" text="Create" />
+            </hbox>
+        </vbox>
+    </vbox>
+</sidebar>

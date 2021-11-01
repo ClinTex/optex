@@ -1,5 +1,6 @@
 package components;
 
+import haxe.ui.events.UIEvent;
 import js.lib.Promise;
 import haxe.ui.components.Label;
 import js.html.FileReader;
@@ -39,7 +40,12 @@ class FileSelector extends HBox {
         _fileInput.onchange = function(e) {
             _file = e.target.files[0]; 
             _label.text = _file.name;
+            dispatch(new UIEvent(UIEvent.CHANGE));
         }
+    }
+
+    private override function get_text():String {
+        return _label.text;
     }
 
     public function readContents():Promise<Dynamic> {

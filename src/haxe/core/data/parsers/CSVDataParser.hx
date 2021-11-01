@@ -1,8 +1,7 @@
 package core.data.parsers;
 
-import core.data.DataSource.FieldType;
-import core.Types.TFieldDefinition;
-
+import core.data.CoreData.FieldType;
+import core.data.CoreData.TableFieldInfo;
 using StringTools;
 
 class CSVDataParser extends DataParser {
@@ -13,11 +12,17 @@ class CSVDataParser extends DataParser {
         super();
     }
 
-    public override function getFieldDefinitions():Array<TFieldDefinition> {
+    public override function getFieldDefinitions():Array<TableFieldInfo> {
         var fds = [];
         var parts = _firstLine.split(",");
         for (p in parts) {
             p = p.trim();
+            if (p.startsWith("\"") && p.endsWith("\"")) {
+                p = p.substring(1, p.length - 1);
+            }
+            if (p.startsWith("'") && p.endsWith("'")) {
+                p = p.substring(1, p.length - 1);
+            }
             fds.push({
                 fieldName: p,
                 fieldType: FieldType.String
@@ -34,6 +39,12 @@ class CSVDataParser extends DataParser {
             var row = [];
             for (p in parts) {
                 p = p.trim();
+                if (p.startsWith("\"") && p.endsWith("\"")) {
+                    p = p.substring(1, p.length - 1);
+                }
+                if (p.startsWith("'") && p.endsWith("'")) {
+                    p = p.substring(1, p.length - 1);
+                }
                 row.push(p);
             }
             d.push(row);
