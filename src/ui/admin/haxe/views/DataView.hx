@@ -1,5 +1,7 @@
 package views;
 
+import haxe.ui.containers.Box;
+import haxe.ui.core.Component;
 import haxe.ui.containers.dialogs.Dialog.DialogButton;
 import haxe.ui.containers.dialogs.MessageBox.MessageBoxType;
 import haxe.ui.containers.dialogs.Dialogs;
@@ -120,33 +122,54 @@ class DataView extends VBox {
     private function refreshTableData(table:Table) {
         dataSourceDataTable.clearContents(true);
 
+        var colWidths:Map<Component, Float> = [];
+        var cols:Map<String, Component> = [];
         var fieldDefs = table.fieldDefinitions;
-        var maxCols = 10;
+        var maxCols = 100;
         var n = 0;
         for (fd in fieldDefs) {
             var column = dataSourceDataTable.addColumn(safeId(fd.fieldName));
-            column.width = 200;
+            column.width = guessStringWidth(column.text);
+            colWidths.set(column, column.width);
+            cols.set(column.id, column);
             if (n > maxCols) {
                 break;
             }
             n++;
         }
 
-        table.getRows(0, 100).then(function(f) {
-            trace(f.count);
+        var n = Std.int((dataSourceDataTable.height - 75) / 25);
+        table.getRows(0, n).then(function(f) {
             var ds = new ArrayDataSource<Dynamic>();
             for (d in f.data) {
                 var fieldIndex = 0;
                 var item:Dynamic = {};
                 for (fd in fieldDefs) {
                     Reflect.setField(item, safeId(fd.fieldName), d[fieldIndex]);
+
+                    var column = cols.get(safeId(fd.fieldName));
+                    var columnWidth = colWidths.get(column);
+                    var newWidth = guessStringWidth(Std.string(d[fieldIndex]), 9);
+                    if (newWidth > columnWidth) {
+                        colWidths.set(column, newWidth);
+                    }
+
                     fieldIndex++;
                 }
                 ds.add(item);
             }
 
+            for (column in colWidths.keys()) {
+                var cx = colWidths.get(column);
+                column.width = cx;
+            }
+
             dataSourceDataTable.dataSource = ds;
         });
+    }
+
+    private inline function guessStringWidth(s:String, cx:Int = 10) {
+        return (s.length * cx) + 20;
     }
 
     private inline function safeId(fieldName:String) {

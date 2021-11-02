@@ -31881,22 +31881,28 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,refreshTableData: function(table) {
 		var _gthis = this;
 		this.dataSourceDataTable.clearContents(true);
+		var colWidths = new haxe_ds_ObjectMap();
+		var cols_h = Object.create(null);
 		var fieldDefs = table.get_fieldDefinitions();
-		var maxCols = 10;
+		var maxCols = 100;
 		var n = 0;
 		var _g = 0;
 		while(_g < fieldDefs.length) {
 			var fd = fieldDefs[_g];
 			++_g;
 			var column = this.dataSourceDataTable.addColumn(StringTools.replace(StringTools.replace(fd.fieldName,"\"","")," ","_"));
-			column.set_width(200);
+			column.set_width(column.get_text().length * 10 + 20);
+			var value = column.get_width();
+			colWidths.set(column,value);
+			var key = column.get_id();
+			cols_h[key] = column;
 			if(n > maxCols) {
 				break;
 			}
 			++n;
 		}
-		table.getRows(0,100).then(function(f) {
-			console.log("haxe/views/DataView.hx:136:",f.count);
+		var n = (this.dataSourceDataTable.get_height() - 75) / 25 | 0;
+		table.getRows(0,n).then(function(f) {
 			var ds = new haxe_ui_data_ArrayDataSource();
 			var _g = 0;
 			var _g1 = f.data;
@@ -31910,12 +31916,35 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 					var fd = fieldDefs[_g2];
 					++_g2;
 					item[StringTools.replace(StringTools.replace(fd.fieldName,"\"","")," ","_")] = d[fieldIndex];
+					var key = StringTools.replace(StringTools.replace(fd.fieldName,"\"","")," ","_");
+					var column = cols_h[key];
+					var columnWidth = colWidths.h[column.__id__];
+					var cx = 9;
+					if(cx == null) {
+						cx = 10;
+					}
+					var newWidth = Std.string(d[fieldIndex]).length * cx + 20;
+					if(newWidth > columnWidth) {
+						colWidths.set(column,newWidth);
+					}
 					++fieldIndex;
 				}
 				ds.add(item);
 			}
+			var column = colWidths.keys();
+			while(column.hasNext()) {
+				var column1 = column.next();
+				var cx = colWidths.h[column1.__id__];
+				column1.set_width(cx);
+			}
 			_gthis.dataSourceDataTable.set_dataSource(ds);
 		});
+	}
+	,guessStringWidth: function(s,cx) {
+		if(cx == null) {
+			cx = 10;
+		}
+		return s.length * cx + 20;
 	}
 	,safeId: function(fieldName) {
 		return StringTools.replace(StringTools.replace(fieldName,"\"","")," ","_");
