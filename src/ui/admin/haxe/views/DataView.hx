@@ -1,5 +1,7 @@
 package views;
 
+import haxe.ui.core.Platform;
+import core.data.CoreData;
 import haxe.ui.containers.Box;
 import haxe.ui.core.Component;
 import haxe.ui.containers.dialogs.Dialog.DialogButton;
@@ -26,6 +28,66 @@ class DataView extends VBox {
 
     private inline function num(i:Dynamic) {
         return Syntax.code("Number({0})", i);
+    }
+
+    @:bind(test1, MouseEvent.CLICK)
+    private function onTest1(_) {
+        var selectedItem = databaseSelector.selectedItem;
+        if (selectedItem == null) {
+            return;
+        }
+        var databaseName = selectedItem.db.name;
+
+        var selectedItem = tableSelector.selectedItem;
+        if (selectedItem == null) {
+            return;
+        }
+        var tableRows = selectedItem.table.getRowCount();
+        var tableName = selectedItem.table.name;
+
+        var selectedItem = testFieldsList.selectedItem;
+        if (selectedItem == null) {
+            return;
+        }
+        var fieldName = selectedItem.text;
+
+        trace("test1");
+        var start = Platform.instance.perf();
+        var params = [["fieldName", fieldName]];
+        //CoreData.test1(databaseName, tableName, fieldName).then(function(r) {
+        CoreData.applyTableTransform(databaseName, tableName, "count-unique", params).then(function(r) {
+            var graphData:Array<Dynamic> = [];
+            for (d in r.data) {
+                var group = d[0];
+                var value = Std.parseInt(d[1]);
+                graphData.push({
+                    group: group,
+                    value: value
+                });
+            }
+            testbargraph1.data = graphData;
+            var end = Platform.instance.perf();
+            testPerf.text = "" + tableRows + " records in " + (end - start) + "ms";
+            trace(r);
+        });
+    }
+
+    @:bind(testRefreshFields, MouseEvent.CLICK)
+    private function ontestRefreshFields(_) {
+        var selectedItem = tableSelector.selectedItem;
+        if (selectedItem == null) {
+            return;
+        }
+
+        var table:Table = selectedItem.table;
+        var ds = new ArrayDataSource<Dynamic>();
+        for (f in table.fieldDefinitions) {
+            ds.add({
+                text: f.fieldName
+            });
+        }
+        testFieldsList.dataSource = ds;
+        
     }
 
     public function new() {
@@ -87,7 +149,7 @@ class DataView extends VBox {
         _database = new Database(dbName);
         _database.listTables().then(function(tables) {
             var ds = new ArrayDataSource<Dynamic>();
-            var indexToSelect = 0;
+            var indexToSelect = -1;
             var n = 0;
             for (table in tables) {
                 ds.add({
@@ -125,7 +187,7 @@ class DataView extends VBox {
         var colWidths:Map<Component, Float> = [];
         var cols:Map<String, Component> = [];
         var fieldDefs = table.fieldDefinitions;
-        var maxCols = 100;
+        var maxCols = 9;
         var n = 0;
         for (fd in fieldDefs) {
             var column = dataSourceDataTable.addColumn(safeId(fd.fieldName));
@@ -138,12 +200,14 @@ class DataView extends VBox {
             n++;
         }
 
-        var n = Std.int((dataSourceDataTable.height - 75) / 25);
-        table.getRows(0, n).then(function(f) {
+        var max = Std.int((dataSourceDataTable.height - 75) / 25);
+        n = 0;
+        table.getRows(0, max).then(function(f) {
             var ds = new ArrayDataSource<Dynamic>();
             for (d in f.data) {
                 var fieldIndex = 0;
                 var item:Dynamic = {};
+                n = 0;
                 for (fd in fieldDefs) {
                     Reflect.setField(item, safeId(fd.fieldName), d[fieldIndex]);
 
@@ -155,6 +219,12 @@ class DataView extends VBox {
                     }
 
                     fieldIndex++;
+
+                    if (n > maxCols) {
+                        break;
+                    }
+                    n++;
+        
                 }
                 ds.add(item);
             }

@@ -1,3 +1,44 @@
-<vbox>
-    <button text="Dashboards" />
+<vbox width="100%" height="100%">
+    <hbox width="100%" height="100%">
+        <vbox width="200" height="100%" style="spacing:0;border-right: 1px solid #ababab;">
+            <vbox  width="100%" style="padding:7px;background-color: #eeeeee;__padding-right: 1px;border-bottom:1px solid #ababab;border-right:1px solid #ababab">
+                <textfield placeholder="Filter dashboards" width="100%" />
+            </vbox>
+            <listview id="dashboardSelector" styleName="left-menu" width="100%" height="100%" selectedIndex="0">
+                <item-renderer width="100%" layoutName="horizontal">
+                    <image id="icon" verticalAlign="center" />
+                    <label width="100%" id="name" verticalAlign="center" />
+                </item-renderer>
+            </listview>
+            <hbox width="100%" height="67" style="padding:0px;spacing:0px;border-right: 1px solid #ababab;border-top: 1px solid #ababab;padding-right:1px;padding-top: 1px;border-bottom:1px solid #ababab;padding-bottom:1px;" styleName="bottom-buttons">
+                <button id="addDashboardButton" text="Add" width="33%" height="100%" icon="icons/icons8-plus-+-32.png" iconPosition="top" />
+                <component width="1" height="100%" style="background-color: #ababab" />
+                <button text="Update" width="34%" height="100%" icon="icons/icons8-edit-32(1).png" iconPosition="top" />
+                <component width="1" height="100%" style="background-color: #ababab" />
+                <button id="removeDashboardButton" text="Remove" width="33%" height="100%" icon="icons/icons8-delete-32.png" iconPosition="top" />
+            </hbox>
+        </vbox>    
+
+        <style>
+            #layoutDataField {
+                border: none;
+                filter: none;
+            }
+        </style>
+
+        <vbox id="detailsContainer" width="100%" height="100%" style="padding: 10px;">
+            <tabview id="mainTabs" width="100%" height="100%" tabPosition="bottom">
+                <vbox id="previewTab" text="Preview" width="100%" height="100%">
+                </vbox>
+                <vbox text="Designer" width="100%" height="100%">
+                </vbox>
+                <vbox text="Layout Data" width="100%" height="100%">
+                    <textarea id="layoutDataField" width="100%" height="100%" />
+                    <hbox horizontalAlign="right">
+                        <button id="updateLayoutDataButton" text="Update" />
+                    </hbox>
+                </vbox>
+            </tabview>
+        </vbox>
+    </hbox>
 </vbox>

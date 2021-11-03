@@ -27,17 +27,6 @@ type Result =
    errorText: text;
    errored: bool;
  };
-type ImmutableFieldDefinition = 
- record {
-   fieldName: text;
-   fieldType: text;
- };
-type ImmutableDataSource = 
- record {
-   data: vec vec text;
-   dataSourceName: text;
-   fieldDefinitions: vec ImmutableFieldDefinition;
- };
 type DatabaseInfo = 
  record {
    databaseName: text;
@@ -45,18 +34,17 @@ type DatabaseInfo =
  };
 service : {
   addTableData: (text, text, vec vec text) -> (Result);
-  createDataSource: (ImmutableDataSource) -> ();
+  applyTableTransform: (text, text, text, vec vec text) ->
+   (TableFragment) query;
   createDatabase: (text) -> (Result);
   createTable: (text, text, vec TableFieldInfo) -> (Result);
   getDatabaseInfo: (text) -> (DatabaseInfo) query;
   getTableData: (text, text, nat, nat) -> (TableFragment) query;
+  getTableInfo: (text, text) -> (TableInfo) query;
   hasDatabase: (text) -> (bool) query;
   hasTable: (text, text) -> (bool) query;
-  listDataSourceNames: () -> (vec text) query;
-  listDataSources: () -> (vec ImmutableDataSource) query;
   listDatabases: () -> (vec DatabaseInfo) query;
   removeDatabase: (text) -> (Result);
   removeTable: (text, text) -> (Result);
-  test: () -> (TableFragment);
-  test2: () -> (text) query;
+  updateTableData: (text, text, text, text, vec text) -> (Result);
 }

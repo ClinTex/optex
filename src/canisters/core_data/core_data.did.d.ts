@@ -3,15 +3,6 @@ export interface DatabaseInfo {
   'tables' : Array<TableInfo>,
   'databaseName' : string,
 }
-export interface ImmutableDataSource {
-  'data' : Array<Array<string>>,
-  'dataSourceName' : string,
-  'fieldDefinitions' : Array<ImmutableFieldDefinition>,
-}
-export interface ImmutableFieldDefinition {
-  'fieldName' : string,
-  'fieldType' : string,
-}
 export interface Result {
   'errorCode' : bigint,
   'errorText' : string,
@@ -39,7 +30,12 @@ export interface _SERVICE {
       arg_1: string,
       arg_2: Array<Array<string>>,
     ) => Promise<Result>,
-  'createDataSource' : (arg_0: ImmutableDataSource) => Promise<undefined>,
+  'applyTableTransform' : (
+      arg_0: string,
+      arg_1: string,
+      arg_2: string,
+      arg_3: Array<Array<string>>,
+    ) => Promise<TableFragment>,
   'createDatabase' : (arg_0: string) => Promise<Result>,
   'createTable' : (
       arg_0: string,
@@ -53,13 +49,17 @@ export interface _SERVICE {
       arg_2: bigint,
       arg_3: bigint,
     ) => Promise<TableFragment>,
+  'getTableInfo' : (arg_0: string, arg_1: string) => Promise<TableInfo>,
   'hasDatabase' : (arg_0: string) => Promise<boolean>,
   'hasTable' : (arg_0: string, arg_1: string) => Promise<boolean>,
-  'listDataSourceNames' : () => Promise<Array<string>>,
-  'listDataSources' : () => Promise<Array<ImmutableDataSource>>,
   'listDatabases' : () => Promise<Array<DatabaseInfo>>,
   'removeDatabase' : (arg_0: string) => Promise<Result>,
   'removeTable' : (arg_0: string, arg_1: string) => Promise<Result>,
-  'test' : () => Promise<TableFragment>,
-  'test2' : () => Promise<string>,
+  'updateTableData' : (
+      arg_0: string,
+      arg_1: string,
+      arg_2: string,
+      arg_3: string,
+      arg_4: Array<string>,
+    ) => Promise<Result>,
 }

@@ -184,7 +184,9 @@ class ImportDataSourceSidebar extends SideBar {
             }
         } else {
             tableName = existingTableSelector.selectedItem.table.name;
-            table = db.getTable(tableName);
+            db.getTable(tableName, false).then(function(t) {
+                table = t;
+            });
         }
 
         // data

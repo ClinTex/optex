@@ -50,7 +50,12 @@ extern class CoreData {
     static function hasTable(databaseName:String, tableName:String):Promise<Bool>;
     static function createTable(databaseName:String, tableName:String, fieldDefinitions:Array<TableFieldInfo>):Promise<CoreResult>;
     static function removeTable(databaseName:String, tableName:String):Promise<CoreResult>;
+    static function getTableInfo(databaseName:String, tableName:String):Promise<TableInfo>;
 
     static function addTableData(databaseName:String, tableName:String, data:Array<Array<String>>):Promise<CoreResult>;
     static function getTableData(databaseName:String, tableName:String, start:Int, end:Int):Promise<TableFragment>;
+    static function updateTableData(databaseName:String, tableName:String, fieldName:String, fieldValue:String, newData:Array<String>):Promise<CoreResult>;
+
+    static function applyTableTransform(databaseName:String, tableName:String, transformId:String, parameters:Array<Array<String>>):Promise<TableFragment>;
+    static function test1(databaseName:String, tableName:String, fieldName:String):Promise<TableFragment>;
 }

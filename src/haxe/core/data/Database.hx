@@ -70,23 +70,34 @@ class Database {
         });
     }
 
-    public function getTable(name:String, live:Bool = true):Table {
-        var table = new Table(name, this);
-        table.onProgress = this.onProgress;
+    public function getTable(tableName:String, live:Bool = true):Promise<Table> {
+        return new Promise((resolve, reject) -> {
+            if (live == false) {
+                var table = new Table(tableName, this);
+                table.onProgress = this.onProgress;
 
-        var exists:Bool = false;
-        for (t in _tablesToCommit) {
-            if (t.name == table.name) {
-                exists = true;
-                break;
+                var exists:Bool = false;
+                for (t in _tablesToCommit) {
+                    if (t.name == table.name) {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (exists == false) {
+                    _tablesToCommit.push(table);
+                }
+
+                resolve(table);
+                return;
             }
-        }
 
-        if (exists == false) {
-            _tablesToCommit.push(table);
-        }
-
-        return table;
+            CoreData.getTableInfo(name, tableName).then(function(tableInfo) {
+                var table = new Table(tableName, this, tableInfo);
+                table.onProgress = this.onProgress;
+                resolve(table);
+            });
+        });
     }
 
     public function commit():Promise<CoreResult>  {

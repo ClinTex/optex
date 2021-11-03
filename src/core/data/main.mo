@@ -1,9 +1,13 @@
 import Text  "mo:base/Text";
 import Map   "mo:base/HashMap";
 import Array "mo:base/Array";
+import Int   "mo:base/Int";
+import Nat   "mo:base/Nat";
 
-import Types "../types";
-import DBMS "DBMS";
+import Types      "../types";
+import DBMS       "DBMS";
+import Transforms "Transforms";
+import Debug "mo:base/Debug";
 
 actor Data {
     let DatabaseManager = DBMS.DatabaseManager();
@@ -131,6 +135,37 @@ actor Data {
         };
     };
 
+    public query func getTableInfo(databaseName:Text, tableName:Text):async DBMS.TableInfo {
+        switch(DatabaseManager.getDatabase(databaseName)) {
+            case null {
+                return {
+                    tableName = "";
+                    fieldDefinitions = [];
+                    recordCount = 0;
+                };
+            };
+            case (?db) {
+                switch (db.getTable(tableName)) {
+                    case null {
+                        return {
+                            tableName = "";
+                            fieldDefinitions = [];
+                            recordCount = 0;
+                        };
+                    };
+                    case (?table) {
+                        return table.getInfo();
+                    };
+                };
+            }
+        };
+        return {
+            tableName = "";
+            fieldDefinitions = [];
+            recordCount = 0;
+        };
+    };
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Data
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -195,4 +230,38 @@ actor Data {
             };
         };
     };
-}
+
+    public shared(msg) func updateTableData(databaseName:Text, tableName:Text, fieldName:Text, fieldValue:Text, newData:[Text]):async Types.Result {
+        switch (DatabaseManager.getDatabaseTable(databaseName, tableName)) {
+            case null { };
+            case (?table) {
+                table.updateData(fieldName, fieldValue, newData);
+                return {
+                    errored = false;
+                    errorText = "";
+                    errorCode = 0;
+                };
+            };
+        };
+
+        return {
+            errored = true;
+            errorText = "Could not update data";
+            errorCode = 2000;
+        };
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Transformations
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    public query func applyTableTransform(databaseName:Text, tableName:Text, transformId:Text, parameters:[[Text]]):async DBMS.TableFragment {
+        switch (DatabaseManager.getDatabaseTable(databaseName, tableName)) {
+            case null { };
+            case (?table) {
+                return Transforms.Create(transformId)(table, parameters);
+            };
+        };
+
+        return DBMS.EmptyTableFragment;
+    };
+};

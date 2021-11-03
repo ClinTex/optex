@@ -1,5 +1,11 @@
 package;
 
+import components.Portlet;
+import haxe.ui.containers.HBox;
+import haxe.ui.core.ComponentClassMap;
+import core.data.CoreData.FieldType;
+import core.data.Table;
+import core.data.DatabaseManager;
 import views.DataView;
 import haxe.ui.containers.menus.Menu.MenuEvent;
 import haxe.ui.containers.VBox;
@@ -8,6 +14,14 @@ import haxe.ui.containers.VBox;
 class MainView extends VBox {
     public function new() {
         super();
+
+        ComponentClassMap.instance.registerClassName("vbox", Type.getClassName(VBox));
+        ComponentClassMap.instance.registerClassName("hbox", Type.getClassName(HBox));
+        ComponentClassMap.instance.registerClassName("portlet", Type.getClassName(Portlet));
+
+        DatabaseManager.instance.init().then(function(r) {
+            trace("database manager ready");
+        });
     }
     
     @:bind(mainMenu, MenuEvent.MENU_SELECTED)

@@ -5,5 +5,6 @@
     <components>
         <class package="components" />
         <class package="views" />
+        <class package="graphs" />
     </components>
 </module>

@@ -1,6 +1,7 @@
 import Text "mo:base/Text";
 import Map "mo:base/HashMap";
 import Array "mo:base/Array";
+import Buffer "mo:base/Buffer";
 import Int "mo:base/Int";
 
 import Debug "mo:base/Debug";
@@ -108,6 +109,17 @@ module {
                 case null return false;
                 case (?database) return true;
             };
+        };
+
+        public func getDatabaseTable(databaseName:Text, tableName:Text):?Table {
+            switch(getDatabase(databaseName)) {
+                case null { };
+                case (?db) {
+                    return db.getTable(tableName);
+                };
+            };
+
+            return null;
         };
     };
 
@@ -219,7 +231,9 @@ module {
     public class Table(tableName:Text) {
         var name:Text = tableName;
         var schema:TableSchema = TableSchema();
-        var data:[[Text]] = [];
+        public var data:[[Text]] = [];
+
+        //public var data2:Buffer.Buffer<Buffer.Buffer<Text>> = Buffer.Buffer(0);
 
         public func getName():Text {
             return name;
@@ -250,6 +264,10 @@ module {
         };
 
         public func getRows(start:Nat, end:Nat):TableFragment {
+            if (data.size() == 0) {
+                return EmptyTableFragment;
+            };
+
             var actualEnd:Nat = end;
             if (actualEnd > Int.abs(data.size() - 1)) {
                 actualEnd := Int.abs(data.size() - 1);
@@ -276,6 +294,14 @@ module {
                 data = fragmentData;
             };
             return f;
+        };
+
+        public func getAllRows(start:Nat, end:Nat):TableFragment {
+            return getRows(0, data.size() - 1);
+        };
+
+        public func getAllData():[[Text]] {
+            return data;
         };
 
         public func findRows(fieldName:Text, fieldValue:Text):TableFragment {
@@ -317,6 +343,25 @@ module {
             };
         };
 
+        public func updateData(fieldName:Text, fieldValue:Text, newData:[Text]) {
+            var fieldIndex = schema.fieldIndex(fieldName);
+            var x = fieldIndex;
+            var updatedData:[[Text]] = [];
+
+            if (fieldIndex > -1) {
+                for (d in data.vals()) {
+                    var r = d;
+                    if (d[Int.abs(x)] == fieldValue) {
+                        r := newData;
+                    };
+
+                    updatedData := Array.append(updatedData, [r]);
+                };
+            };
+
+            data := updatedData;
+        };
+
         public func debugPrint() {
             Debug.print("  " # name # ": ");
             schema.debugPrint();
@@ -337,5 +382,12 @@ module {
         data:[[Text]];
         total:Int;
         count:Int;
+    };
+
+    public let EmptyTableFragment:TableFragment = {
+        fieldDefinitions:[TableFragmentField] = [];
+        data:[[Text]] = [];
+        total:Int = 0;
+        count:Int = 0;
     };
 };

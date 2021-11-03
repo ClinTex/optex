@@ -55,6 +55,7 @@ class Table {
 
     public function addData(values:Array<Any>) {
         _dataToAdd.push(values);
+        return this;
     }
 
     public function addDatas(values:Array<Array<Any>>) {
@@ -77,6 +78,14 @@ class Table {
         return new Promise((resolve, reject) -> {
             CoreData.getTableData(_database.name, name, start, end).then(function(f) {
                 resolve(f);
+            });
+        });
+    }
+
+    public function updateData(fieldName:String, fieldValue:String, newData:Array<String>):Promise<CoreResult> {
+        return new Promise((resolve, reject) -> {
+            CoreData.updateTableData(_database.name, name, fieldName, fieldValue, newData).then(function(result) {
+                resolve(result);
             });
         });
     }
