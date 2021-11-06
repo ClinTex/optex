@@ -29,7 +29,7 @@ class BarGraph extends Component {
     
     public var scheme:String = "blues";
     public var colorCalculator:ColorCalculator = null;
-    public var sort = null;
+    public var sort = "desc";
     public var barSpacing:Float = 0.2;
     public var roundBarWidths:Bool = false;
     
@@ -39,7 +39,7 @@ class BarGraph extends Component {
         colorCalculator.scheme = scheme;
     }
     
-    private var _margins:Dynamic = {top: 5, right: 2, bottom: 20, left: 20};
+    private var _margins:Dynamic = {top: 5, right: 2, bottom: 20, left: 30};
     public var margins(get, set):Dynamic;
     private function get_margins():Dynamic {
         return _margins;
@@ -254,5 +254,18 @@ class BarGraph extends Component {
             .attr("fill", AXIS_COLOR);
         _yAxis.selectAll("line")
             .attr("stroke", AXIS_COLOR);
+    }
+
+    private static var LETTERS:Array<String> = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "X", "Y", "Z"];
+    public function createRandomData(count:Int = 20) {
+        var randomData:Dynamic = [];
+        for (n in 0...count) {
+            randomData.push({
+                group: LETTERS[n],
+                value: Std.random(100) + 10
+            });
+        }
+
+        this.data = randomData;
     }
 }

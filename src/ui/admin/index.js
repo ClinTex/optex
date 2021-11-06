@@ -4594,7 +4594,7 @@ haxe_ui_containers_VBox.prototype = $extend(haxe_ui_containers_Box.prototype,{
 });
 var MainView = function() {
 	haxe_ui_containers_VBox.call(this);
-	haxe_ui_Toolkit.styleSheet.parse("\n        .bottom-buttons  {\n        }\n\n        .bottom-buttons .button {\n            background-color: #eeeeee;\n            border: none;\n            border-radius:0px;\n        }\n\n        .bottom-buttons .button:hover {\n            background-color: #f5f5f5;\n        }\n\n        .bottom-buttons .button:down {\n            background-color: #d2d2d2;\n        }\n\n        .portlet {\n            background-color: red;\n        }\n    ","user");
+	haxe_ui_Toolkit.styleSheet.parse("\n        .bottom-buttons  {\n        }\n\n        .bottom-buttons .button {\n            background-color: #eeeeee;\n            border: none;\n            border-radius:0px;\n        }\n\n        .bottom-buttons .button:hover {\n            background-color: #f5f5f5;\n        }\n\n        .bottom-buttons .button:down {\n            background-color: #d2d2d2;\n        }\n\n        .portlet {\n            filter: drop-shadow(2, 45, #000000, 0.15, 6, 1, 30, 35, false);\n            border: 1px solid #CCCCCC;\n            border-radius: 6px;\n            padding: 10px;\n        }\n\n        .portlet.no-border {\n            filter: none;\n            border: none;\n            border-radius: 0;\n            padding: 0;\n        }\n    ","user");
 	var c0 = new haxe_ui_containers_menus_MenuBar();
 	c0.set_id("mainMenu");
 	c0.set_percentWidth(100.);
@@ -4830,6 +4830,13 @@ Std.parseInt = function(x) {
 		}
 	}
 	return null;
+};
+Std.random = function(x) {
+	if(x <= 0) {
+		return 0;
+	} else {
+		return Math.floor(Math.random() * x);
+	}
 };
 var StringBuf = function() {
 	this.b = "";
@@ -5315,13 +5322,60 @@ components_FileSelector.prototype = $extend(haxe_ui_containers_HBox.prototype,{
 	,__class__: components_FileSelector
 });
 var components_Portlet = function() {
+	this._border = true;
 	haxe_ui_containers_Box.call(this);
 };
 $hxClasses["components.Portlet"] = components_Portlet;
 components_Portlet.__name__ = "components.Portlet";
 components_Portlet.__super__ = haxe_ui_containers_Box;
 components_Portlet.prototype = $extend(haxe_ui_containers_Box.prototype,{
-	registerBehaviours: function() {
+	_instance: null
+	,onReady: function() {
+		haxe_ui_containers_Box.prototype.onReady.call(this);
+		console.log("haxe/components/Portlet.hx:15:",this._border);
+		if(this._border == false) {
+			this.addClass("no-border");
+		}
+		this.addComponent(this._instance);
+	}
+	,_type: null
+	,get_type: function() {
+		return this._type;
+	}
+	,set_type: function(value) {
+		if(value == this._type) {
+			return value;
+		}
+		this._type = value;
+		switch(this._type) {
+		case "chart-bar":
+			this._instance = new components_portlets_BarGraphPortletInstance();
+			this._instance.set_percentWidth(100);
+			this._instance.set_percentHeight(100);
+			break;
+		case "filter":
+			this._instance = new components_portlets_FilterPortletInstance();
+			break;
+		case "table":
+			this._instance = new components_portlets_TableDataPortletInstance();
+			this._instance.set_percentWidth(100);
+			this._instance.set_percentHeight(100);
+			break;
+		}
+		return value;
+	}
+	,_border: null
+	,get_border: function() {
+		return this._border;
+	}
+	,set_border: function(value) {
+		if(value == this._border) {
+			return value;
+		}
+		this._border = value;
+		return value;
+	}
+	,registerBehaviours: function() {
 		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
 	}
 	,cloneComponent: function() {
@@ -5341,6 +5395,7 @@ components_Portlet.prototype = $extend(haxe_ui_containers_Box.prototype,{
 		return new components_Portlet();
 	}
 	,__class__: components_Portlet
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{set_border:"set_border",get_border:"get_border",set_type:"set_type",get_type:"get_type"})
 });
 var components_WorkingIndicator = function() {
 	this._overlay = null;
@@ -5485,6 +5540,167 @@ components_WorkingIndicator.prototype = $extend(haxe_ui_containers_VBox.prototyp
 	,closeButton: null
 	,__class__: components_WorkingIndicator
 	,__properties__: $extend(haxe_ui_containers_VBox.prototype.__properties__,{set_message:"set_message",get_message:"get_message"})
+});
+var components_portlets_PortletInstance = function() {
+	haxe_ui_containers_Box.call(this);
+};
+$hxClasses["components.portlets.PortletInstance"] = components_portlets_PortletInstance;
+components_portlets_PortletInstance.__name__ = "components.portlets.PortletInstance";
+components_portlets_PortletInstance.__super__ = haxe_ui_containers_Box;
+components_portlets_PortletInstance.prototype = $extend(haxe_ui_containers_Box.prototype,{
+	registerBehaviours: function() {
+		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new components_portlets_PortletInstance();
+	}
+	,__class__: components_portlets_PortletInstance
+});
+var components_portlets_BarGraphPortletInstance = function() {
+	components_portlets_PortletInstance.call(this);
+	this._bar = new graphs_BarGraph();
+	this._bar.set_percentWidth(100);
+	this._bar.set_percentHeight(100);
+	this._bar.createRandomData();
+	this.addComponent(this._bar);
+};
+$hxClasses["components.portlets.BarGraphPortletInstance"] = components_portlets_BarGraphPortletInstance;
+components_portlets_BarGraphPortletInstance.__name__ = "components.portlets.BarGraphPortletInstance";
+components_portlets_BarGraphPortletInstance.__super__ = components_portlets_PortletInstance;
+components_portlets_BarGraphPortletInstance.prototype = $extend(components_portlets_PortletInstance.prototype,{
+	_bar: null
+	,registerBehaviours: function() {
+		components_portlets_PortletInstance.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = components_portlets_PortletInstance.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new components_portlets_BarGraphPortletInstance();
+	}
+	,__class__: components_portlets_BarGraphPortletInstance
+});
+var components_portlets_FilterPortletInstance = function() {
+	components_portlets_PortletInstance.call(this);
+	var dd = new haxe_ui_components_DropDown();
+	var ds = new haxe_ui_data_ArrayDataSource();
+	ds.add({ text : "Filter Item 1"});
+	ds.add({ text : "Filter Item 2"});
+	ds.add({ text : "Filter Item 3"});
+	ds.add({ text : "Filter Item 4"});
+	ds.add({ text : "Filter Item 5"});
+	dd.set_dataSource(ds);
+	this.addComponent(dd);
+};
+$hxClasses["components.portlets.FilterPortletInstance"] = components_portlets_FilterPortletInstance;
+components_portlets_FilterPortletInstance.__name__ = "components.portlets.FilterPortletInstance";
+components_portlets_FilterPortletInstance.__super__ = components_portlets_PortletInstance;
+components_portlets_FilterPortletInstance.prototype = $extend(components_portlets_PortletInstance.prototype,{
+	registerBehaviours: function() {
+		components_portlets_PortletInstance.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = components_portlets_PortletInstance.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new components_portlets_FilterPortletInstance();
+	}
+	,__class__: components_portlets_FilterPortletInstance
+});
+var components_portlets_TableDataPortletInstance = function() {
+	components_portlets_PortletInstance.call(this);
+	var table = new haxe_ui_containers_TableView();
+	table.set_percentWidth(100);
+	table.set_percentHeight(100);
+	this.addComponent(table);
+	var header = new haxe_ui_containers_Header();
+	header.set_percentWidth(100);
+	var col = new haxe_ui_components_Column();
+	col.set_id("fieldA");
+	col.set_width(100);
+	col.set_text("Field A");
+	header.addComponent(col);
+	var col = new haxe_ui_components_Column();
+	col.set_id("fieldB");
+	col.set_width(100);
+	col.set_text("Field B");
+	header.addComponent(col);
+	var col = new haxe_ui_components_Column();
+	col.set_id("fieldC");
+	col.set_width(100);
+	col.set_text("Field C");
+	header.addComponent(col);
+	var col = new haxe_ui_components_Column();
+	col.set_id("fieldD");
+	col.set_percentWidth(100);
+	col.set_text("Field D");
+	header.addComponent(col);
+	table.addComponent(header);
+	var ds = new haxe_ui_data_ArrayDataSource();
+	var _g = 0;
+	while(_g < 20) {
+		var i = _g++;
+		ds.add({ fieldA : "Item " + (i + 1) + "A", fieldB : "Item " + (i + 1) + "B", fieldC : "Item " + (i + 1) + "C", fieldD : "Item " + (i + 1) + "D"});
+	}
+	table.set_dataSource(ds);
+};
+$hxClasses["components.portlets.TableDataPortletInstance"] = components_portlets_TableDataPortletInstance;
+components_portlets_TableDataPortletInstance.__name__ = "components.portlets.TableDataPortletInstance";
+components_portlets_TableDataPortletInstance.__super__ = components_portlets_PortletInstance;
+components_portlets_TableDataPortletInstance.prototype = $extend(components_portlets_PortletInstance.prototype,{
+	registerBehaviours: function() {
+		components_portlets_PortletInstance.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = components_portlets_PortletInstance.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new components_portlets_TableDataPortletInstance();
+	}
+	,__class__: components_portlets_TableDataPortletInstance
 });
 var core_Event = function(type) {
 	this.type = type;
@@ -6079,10 +6295,10 @@ core_data_parsers_CSVDataParser.prototype = $extend(core_data_parsers_DataParser
 });
 var graphs_BarGraph = function() {
 	this._data = null;
-	this._margins = { top : 5, right : 2, bottom : 20, left : 20};
+	this._margins = { top : 5, right : 2, bottom : 20, left : 30};
 	this.roundBarWidths = false;
 	this.barSpacing = 0.2;
-	this.sort = null;
+	this.sort = "desc";
 	this.colorCalculator = null;
 	this.scheme = "blues";
 	this.hideXAxis = false;
@@ -6287,6 +6503,19 @@ graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 		this._yAxis.selectAll("path").attr("stroke",this.AXIS_COLOR);
 		this._yAxis.selectAll("text").attr("fill",this.AXIS_COLOR);
 		this._yAxis.selectAll("line").attr("stroke",this.AXIS_COLOR);
+	}
+	,createRandomData: function(count) {
+		if(count == null) {
+			count = 20;
+		}
+		var randomData = [];
+		var _g = 0;
+		var _g1 = count;
+		while(_g < _g1) {
+			var n = _g++;
+			randomData.push({ group : graphs_BarGraph.LETTERS[n], value : Std.random(100) + 10});
+		}
+		this.set_data(randomData);
 	}
 	,registerBehaviours: function() {
 		haxe_ui_core_Component.prototype.registerBehaviours.call(this);
@@ -35680,7 +35909,7 @@ sidebars_ImportDataSourceSidebar.prototype = $extend(haxe_ui_containers_SideBar.
 var views_DashboardsView = function() {
 	var _gthis = this;
 	haxe_ui_containers_VBox.call(this);
-	haxe_ui_Toolkit.styleSheet.parse("\n            #layoutDataField {\n                border: none;\n                filter: none;\n            }\n        ","user");
+	haxe_ui_Toolkit.styleSheet.parse("\n            #layoutDataField {\n                border: none;\n                filter: none;\n            }\n\n            #previewTab {\n                __padding: 20px;\n            }\n\n            #previewTab .hbox, #previewTab .vbox {\n                __spacing: 20px;\n            }\n        ","user");
 	var c0 = new haxe_ui_containers_HBox();
 	c0.set_percentWidth(100.);
 	c0.set_percentHeight(100.);
@@ -35853,6 +36082,7 @@ views_DashboardsView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 				ds.add({ name : d.name, dashboard : d});
 			}
 			_gthis.dashboardSelector.set_dataSource(ds);
+			_gthis.dashboardSelector.set_selectedIndex(0);
 		});
 	}
 	,onAddDataButton: function(e) {
@@ -35869,7 +36099,7 @@ views_DashboardsView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 		var dashboard = selectedItem.dashboard;
 		dashboard.layoutData = this.layoutDataField.get_text();
 		dashboard.update().then(function(r) {
-			console.log("haxe/views/DashboardsView.hx:57:",r);
+			console.log("haxe/views/DashboardsView.hx:58:",r);
 		});
 	}
 	,onDashboardSelectorChanged: function(e) {
@@ -36512,6 +36742,7 @@ core_data_FieldType.String = 1;
 core_data_FieldType.Number = 2;
 core_data_FieldType.Boolean = 3;
 core_data_DatabaseEvent.Initialized = "initialized";
+graphs_BarGraph.LETTERS = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","X","Y","Z"];
 haxe_crypto_Base64.CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 haxe_crypto_Base64.BYTES = haxe_io_Bytes.ofString(haxe_crypto_Base64.CHARS);
 haxe_ui_backend_BackendImpl.id = "html5";

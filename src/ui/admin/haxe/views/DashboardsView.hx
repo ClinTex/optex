@@ -33,6 +33,7 @@ class DashboardsView extends VBox {
                 });
             }
             dashboardSelector.dataSource = ds;
+            dashboardSelector.selectedIndex = 0;
         });
     }
 
@@ -84,7 +85,7 @@ class DashboardsView extends VBox {
 
         var dashboard:Dashboard = selectedItem.dashboard;
         dashboard.layoutData = layoutDataField.text;
-        
+
         var c = RuntimeComponentBuilder.fromString(dashboard.layoutData);
         previewTab.removeAllComponents();
         previewTab.addComponent(c);

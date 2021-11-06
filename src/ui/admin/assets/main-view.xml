@@ -18,7 +18,17 @@
         }
 
         .portlet {
-            background-color: red;
+            filter: drop-shadow(2, 45, #000000, 0.15, 6, 1, 30, 35, false);
+            border: 1px solid #CCCCCC;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .portlet.no-border {
+            filter: none;
+            border: none;
+            border-radius: 0;
+            padding: 0;
         }
     </style>
 
