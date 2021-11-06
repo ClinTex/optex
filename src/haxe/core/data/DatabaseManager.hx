@@ -7,6 +7,17 @@ import core.data.CoreData.FieldType;
 import core.EventDispatcher;
 import core.EventDispatcher.Event;
 
+enum DatabaseBatchOperationType {
+    CreateDatabase;
+    CreateTable;
+    AddTableData;
+}
+
+typedef DatabaseBatchOperation = {
+    var type:DatabaseBatchOperationType;
+    var data:Dynamic;
+}
+
 class DatabaseEvent extends Event {
     public static inline var Initialized = "initialized";
 }
@@ -28,6 +39,61 @@ class DatabaseManager extends EventDispatcher<DatabaseEvent> {
     public var dashboardsData:Table = null;
 
     private function new() {
+    }
+
+    private var _batchOperations:Array<DatabaseBatchOperation> = [];
+    public function addBatchOperation(type:DatabaseBatchOperationType, data:Dynamic) {
+        _batchOperations.push({
+            type: type,
+            data: data
+        });
+    }
+
+    public function performBatchOperations(onProgress:String->Void):Promise<CoreResult> {
+        return new Promise((resolve, reject) -> {
+            performBatches(_batchOperations.copy(), onProgress, function() {
+                _batchOperations = [];
+                resolve({
+                    errored: false,
+                    errorCode: 0,
+                    errorText: ""
+                });
+            });
+        });
+    }
+
+    private function performBatches(list:Array<DatabaseBatchOperation>, onProgress:String->Void, complete:Void->Void) {
+        if (list.length == 0) {
+            complete();
+            return;
+        }
+
+        var item = list.shift();
+        switch (item.type) {
+            case CreateDatabase:
+                var database:Database = cast(item.data, Database);
+                if (onProgress != null) {
+                    onProgress("Creating database '" + database.name + "'");
+                }
+                createDatabase(database.name).then(function(createdDatabase) {
+                    performBatches(list, onProgress, complete);
+                });
+            case CreateTable:
+                var table:Table = cast(item.data, Table);
+                if (onProgress != null) {
+                    onProgress("Creating table '" + table.name + "'");
+                }
+                CoreData.createTable(table.database.name, table.name, table.fieldDefinitions).then(function(createTableResult) {
+                    performBatches(list, onProgress, complete);
+                });
+            case AddTableData:   
+                var table:Table = cast(item.data, Table);
+                @:privateAccess {
+                    table.commitData(table._dataToAdd, onProgress).then(function(addDataResult) {
+                        performBatches(list, onProgress, complete);
+                    });
+                }     
+        }
     }
 
     public function init():Promise<Bool> {
@@ -85,6 +151,18 @@ class DatabaseManager extends EventDispatcher<DatabaseEvent> {
                     createTablesIfDontExist(databaseName, tablesToCreate, complete);
                 });
             }
+        });
+    }
+
+    public function createDatabase(databaseName:String):Promise<Database> {
+        return new Promise((resolve, reject) -> {
+            Logger.instance.log("creating database '" + databaseName + "'");
+            CoreData.createDatabase(databaseName).then(function(createDatabaseResult) {
+                Logger.instance.log("database '" + databaseName + "' created successfully");
+                getDatabase(databaseName).then(function(database) {
+                    resolve(database);
+                });
+            });
         });
     }
 

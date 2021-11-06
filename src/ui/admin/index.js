@@ -5563,9 +5563,12 @@ core_data_DashboardManager.get_instance = function() {
 	return core_data_DashboardManager._instance;
 };
 core_data_DashboardManager.prototype = {
-	listDashboards: function() {
+	listDashboards: function(count) {
+		if(count == null) {
+			count = 100;
+		}
 		return new Promise(function(resolve,reject) {
-			core_data_DatabaseManager.get_instance().dashboardsData.getRows(0,100).then(function(fragment) {
+			core_data_DatabaseManager.get_instance().dashboardsData.getRows(0,count).then(function(fragment) {
 				var dashboards = [];
 				var _g = 0;
 				var _g1 = fragment.data;
@@ -5591,10 +5594,6 @@ core_data_DashboardManager.prototype = {
 	,__class__: core_data_DashboardManager
 };
 var core_data_Database = function(name,info) {
-	this.onProgress = null;
-	this._tablesToCommit = [];
-	this._tablesToCreate = [];
-	this._create = false;
 	this.name = name;
 	this._info = info;
 };
@@ -5602,47 +5601,29 @@ $hxClasses["core.data.Database"] = core_data_Database;
 core_data_Database.__name__ = "core.data.Database";
 core_data_Database.prototype = {
 	name: null
-	,_create: null
-	,_tablesToCreate: null
-	,_tablesToCommit: null
 	,_info: null
-	,onProgress: null
-	,progress: function(message) {
-		if(this.onProgress != null) {
-			this.onProgress(message);
-		}
-	}
-	,create: function() {
-		this._create = true;
-		return this;
-	}
-	,createTable: function(name) {
-		var table = new core_data_Table(name,this);
-		table.onProgress = this.onProgress;
-		table.create();
-		this._tablesToCreate.push(table);
-		return table;
-	}
-	,listTables: function(live) {
-		if(live == null) {
-			live = true;
-		}
+	,createTable: function(tableName,fieldDefinitions) {
 		var _gthis = this;
 		return new Promise(function(resolve,reject) {
-			if(live == false && _gthis._info != null) {
-				var tables = [];
-				var _g = 0;
-				var _g1 = _gthis._info.tables;
-				while(_g < _g1.length) {
-					var t = _g1[_g];
-					++_g;
-					var table = new core_data_Table(t.tableName,_gthis,t);
-					table.onProgress = _gthis.onProgress;
-					tables.push(table);
-				}
-				resolve(tables);
-				return;
-			}
+			core_data.createTable(_gthis.name,tableName,fieldDefinitions).then(function(createTableResult) {
+				_gthis.getTable(tableName).then(function(table) {
+					resolve(table);
+				});
+			});
+		});
+	}
+	,getTable: function(tableName) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			core_data.getTableInfo(_gthis.name,tableName).then(function(tableInfo) {
+				var table = new core_data_Table(tableName,_gthis,tableInfo);
+				resolve(table);
+			});
+		});
+	}
+	,listTables: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
 			core_data.getDatabaseInfo(_gthis.name).then(function(info) {
 				var tables = [];
 				var _g = 0;
@@ -5651,7 +5632,6 @@ core_data_Database.prototype = {
 					var t = _g1[_g];
 					++_g;
 					var table = new core_data_Table(t.tableName,_gthis,t);
-					table.onProgress = _gthis.onProgress;
 					tables.push(table);
 				}
 				resolve(tables);
@@ -5666,97 +5646,14 @@ core_data_Database.prototype = {
 			});
 		});
 	}
-	,getTable: function(tableName,live) {
-		if(live == null) {
-			live = true;
-		}
-		var _gthis = this;
-		return new Promise(function(resolve,reject) {
-			if(live == false) {
-				var table = new core_data_Table(tableName,_gthis);
-				table.onProgress = _gthis.onProgress;
-				var exists = false;
-				var _g = 0;
-				var _g1 = _gthis._tablesToCommit;
-				while(_g < _g1.length) {
-					var t = _g1[_g];
-					++_g;
-					if(t.name == table.name) {
-						exists = true;
-						break;
-					}
-				}
-				if(exists == false) {
-					_gthis._tablesToCommit.push(table);
-				}
-				resolve(table);
-				return;
-			}
-			core_data.getTableInfo(_gthis.name,tableName).then(function(tableInfo) {
-				var table = new core_data_Table(tableName,_gthis,tableInfo);
-				table.onProgress = _gthis.onProgress;
-				resolve(table);
-			});
-		});
-	}
-	,commit: function() {
-		var _gthis = this;
-		return new Promise(function(resolve,reject) {
-			if(_gthis._create == true) {
-				var tmp = "creating database '" + _gthis.name;
-				core_data_Logger.get_instance().log(tmp + "'");
-				_gthis.progress("Creating database '" + _gthis.name + "'");
-				core_data.createDatabase(_gthis.name).then(function(createResult) {
-					if(createResult.errored == true) {
-						var tmp = "problem creating database '" + _gthis.name + "': " + createResult.errorText + " (" + createResult.errorCode;
-						core_data_Logger.get_instance().log(tmp + ")");
-						resolve(createResult);
-					} else {
-						var tmp = "database '" + _gthis.name;
-						core_data_Logger.get_instance().log(tmp + "' created successfully");
-						if(_gthis._tablesToCreate.length > 0) {
-							var tmp = "creating " + _gthis._tablesToCreate.length + " table(s) in database '" + _gthis.name;
-							core_data_Logger.get_instance().log(tmp + "'");
-							_gthis.commitTables(_gthis._tablesToCreate.slice(),function() {
-								var tmp = "table(s) created in database '" + _gthis.name;
-								core_data_Logger.get_instance().log(tmp + "'");
-								resolve({ errored : false, errorCode : 0, errorText : ""});
-							});
-						}
-					}
-				});
-			} else if(_gthis._tablesToCommit.length > 0) {
-				var tmp = "committing " + _gthis._tablesToCommit.length + " table(s) in database '" + _gthis.name;
-				core_data_Logger.get_instance().log(tmp + "'");
-				_gthis.commitTables(_gthis._tablesToCommit.slice(),function() {
-					var tmp = "table(s) committed in database '" + _gthis.name;
-					core_data_Logger.get_instance().log(tmp + "'");
-					resolve({ errored : false, errorCode : 0, errorText : ""});
-				});
-			} else if(_gthis._tablesToCreate.length > 0) {
-				var tmp = "creating " + _gthis._tablesToCreate.length + " table(s) in database '" + _gthis.name;
-				core_data_Logger.get_instance().log(tmp + "'");
-				_gthis.commitTables(_gthis._tablesToCreate.slice(),function() {
-					var tmp = "table(s) created in database '" + _gthis.name;
-					core_data_Logger.get_instance().log(tmp + "'");
-					resolve({ errored : false, errorCode : 0, errorText : ""});
-				});
-			}
-		});
-	}
-	,commitTables: function(list,complete) {
-		var _gthis = this;
-		if(list.length == 0) {
-			complete();
-			return;
-		}
-		var table = list.shift();
-		table.commit().then(function(commitResult) {
-			_gthis.commitTables(list,complete);
-		});
-	}
 	,__class__: core_data_Database
 };
+var core_data_DatabaseBatchOperationType = $hxEnums["core.data.DatabaseBatchOperationType"] = { __ename__:true,__constructs__:null
+	,CreateDatabase: {_hx_name:"CreateDatabase",_hx_index:0,__enum__:"core.data.DatabaseBatchOperationType",toString:$estr}
+	,CreateTable: {_hx_name:"CreateTable",_hx_index:1,__enum__:"core.data.DatabaseBatchOperationType",toString:$estr}
+	,AddTableData: {_hx_name:"AddTableData",_hx_index:2,__enum__:"core.data.DatabaseBatchOperationType",toString:$estr}
+};
+core_data_DatabaseBatchOperationType.__constructs__ = [core_data_DatabaseBatchOperationType.CreateDatabase,core_data_DatabaseBatchOperationType.CreateTable,core_data_DatabaseBatchOperationType.AddTableData];
 var core_data_DatabaseEvent = function(type) {
 	core_Event.call(this,type);
 };
@@ -5767,6 +5664,7 @@ core_data_DatabaseEvent.prototype = $extend(core_Event.prototype,{
 	__class__: core_data_DatabaseEvent
 });
 var core_data_DatabaseManager = function() {
+	this._batchOperations = [];
 	this.dashboardsData = null;
 	this.internalData = null;
 	core_EventDispatcher.call(this);
@@ -5784,6 +5682,53 @@ core_data_DatabaseManager.__super__ = core_EventDispatcher;
 core_data_DatabaseManager.prototype = $extend(core_EventDispatcher.prototype,{
 	internalData: null
 	,dashboardsData: null
+	,_batchOperations: null
+	,addBatchOperation: function(type,data) {
+		this._batchOperations.push({ type : type, data : data});
+	}
+	,performBatchOperations: function(onProgress) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.performBatches(_gthis._batchOperations.slice(),onProgress,function() {
+				_gthis._batchOperations = [];
+				resolve({ errored : false, errorCode : 0, errorText : ""});
+			});
+		});
+	}
+	,performBatches: function(list,onProgress,complete) {
+		var _gthis = this;
+		if(list.length == 0) {
+			complete();
+			return;
+		}
+		var item = list.shift();
+		switch(item.type._hx_index) {
+		case 0:
+			var database = js_Boot.__cast(item.data , core_data_Database);
+			if(onProgress != null) {
+				onProgress("Creating database '" + database.name + "'");
+			}
+			this.createDatabase(database.name).then(function(createdDatabase) {
+				_gthis.performBatches(list,onProgress,complete);
+			});
+			break;
+		case 1:
+			var table = js_Boot.__cast(item.data , core_data_Table);
+			if(onProgress != null) {
+				onProgress("Creating table '" + table.name + "'");
+			}
+			core_data.createTable(table.database.name,table.name,table.get_fieldDefinitions()).then(function(createTableResult) {
+				_gthis.performBatches(list,onProgress,complete);
+			});
+			break;
+		case 2:
+			var table = js_Boot.__cast(item.data , core_data_Table);
+			table.commitData(table._dataToAdd,onProgress).then(function(addDataResult) {
+				_gthis.performBatches(list,onProgress,complete);
+			});
+			break;
+		}
+	}
 	,init: function() {
 		var _gthis = this;
 		return new Promise(function(resolve,reject) {
@@ -5839,6 +5784,20 @@ core_data_DatabaseManager.prototype = $extend(core_EventDispatcher.prototype,{
 			}
 		});
 	}
+	,createDatabase: function(databaseName) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var tmp = "creating database '" + databaseName;
+			core_data_Logger.get_instance().log(tmp + "'");
+			core_data.createDatabase(databaseName).then(function(createDatabaseResult) {
+				var tmp = "database '" + databaseName;
+				core_data_Logger.get_instance().log(tmp + "' created successfully");
+				_gthis.getDatabase(databaseName).then(function(database) {
+					resolve(database);
+				});
+			});
+		});
+	}
 	,getDatabase: function(databaseName) {
 		return new Promise(function(resolve,reject) {
 			core_data.getDatabaseInfo(databaseName).then(function(info) {
@@ -5889,12 +5848,10 @@ core_data_Logger.prototype = {
 };
 var core_data_Table = function(name,database,info) {
 	this.addDataBatchSize = 5000;
-	this.onProgress = null;
 	this._dataToAdd = [];
 	this._fieldDefs = [];
-	this._create = false;
 	this.name = name;
-	this._database = database;
+	this.database = database;
 	this._info = info;
 	if(this._info != null) {
 		this._fieldDefs = this._info.fieldDefinitions;
@@ -5905,8 +5862,7 @@ core_data_Table.__name__ = "core.data.Table";
 core_data_Table.prototype = {
 	name: null
 	,_info: null
-	,_create: null
-	,_database: null
+	,database: null
 	,_fieldDefs: null
 	,_dataToAdd: null
 	,get_fieldDefinitions: function() {
@@ -5915,16 +5871,6 @@ core_data_Table.prototype = {
 	,set_fieldDefinitions: function(value) {
 		this._fieldDefs = value;
 		return value;
-	}
-	,onProgress: null
-	,progress: function(message) {
-		if(this.onProgress != null) {
-			this.onProgress(message);
-		}
-	}
-	,create: function() {
-		this._create = true;
-		return this;
 	}
 	,defineField: function(fieldName,fieldType) {
 		this._fieldDefs.push({ fieldName : fieldName, fieldType : fieldType});
@@ -5941,13 +5887,7 @@ core_data_Table.prototype = {
 			this.addData(v);
 		}
 	}
-	,getRowCount: function(live) {
-		if(live == null) {
-			live = true;
-		}
-		if(live == false && this._info != null) {
-			return this._info.recordCount;
-		}
+	,getRowCount: function() {
 		if(this._info != null) {
 			return this._info.recordCount;
 		}
@@ -5956,7 +5896,7 @@ core_data_Table.prototype = {
 	,getRows: function(start,end) {
 		var _gthis = this;
 		return new Promise(function(resolve,reject) {
-			core_data.getTableData(_gthis._database.name,_gthis.name,start,end).then(function(f) {
+			core_data.getTableData(_gthis.database.name,_gthis.name,start,end).then(function(f) {
 				resolve(f);
 			});
 		});
@@ -5964,7 +5904,7 @@ core_data_Table.prototype = {
 	,updateData: function(fieldName,fieldValue,newData) {
 		var _gthis = this;
 		return new Promise(function(resolve,reject) {
-			core_data.updateTableData(_gthis._database.name,_gthis.name,fieldName,fieldValue,newData).then(function(result) {
+			core_data.updateTableData(_gthis.database.name,_gthis.name,fieldName,fieldValue,newData).then(function(result) {
 				resolve(result);
 			});
 		});
@@ -5972,30 +5912,8 @@ core_data_Table.prototype = {
 	,commit: function() {
 		var _gthis = this;
 		return new Promise(function(resolve,reject) {
-			if(_gthis._create == true) {
-				var tmp = "creating table '" + _gthis.name + "' in database '" + _gthis._database.name;
-				core_data_Logger.get_instance().log(tmp + "'");
-				_gthis.progress("Creating table '" + _gthis.name + "'");
-				var fieldDefs = _gthis._fieldDefs;
-				core_data.createTable(_gthis._database.name,_gthis.name,fieldDefs).then(function(createResult) {
-					if(createResult.errored == true) {
-						var tmp = "problem creating table '" + _gthis.name + "' in database '" + _gthis._database.name + "': " + createResult.errorText + " (" + createResult.errorCode;
-						core_data_Logger.get_instance().log(tmp + ")");
-						resolve(createResult);
-					} else {
-						var tmp = "table '" + _gthis.name + "' created successfully in database '" + _gthis._database.name;
-						core_data_Logger.get_instance().log(tmp + "'");
-						if(_gthis._dataToAdd != null && _gthis._dataToAdd.length > 0) {
-							_gthis.commitData(_gthis._dataToAdd).then(function(dataCreateResult) {
-								resolve(dataCreateResult);
-							});
-						} else {
-							resolve(createResult);
-						}
-					}
-				});
-			} else if(_gthis._dataToAdd != null && _gthis._dataToAdd.length > 0) {
-				_gthis.commitData(_gthis._dataToAdd).then(function(dataCreateResult) {
+			if(_gthis._dataToAdd != null && _gthis._dataToAdd.length > 0) {
+				_gthis.commitData(_gthis._dataToAdd,null).then(function(dataCreateResult) {
 					resolve(dataCreateResult);
 				});
 			} else {
@@ -6004,7 +5922,7 @@ core_data_Table.prototype = {
 		});
 	}
 	,addDataBatchSize: null
-	,commitData: function(data) {
+	,commitData: function(data,onProgress) {
 		var _gthis = this;
 		return new Promise(function(resolve,reject) {
 			var batches = [];
@@ -6032,33 +5950,35 @@ core_data_Table.prototype = {
 			if(fixedData.length > 0) {
 				batches.push(fixedData);
 			}
-			var tmp = "creating " + data.length + " row(s) in '" + _gthis._database.name + "." + _gthis.name + "' using " + batches.length;
+			var tmp = "creating " + data.length + " row(s) in '" + _gthis.database.name + "." + _gthis.name + "' using " + batches.length;
 			core_data_Logger.get_instance().log(tmp + " batch(es)");
 			_gthis.batchCommitData(batches,function() {
-				var tmp = "creation of " + data.length + " row(s) in '" + _gthis._database.name + "." + _gthis.name;
+				var tmp = "creation of " + data.length + " row(s) in '" + _gthis.database.name + "." + _gthis.name;
 				core_data_Logger.get_instance().log(tmp + "' complete");
 				resolve({ errored : false, errorCode : 0, errorText : ""});
-			},0,batches.length);
+			},onProgress,0,batches.length);
 		});
 	}
-	,batchCommitData: function(batches,complete,current,max) {
+	,batchCommitData: function(batches,complete,onProgress,current,max) {
 		var _gthis = this;
 		if(batches.length == 0) {
 			complete();
 			return;
 		}
-		if(max > 1) {
-			this.progress("Adding data (batch " + (current + 1) + " of " + max + ")");
-		} else {
-			this.progress("Adding data");
+		if(onProgress != null) {
+			if(max > 1) {
+				onProgress("Adding data (batch " + (current + 1) + " of " + max + ")");
+			} else {
+				onProgress("Adding data");
+			}
 		}
 		var batch = batches.shift();
-		var tmp = "batching commiting " + batch.length + " row(s) to '" + this._database.name + "." + this.name;
+		var tmp = "batching commiting " + batch.length + " row(s) to '" + this.database.name + "." + this.name;
 		core_data_Logger.get_instance().log(tmp + "'");
-		core_data.addTableData(this._database.name,this.name,batch).then(function(addDataResult) {
-			var tmp = "batch commit of " + batch.length + " row(s) to '" + _gthis._database.name + "." + _gthis.name;
+		core_data.addTableData(this.database.name,this.name,batch).then(function(addDataResult) {
+			var tmp = "batch commit of " + batch.length + " row(s) to '" + _gthis.database.name + "." + _gthis.name;
 			core_data_Logger.get_instance().log(tmp + "' complete");
-			_gthis.batchCommitData(batches,complete,current + 1,max);
+			_gthis.batchCommitData(batches,complete,onProgress,current + 1,max);
 		});
 	}
 	,__class__: core_data_Table
@@ -35594,13 +35514,13 @@ sidebars_ImportDataSourceSidebar.prototype = $extend(haxe_ui_containers_SideBar.
 	}
 	,populateTables: function(database) {
 		var _gthis = this;
-		database.listTables(false).then(function(tables) {
+		database.listTables().then(function(tables) {
 			var ds = new haxe_ui_data_ArrayDataSource();
 			var _g = 0;
 			while(_g < tables.length) {
 				var table = tables[_g];
 				++_g;
-				ds.add({ text : table.name + " (" + table.getRowCount(false) + " records)", table : table});
+				ds.add({ text : table.name + " (" + table.getRowCount() + " records)", table : table});
 			}
 			_gthis.existingTableSelector.set_dataSource(ds);
 			if(ds.get_size() == 0) {
@@ -35677,23 +35597,20 @@ sidebars_ImportDataSourceSidebar.prototype = $extend(haxe_ui_containers_SideBar.
 			return;
 		}
 		var dbName = null;
+		var db = null;
 		if(this.createNewCoreOption.get_selected() == true) {
 			dbName = this.newCoreName.get_text();
+			db = new core_data_Database(dbName);
+			core_data_DatabaseManager.get_instance().addBatchOperation(core_data_DatabaseBatchOperationType.CreateDatabase,db);
 		} else {
 			dbName = this.existingCoreSelector.get_selectedItem().db.name;
-		}
-		var db = new core_data_Database(dbName);
-		db.onProgress = function(s) {
-			_gthis._working.set_message(s);
-		};
-		if(this.createNewCoreOption.get_selected() == true) {
-			db.create();
+			db = new core_data_Database(dbName);
 		}
 		var tableName = null;
 		var table = null;
 		if(this.createNewTableOption.get_selected() == true) {
 			tableName = this.newTableName.get_text();
-			table = db.createTable(tableName);
+			table = new core_data_Table(tableName,db);
 			var _g = 0;
 			var _g1 = this._parser.getFieldDefinitions();
 			while(_g < _g1.length) {
@@ -35701,16 +35618,18 @@ sidebars_ImportDataSourceSidebar.prototype = $extend(haxe_ui_containers_SideBar.
 				++_g;
 				table.defineField(fd.fieldName,1);
 			}
+			core_data_DatabaseManager.get_instance().addBatchOperation(core_data_DatabaseBatchOperationType.CreateTable,table);
 		} else {
 			tableName = this.existingTableSelector.get_selectedItem().table.name;
-			db.getTable(tableName,false).then(function(t) {
-				table = t;
-			});
+			table = new core_data_Table(tableName,db);
 		}
 		table.addDatas(this._parser.getData());
+		core_data_DatabaseManager.get_instance().addBatchOperation(core_data_DatabaseBatchOperationType.AddTableData,table);
 		this._working = new components_WorkingIndicator();
 		this._working.showWorking();
-		db.commit().then(function(result) {
+		core_data_DatabaseManager.get_instance().performBatchOperations(function(s) {
+			_gthis._working.set_message(s);
+		}).then(function(result) {
 			_gthis._working.workComplete();
 			views_DataView.instance.refresh(dbName,tableName);
 		});

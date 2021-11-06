@@ -18,9 +18,9 @@ class DashboardManager {
     private function new() {
     }
 
-    public function listDashboards():Promise<Array<Dashboard>> {
+    public function listDashboards(count:Int = 100):Promise<Array<Dashboard>> {
         return new Promise((resolve, reject) -> {
-            DatabaseManager.instance.dashboardsData.getRows(0, 100).then(function(fragment) {
+            DatabaseManager.instance.dashboardsData.getRows(0, count).then(function(fragment) {
                 var dashboards:Array<Dashboard> = [];
                 for (r in fragment.data) {
                     var dashboard = new Dashboard(r[0]);

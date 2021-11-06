@@ -11,14 +11,13 @@ class Table {
 
     private var _info:TableInfo;
 
-    private var _create:Bool = false;
-    private var _database:Database;
+    public var database:Database;
     private var _fieldDefs:Array<TableFieldInfo> = [];
     private var _dataToAdd:Array<Array<Any>> = [];
 
     public function new(name:String, database:Database = null, info:TableInfo = null) {
         this.name = name;
-        _database = database;
+        this.database = database;
         _info = info;
         if (_info != null) {
             _fieldDefs = _info.fieldDefinitions;
@@ -32,18 +31,6 @@ class Table {
     private function set_fieldDefinitions(value:Array<TableFieldInfo>):Array<TableFieldInfo> {
         _fieldDefs = value;
         return value;
-    }
-
-    public var onProgress:String->Void = null;
-    private function progress(message:String) {
-        if (onProgress != null) {
-            onProgress(message);
-        }
-    }
-
-    public function create() {
-        _create = true;
-        return this;
     }
 
     public function defineField(fieldName:String, fieldType:Int) {
@@ -64,10 +51,7 @@ class Table {
         }
     }
 
-    public function getRowCount(live:Bool = true):Int {
-        if (live == false && _info != null) {
-            return _info.recordCount;
-        }
+    public function getRowCount():Int {
         if (_info != null) {
             return _info.recordCount;
         }
@@ -76,7 +60,7 @@ class Table {
 
     public function getRows(start:Int, end:Int):Promise<TableFragment> {
         return new Promise((resolve, reject) -> {
-            CoreData.getTableData(_database.name, name, start, end).then(function(f) {
+            CoreData.getTableData(database.name, name, start, end).then(function(f) {
                 resolve(f);
             });
         });
@@ -84,7 +68,7 @@ class Table {
 
     public function updateData(fieldName:String, fieldValue:String, newData:Array<String>):Promise<CoreResult> {
         return new Promise((resolve, reject) -> {
-            CoreData.updateTableData(_database.name, name, fieldName, fieldValue, newData).then(function(result) {
+            CoreData.updateTableData(database.name, name, fieldName, fieldValue, newData).then(function(result) {
                 resolve(result);
             });
         });
@@ -92,43 +76,22 @@ class Table {
 
     public function commit():Promise<CoreResult> {
         return new Promise((resolve, reject) -> {
-            if (_create == true) {
-                Logger.instance.log("creating table '" + name + "' in database '" + _database.name + "'");
-                progress("Creating table '" + name + "'");
-                var fieldDefs = _fieldDefs;
-                CoreData.createTable(_database.name, name, fieldDefs).then(function(createResult:CoreResult) {
-                    if (createResult.errored == true) {
-                        Logger.instance.log("problem creating table '" + name + "' in database '" + _database.name + "': " + createResult.errorText + " (" + createResult.errorCode + ")");
-                        resolve(createResult);
-                    } else {
-                        Logger.instance.log("table '" + name + "' created successfully in database '" + _database.name + "'");
-                        if (_dataToAdd != null && _dataToAdd.length > 0) {
-                            commitData(_dataToAdd).then(function(dataCreateResult) {
-                                resolve(dataCreateResult);
-                            });
-                        } else {
-                            resolve(createResult);
-                        }
-                    }
+            if (_dataToAdd != null && _dataToAdd.length > 0) {
+                commitData(_dataToAdd, null).then(function(dataCreateResult) {
+                    resolve(dataCreateResult);
                 });
             } else {
-                if (_dataToAdd != null && _dataToAdd.length > 0) {
-                    commitData(_dataToAdd).then(function(dataCreateResult) {
-                        resolve(dataCreateResult);
-                    });
-                } else {
-                    resolve({
-                        errored: false,
-                        errorCode: 0,
-                        errorText: ""
-                    });
-                }
+                resolve({
+                    errored: false,
+                    errorCode: 0,
+                    errorText: ""
+                });
             }
         });
     }
 
     public var addDataBatchSize:Int = 5000;
-    private function commitData(data:Array<Array<Any>>):Promise<CoreResult> {
+    private function commitData(data:Array<Array<Any>>, onProgress:String->Void):Promise<CoreResult> {
         return new Promise((resolve, reject) -> {
             var batches:Array<Array<Array<String>>> = [];
             var n = 0;
@@ -150,35 +113,37 @@ class Table {
                 batches.push(fixedData);
             }
     
-            Logger.instance.log("creating " + data.length + " row(s) in '" + _database.name + "." + name + "' using " + batches.length + " batch(es)");
+            Logger.instance.log("creating " + data.length + " row(s) in '" + database.name + "." + name + "' using " + batches.length + " batch(es)");
             batchCommitData(batches, function() {
-                Logger.instance.log("creation of " + data.length + " row(s) in '" + _database.name + "." + name + "' complete");
+                Logger.instance.log("creation of " + data.length + " row(s) in '" + database.name + "." + name + "' complete");
                 resolve({
                     errored: false,
                     errorCode: 0,
                     errorText: ""
                 });
-            }, 0, batches.length);
+            }, onProgress, 0, batches.length);
         });
     }
 
-    private function batchCommitData(batches:Array<Array<Array<String>>>, complete:Void->Void, current:Int, max:Int) {
+    private function batchCommitData(batches:Array<Array<Array<String>>>, complete:Void->Void, onProgress:String->Void, current:Int, max:Int) {
         if (batches.length == 0) {
             complete();
             return;
         }
 
-        if (max > 1) {
-            progress("Adding data (batch " + (current + 1) + " of " + max + ")");
-        } else {
-            progress("Adding data");
+        if (onProgress != null) {
+            if (max > 1) {
+                onProgress("Adding data (batch " + (current + 1) + " of " + max + ")");
+            } else {
+                onProgress("Adding data");
+            }
         }
 
         var batch = batches.shift();
-        Logger.instance.log("batching commiting " + batch.length + " row(s) to '" + _database.name + "." + name + "'");
-        CoreData.addTableData(_database.name, name, batch).then(function(addDataResult) {
-            Logger.instance.log("batch commit of " + batch.length + " row(s) to '" + _database.name + "." + name + "' complete");
-            batchCommitData(batches, complete, current + 1, max);
+        Logger.instance.log("batching commiting " + batch.length + " row(s) to '" + database.name + "." + name + "'");
+        CoreData.addTableData(database.name, name, batch).then(function(addDataResult) {
+            Logger.instance.log("batch commit of " + batch.length + " row(s) to '" + database.name + "." + name + "' complete");
+            batchCommitData(batches, complete, onProgress, current + 1, max);
         });
     }
 }

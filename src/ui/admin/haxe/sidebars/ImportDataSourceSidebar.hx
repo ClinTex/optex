@@ -1,5 +1,7 @@
 package sidebars;
 
+import core.data.Table;
+import core.data.DatabaseManager;
 import views.DataView;
 import core.data.CoreData.FieldType;
 import components.WorkingIndicator;
@@ -58,11 +60,11 @@ class ImportDataSourceSidebar extends SideBar {
     }
 
     private function populateTables(database:Database) {
-        database.listTables(false).then(function(tables) {
+        database.listTables().then(function(tables) {
             var ds = new ArrayDataSource<Dynamic>();
             for (table in tables) {
                 ds.add({
-                    text: table.name + " (" + table.getRowCount(false) + " records)",
+                    text: table.name + " (" + table.getRowCount() + " records)",
                     table: table
                 });
             }
@@ -160,41 +162,40 @@ class ImportDataSourceSidebar extends SideBar {
 
         // database
         var dbName = null;
+        var db = null;
         if (createNewCoreOption.selected == true) {
             dbName = newCoreName.text;
+            db = new Database(dbName);
+            DatabaseManager.instance.addBatchOperation(CreateDatabase, db);
         } else {
             dbName = existingCoreSelector.selectedItem.db.name;
+            db = new Database(dbName);
         }
-        var db = new Database(dbName);
-        db.onProgress = function(s) {
-            _working.message = s;
-        };
-        if (createNewCoreOption.selected == true) {
-            db.create();
-        }
-        
+
         // table
         var tableName = null;
         var table = null;
         if (createNewTableOption.selected == true) {
             tableName = newTableName.text;
-            table = db.createTable(tableName);
+            table = new Table(tableName, db);
             for (fd in _parser.getFieldDefinitions()) {
                 table.defineField(fd.fieldName, FieldType.String);
             }
+            DatabaseManager.instance.addBatchOperation(CreateTable, table);
         } else {
             tableName = existingTableSelector.selectedItem.table.name;
-            db.getTable(tableName, false).then(function(t) {
-                table = t;
-            });
+            table = new Table(tableName, db);
         }
 
         // data
         table.addDatas(_parser.getData());
+        DatabaseManager.instance.addBatchOperation(AddTableData, table);
 
         _working = new WorkingIndicator();
         _working.showWorking();
-        db.commit().then(function(result) {
+        DatabaseManager.instance.performBatchOperations(function(s) {
+            _working.message = s;
+        }).then(function(result) {
             _working.workComplete();
             DataView.instance.refresh(dbName, tableName);
         });
