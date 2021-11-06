@@ -7,6 +7,101 @@ function $extend(from, fields) {
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
 }
+var DateTools = function() { };
+$hxClasses["DateTools"] = DateTools;
+DateTools.__name__ = "DateTools";
+DateTools.__format_get = function(d,e) {
+	switch(e) {
+	case "%":
+		return "%";
+	case "A":
+		return DateTools.DAY_NAMES[d.getDay()];
+	case "B":
+		return DateTools.MONTH_NAMES[d.getMonth()];
+	case "C":
+		return StringTools.lpad(Std.string(d.getFullYear() / 100 | 0),"0",2);
+	case "D":
+		return DateTools.__format(d,"%m/%d/%y");
+	case "F":
+		return DateTools.__format(d,"%Y-%m-%d");
+	case "I":case "l":
+		var hour = d.getHours() % 12;
+		return StringTools.lpad(Std.string(hour == 0 ? 12 : hour),e == "I" ? "0" : " ",2);
+	case "M":
+		return StringTools.lpad(Std.string(d.getMinutes()),"0",2);
+	case "R":
+		return DateTools.__format(d,"%H:%M");
+	case "S":
+		return StringTools.lpad(Std.string(d.getSeconds()),"0",2);
+	case "T":
+		return DateTools.__format(d,"%H:%M:%S");
+	case "Y":
+		return Std.string(d.getFullYear());
+	case "a":
+		return DateTools.DAY_SHORT_NAMES[d.getDay()];
+	case "b":case "h":
+		return DateTools.MONTH_SHORT_NAMES[d.getMonth()];
+	case "d":
+		return StringTools.lpad(Std.string(d.getDate()),"0",2);
+	case "e":
+		return Std.string(d.getDate());
+	case "H":case "k":
+		return StringTools.lpad(Std.string(d.getHours()),e == "H" ? "0" : " ",2);
+	case "m":
+		return StringTools.lpad(Std.string(d.getMonth() + 1),"0",2);
+	case "n":
+		return "\n";
+	case "p":
+		if(d.getHours() > 11) {
+			return "PM";
+		} else {
+			return "AM";
+		}
+		break;
+	case "r":
+		return DateTools.__format(d,"%I:%M:%S %p");
+	case "s":
+		return Std.string(d.getTime() / 1000 | 0);
+	case "t":
+		return "\t";
+	case "u":
+		var t = d.getDay();
+		if(t == 0) {
+			return "7";
+		} else if(t == null) {
+			return "null";
+		} else {
+			return "" + t;
+		}
+		break;
+	case "w":
+		return Std.string(d.getDay());
+	case "y":
+		return StringTools.lpad(Std.string(d.getFullYear() % 100),"0",2);
+	default:
+		throw new haxe_exceptions_NotImplementedException("Date.format %" + e + "- not implemented yet.",null,{ fileName : "DateTools.hx", lineNumber : 101, className : "DateTools", methodName : "__format_get"});
+	}
+};
+DateTools.__format = function(d,f) {
+	var r_b = "";
+	var p = 0;
+	while(true) {
+		var np = f.indexOf("%",p);
+		if(np < 0) {
+			break;
+		}
+		var len = np - p;
+		r_b += len == null ? HxOverrides.substr(f,p,null) : HxOverrides.substr(f,p,len);
+		r_b += Std.string(DateTools.__format_get(d,HxOverrides.substr(f,np + 1,1)));
+		p = np + 2;
+	}
+	var len = f.length - p;
+	r_b += len == null ? HxOverrides.substr(f,p,null) : HxOverrides.substr(f,p,len);
+	return r_b;
+};
+DateTools.format = function(d,f) {
+	return DateTools.__format(d,f);
+};
 var EReg = function(r,opt) {
 	this.r = new RegExp(r,opt.split("u").join(""));
 };
@@ -93,6 +188,36 @@ EReg.prototype = {
 var HxOverrides = function() { };
 $hxClasses["HxOverrides"] = HxOverrides;
 HxOverrides.__name__ = "HxOverrides";
+HxOverrides.dateStr = function(date) {
+	var m = date.getMonth() + 1;
+	var d = date.getDate();
+	var h = date.getHours();
+	var mi = date.getMinutes();
+	var s = date.getSeconds();
+	return date.getFullYear() + "-" + (m < 10 ? "0" + m : "" + m) + "-" + (d < 10 ? "0" + d : "" + d) + " " + (h < 10 ? "0" + h : "" + h) + ":" + (mi < 10 ? "0" + mi : "" + mi) + ":" + (s < 10 ? "0" + s : "" + s);
+};
+HxOverrides.strDate = function(s) {
+	switch(s.length) {
+	case 8:
+		var k = s.split(":");
+		var d = new Date();
+		d["setTime"](0);
+		d["setUTCHours"](k[0]);
+		d["setUTCMinutes"](k[1]);
+		d["setUTCSeconds"](k[2]);
+		return d;
+	case 10:
+		var k = s.split("-");
+		return new Date(k[0],k[1] - 1,k[2],0,0,0);
+	case 19:
+		var k = s.split(" ");
+		var y = k[0].split("-");
+		var t = k[1].split(":");
+		return new Date(y[0],y[1] - 1,y[2],t[0],t[1],t[2]);
+	default:
+		throw haxe_Exception.thrown("Invalid date format : " + s);
+	}
+};
 HxOverrides.cca = function(s,index) {
 	var x = s.charCodeAt(index);
 	if(x != x) {
@@ -128,6 +253,7 @@ $hxClasses["Main"] = Main;
 Main.__name__ = "Main";
 Main.main = function() {
 	var app = new haxe_ui_HaxeUIApp();
+	haxe_ui_Toolkit.set_theme("dark");
 	app.ready(function() {
 		app.addComponent(new MainView());
 		app.start();
@@ -758,7 +884,7 @@ haxe_ui_core_ComponentValidation.prototype = $extend(haxe_ui_core_ComponentEvent
 		if(this._ready == false) {
 			return;
 		}
-		var isAlreadyInvalid = this.isComponentInvalid();
+		var isAlreadyInvalid = this.isComponentInvalid(flag);
 		var isAlreadyDelayedInvalid = false;
 		if(this._isValidating == true) {
 			var h = this._delayedInvalidationFlags.h;
@@ -1328,6 +1454,19 @@ haxe_ui_core_ComponentBounds.prototype = $extend(haxe_ui_core_ComponentLayout.pr
 	,get_isComponentClipped: function() {
 		return this.get_componentClipRect() != null;
 	}
+	,isComponentOffscreen: null
+	,get_isComponentOffscreen: function() {
+		if(this.get_width() == 0 && this.get_height() == 0) {
+			return false;
+		}
+		var x = this.get_screenLeft();
+		var y = this.get_screenTop();
+		var w = this.get_width();
+		var h = this.get_height();
+		var thisRect = new haxe_ui_geom_Rectangle(x,y,w,h);
+		var screenRect = new haxe_ui_geom_Rectangle(0,0,haxe_ui_core_Screen.get_instance().get_width(),haxe_ui_core_Screen.get_instance().get_height());
+		return !screenRect.intersects(thisRect);
+	}
 	,registerBehaviours: function() {
 		haxe_ui_core_ComponentLayout.prototype.registerBehaviours.call(this);
 	}
@@ -1360,7 +1499,7 @@ haxe_ui_core_ComponentBounds.prototype = $extend(haxe_ui_core_ComponentLayout.pr
 		return new haxe_ui_core_ComponentBounds();
 	}
 	,__class__: haxe_ui_core_ComponentBounds
-	,__properties__: $extend(haxe_ui_core_ComponentLayout.prototype.__properties__,{get_isComponentClipped:"get_isComponentClipped",set_componentClipRect:"set_componentClipRect",get_componentClipRect:"get_componentClipRect",get_screenTop:"get_screenTop",get_screenLeft:"get_screenLeft",set_top:"set_top",get_top:"get_top",set_left:"set_left",get_left:"get_left",get_hasScreen:"get_hasScreen",set_height:"set_height",get_height:"get_height",set_width:"set_width",get_width:"get_width",set_percentHeight:"set_percentHeight",get_percentHeight:"get_percentHeight",set_percentWidth:"set_percentWidth",get_percentWidth:"get_percentWidth",set_componentHeight:"set_componentHeight",get_componentHeight:"get_componentHeight",set_componentWidth:"set_componentWidth",get_componentWidth:"get_componentWidth",get_actualComponentHeight:"get_actualComponentHeight",get_actualComponentWidth:"get_actualComponentWidth",get_autoHeight:"get_autoHeight",get_autoWidth:"get_autoWidth"})
+	,__properties__: $extend(haxe_ui_core_ComponentLayout.prototype.__properties__,{get_isComponentOffscreen:"get_isComponentOffscreen",get_isComponentClipped:"get_isComponentClipped",set_componentClipRect:"set_componentClipRect",get_componentClipRect:"get_componentClipRect",get_screenTop:"get_screenTop",get_screenLeft:"get_screenLeft",set_top:"set_top",get_top:"get_top",set_left:"set_left",get_left:"get_left",get_hasScreen:"get_hasScreen",set_height:"set_height",get_height:"get_height",set_width:"set_width",get_width:"get_width",set_percentHeight:"set_percentHeight",get_percentHeight:"get_percentHeight",set_percentWidth:"set_percentWidth",get_percentWidth:"get_percentWidth",set_componentHeight:"set_componentHeight",get_componentHeight:"get_componentHeight",set_componentWidth:"set_componentWidth",get_componentWidth:"get_componentWidth",get_actualComponentHeight:"get_actualComponentHeight",get_actualComponentWidth:"get_actualComponentWidth",get_autoHeight:"get_autoHeight",get_autoWidth:"get_autoWidth"})
 });
 var haxe_ui_backend_ComponentBase = function() {
 	this._nativeClassName = null;
@@ -1653,7 +1792,6 @@ haxe_ui_backend_ComponentImpl.prototype = $extend(haxe_ui_backend_ComponentBase.
 			}
 			this.element.scrollTop = 0;
 			this.element.scrollLeft = 0;
-			this.element.style.overflow = "hidden";
 			this.element.classList.add("haxeui-component");
 			haxe_ui_backend_ComponentImpl.elementToComponent.set(this.element,js_Boot.__cast(this , haxe_ui_core_Component));
 			return;
@@ -1767,7 +1905,7 @@ haxe_ui_backend_ComponentImpl.prototype = $extend(haxe_ui_backend_ComponentBase.
 		var c = js_Boot.__cast(this , haxe_ui_core_Component);
 		var parent = c.parentComponent;
 		if(value != null && parent != null) {
-			var tmp = "rect(" + ("" + value.top + "px") + "," + ("" + value.get_right() + "px") + "," + ("" + value.get_bottom() + "px") + ",";
+			var tmp = "rect(" + ("" + value.top + "px") + "," + ("" + (value.get_right() - 1) + "px") + "," + ("" + value.get_bottom() + "px") + ",";
 			this.element.style.clip = tmp + ("" + value.left + "px") + ")";
 			var tmp = "" + (c.get_left() - value.left | 0) + "px";
 			this.element.style.left = "" + tmp;
@@ -2192,10 +2330,14 @@ haxe_ui_validation_IValidating.__isInterface__ = true;
 haxe_ui_validation_IValidating.prototype = {
 	get_depth: null
 	,set_depth: null
+	,get_id: null
+	,set_id: null
+	,get_isComponentOffscreen: null
 	,validateComponent: null
 	,updateComponentDisplay: null
+	,isComponentOffscreen: null
 	,__class__: haxe_ui_validation_IValidating
-	,__properties__: {set_depth:"set_depth",get_depth:"get_depth"}
+	,__properties__: {get_isComponentOffscreen:"get_isComponentOffscreen",set_id:"set_id",get_id:"get_id",set_depth:"set_depth",get_depth:"get_depth"}
 };
 var haxe_ui_core_IComponentBase = function() { };
 $hxClasses["haxe.ui.core.IComponentBase"] = haxe_ui_core_IComponentBase;
@@ -2428,13 +2570,18 @@ haxe_ui_core_Component.prototype = $extend(haxe_ui_backend_ComponentImpl.prototy
 		return r;
 	}
 	,get_numComponents: function() {
+		var n = 0;
 		if(this._compositeBuilder != null) {
-			return this._compositeBuilder.get_numComponents();
-		} else if(this._children == null) {
-			return 0;
-		} else {
-			return this._children.length;
+			var builderCount = this._compositeBuilder.get_numComponents();
+			if(builderCount != null) {
+				n = builderCount;
+			} else if(this._children != null) {
+				n = this._children.length;
+			}
+		} else if(this._children != null) {
+			n = this._children.length;
 		}
+		return n;
 	}
 	,addComponent: function(child) {
 		if(this._compositeBuilder != null) {
@@ -4449,83 +4596,80 @@ haxe_ui_containers_VBox.prototype = $extend(haxe_ui_containers_Box.prototype,{
 var MainView = function() {
 	var _gthis = this;
 	haxe_ui_containers_VBox.call(this);
-	var c0 = new haxe_ui_containers_menus_MenuBar();
+	haxe_ui_Toolkit.styleSheet.parse("\n        .portlet {\n            filter: drop-shadow(2, 45, #000000, 0.15, 6, 1, 30, 35, false);\n            border: 1px solid #181a1b;\n            border-radius: 6px;\n            padding: 10px;\n        }\n\n        .portlet.no-border {\n            filter: none;\n            border: none;\n            border-radius: 0;\n            padding: 0;\n        }\n\n        .button-bar .button {\n            __border-bottom: none;\n        }\n    ","user");
+	var c0 = new haxe_ui_containers_HBox();
 	c0.set_percentWidth(100.);
-	var c1 = new haxe_ui_components_Label();
-	c1.set_text("Client");
-	c1.set_verticalAlign("center");
+	c0.set_percentHeight(100.);
+	var c1 = new haxe_ui_containers_VerticalButtonBar();
+	c1.set_id("dashboardSelector");
+	c1.set_percentHeight(100.);
+	c1.set_styleNames("left-menu");
+	c1.set_styleString("margin-top: -1px");
+	c1.set_selectedIndex(0);
 	c0.addComponent(c1);
-	var c2 = new haxe_ui_components_Spacer();
+	var c2 = new haxe_ui_containers_VBox();
 	c2.set_percentWidth(100.);
+	c2.set_percentHeight(100.);
+	var c3 = new core_dashboards_DashboardInstance();
+	c3.set_id("dashboardInstance");
+	c3.set_percentWidth(100.);
+	c3.set_percentHeight(100.);
+	c2.addComponent(c3);
 	c0.addComponent(c2);
-	var c3 = new haxe_ui_components_Button();
-	c3.set_text("Refresh");
-	c0.addComponent(c3);
 	this.addComponent(c0);
-	var c4 = new haxe_ui_containers_VBox();
-	c4.set_percentWidth(100.);
-	c4.set_styleString("padding: 15px;");
-	var c5 = new haxe_ui_containers_Frame();
-	c5.set_percentWidth(100.);
-	c5.set_text("Items");
-	var c6 = new haxe_ui_containers_VBox();
-	c6.set_percentWidth(100.);
-	var c7 = new haxe_ui_containers_TableView();
-	c7.set_id("table");
-	c7.set_height(200.);
-	c7.set_percentWidth(100.);
-	var c8 = new haxe_ui_containers_Header();
-	c8.set_percentWidth(100.);
-	var c9 = new haxe_ui_components_Column();
-	c9.set_id("firstName");
-	c9.set_percentWidth(33.);
-	c9.set_text("First Name");
-	c8.addComponent(c9);
-	var c10 = new haxe_ui_components_Column();
-	c10.set_id("lastName");
-	c10.set_percentWidth(34.);
-	c10.set_text("Last Name");
-	c8.addComponent(c10);
-	var c11 = new haxe_ui_components_Column();
-	c11.set_id("emailAddress");
-	c11.set_percentWidth(33.);
-	c11.set_text("Email Address");
-	c8.addComponent(c11);
-	c7.addComponent(c8);
-	c6.addComponent(c7);
-	c5.addComponent(c6);
-	c4.addComponent(c5);
-	this.addComponent(c4);
 	this.set_percentWidth(100.);
 	this.set_percentHeight(100.);
+	this.set_styleNames("default-background");
+	this.set_styleString("spacing:0;");
 	this.bindingRoot = true;
-	this.table = c7;
-	this.lastName = c10;
-	this.firstName = c9;
-	this.emailAddress = c11;
-	this.refreshContacts();
-	var timer = new haxe_ui_util_Timer(100,function() {
-		console.log("MainView.hx:18:","refreshing");
-		_gthis.refreshContacts();
+	this.dashboardSelector = c1;
+	this.dashboardInstance = c3;
+	haxe_ui_core_ComponentClassMap.get_instance().registerClassName("vbox",haxe_ui_containers_VBox.__name__);
+	haxe_ui_core_ComponentClassMap.get_instance().registerClassName("hbox",haxe_ui_containers_HBox.__name__);
+	haxe_ui_core_ComponentClassMap.get_instance().registerClassName("portlet",core_dashboards_Portlet.__name__);
+	core_data_DatabaseManager.get_instance().init().then(function(r) {
+		console.log("haxe/MainView.hx:23:","database manager ready");
 	});
+	core_data_DatabaseManager.get_instance().listen("initialized",function(_) {
+		_gthis.refreshDashboardSelector();
+	});
+	var c = this.dashboardSelector;
+	if(c != null) {
+		c.registerEvent("change",$bind(this,this.onDashboardSelectorChange));
+	} else {
+		console.log("haxe/ui/macros/Macros.hx:301:","WARNING: could not find component to regsiter event (" + "dashboardSelector" + ")");
+	}
 };
 $hxClasses["MainView"] = MainView;
 MainView.__name__ = "MainView";
 MainView.__super__ = haxe_ui_containers_VBox;
 MainView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
-	refreshContacts: function() {
+	refreshDashboardSelector: function() {
 		var _gthis = this;
-		var ds = new haxe_ui_data_ArrayDataSource();
-		core_data.listContacts().then(function(r) {
+		core_data_DashboardManager.get_instance().listDashboards().then(function(dashboards) {
+			_gthis.dashboardSelector.removeAllComponents();
 			var _g = 0;
-			while(_g < r.length) {
-				var c = r[_g];
+			while(_g < dashboards.length) {
+				var d = dashboards[_g];
 				++_g;
-				ds.add({ firstName : c.firstName, lastName : c.lastName, emailAddress : c.emailAddress});
+				var button = new haxe_ui_components_Button();
+				button.set_text(d.name);
+				button.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-dashboard-48.png"));
+				button.userData = d;
+				_gthis.dashboardSelector.addComponent(button);
 			}
-			_gthis.table.set_selectedIndex(-1);
-			_gthis.table.set_dataSource(ds);
+			_gthis.dashboardSelector.registerInternalEvents(null,true);
+			_gthis.dashboardSelector.set_selectedIndex(-1);
+			_gthis.dashboardSelector.set_selectedIndex(0);
 		});
+	}
+	,onDashboardSelectorChange: function(_) {
+		var selectedButton = this.dashboardSelector.get_selectedButton();
+		if(selectedButton == null) {
+			return;
+		}
+		var dashboard = js_Boot.__cast(selectedButton.userData , core_data_Dashboard);
+		this.dashboardInstance.buildDashboard(dashboard);
 	}
 	,registerBehaviours: function() {
 		haxe_ui_containers_VBox.prototype.registerBehaviours.call(this);
@@ -4546,10 +4690,8 @@ MainView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,self: function() {
 		return new MainView();
 	}
-	,table: null
-	,lastName: null
-	,firstName: null
-	,emailAddress: null
+	,dashboardSelector: null
+	,dashboardInstance: null
 	,__class__: MainView
 });
 Math.__name__ = "Math";
@@ -4642,9 +4784,71 @@ Std.parseInt = function(x) {
 	}
 	return null;
 };
+Std.random = function(x) {
+	if(x <= 0) {
+		return 0;
+	} else {
+		return Math.floor(Math.random() * x);
+	}
+};
+var StringBuf = function() {
+	this.b = "";
+};
+$hxClasses["StringBuf"] = StringBuf;
+StringBuf.__name__ = "StringBuf";
+StringBuf.prototype = {
+	b: null
+	,__class__: StringBuf
+};
 var StringTools = function() { };
 $hxClasses["StringTools"] = StringTools;
 StringTools.__name__ = "StringTools";
+StringTools.htmlEscape = function(s,quotes) {
+	var buf_b = "";
+	var _g_offset = 0;
+	var _g_s = s;
+	while(_g_offset < _g_s.length) {
+		var s = _g_s;
+		var index = _g_offset++;
+		var c = s.charCodeAt(index);
+		if(c >= 55296 && c <= 56319) {
+			c = c - 55232 << 10 | s.charCodeAt(index + 1) & 1023;
+		}
+		var c1 = c;
+		if(c1 >= 65536) {
+			++_g_offset;
+		}
+		var code = c1;
+		switch(code) {
+		case 34:
+			if(quotes) {
+				buf_b += "&quot;";
+			} else {
+				buf_b += String.fromCodePoint(code);
+			}
+			break;
+		case 38:
+			buf_b += "&amp;";
+			break;
+		case 39:
+			if(quotes) {
+				buf_b += "&#039;";
+			} else {
+				buf_b += String.fromCodePoint(code);
+			}
+			break;
+		case 60:
+			buf_b += "&lt;";
+			break;
+		case 62:
+			buf_b += "&gt;";
+			break;
+		default:
+			buf_b += String.fromCodePoint(code);
+		}
+	}
+	return buf_b;
+};
 StringTools.startsWith = function(s,start) {
 	if(s.length >= start.length) {
 		return s.lastIndexOf(start,0) == 0;
@@ -4691,6 +4895,16 @@ StringTools.rtrim = function(s) {
 };
 StringTools.trim = function(s) {
 	return StringTools.ltrim(StringTools.rtrim(s));
+};
+StringTools.lpad = function(s,c,l) {
+	if(c.length <= 0) {
+		return s;
+	}
+	var buf_b = "";
+	l -= s.length;
+	while(buf_b.length < l) buf_b += c == null ? "null" : "" + c;
+	buf_b += s == null ? "null" : "" + s;
+	return buf_b;
 };
 StringTools.replace = function(s,sub,by) {
 	return s.split(sub).join(by);
@@ -4771,6 +4985,1363 @@ Type.typeof = function(v) {
 		return ValueType.TUnknown;
 	}
 };
+var XmlType = {};
+XmlType.toString = function(this1) {
+	switch(this1) {
+	case 0:
+		return "Element";
+	case 1:
+		return "PCData";
+	case 2:
+		return "CData";
+	case 3:
+		return "Comment";
+	case 4:
+		return "DocType";
+	case 5:
+		return "ProcessingInstruction";
+	case 6:
+		return "Document";
+	}
+};
+var Xml = function(nodeType) {
+	this.nodeType = nodeType;
+	this.children = [];
+	this.attributeMap = new haxe_ds_StringMap();
+};
+$hxClasses["Xml"] = Xml;
+Xml.__name__ = "Xml";
+Xml.parse = function(str) {
+	return haxe_xml_Parser.parse(str);
+};
+Xml.createElement = function(name) {
+	var xml = new Xml(Xml.Element);
+	if(xml.nodeType != Xml.Element) {
+		throw haxe_Exception.thrown("Bad node type, expected Element but found " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+	}
+	xml.nodeName = name;
+	return xml;
+};
+Xml.createPCData = function(data) {
+	var xml = new Xml(Xml.PCData);
+	if(xml.nodeType == Xml.Document || xml.nodeType == Xml.Element) {
+		throw haxe_Exception.thrown("Bad node type, unexpected " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+	}
+	xml.nodeValue = data;
+	return xml;
+};
+Xml.createCData = function(data) {
+	var xml = new Xml(Xml.CData);
+	if(xml.nodeType == Xml.Document || xml.nodeType == Xml.Element) {
+		throw haxe_Exception.thrown("Bad node type, unexpected " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+	}
+	xml.nodeValue = data;
+	return xml;
+};
+Xml.createComment = function(data) {
+	var xml = new Xml(Xml.Comment);
+	if(xml.nodeType == Xml.Document || xml.nodeType == Xml.Element) {
+		throw haxe_Exception.thrown("Bad node type, unexpected " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+	}
+	xml.nodeValue = data;
+	return xml;
+};
+Xml.createDocType = function(data) {
+	var xml = new Xml(Xml.DocType);
+	if(xml.nodeType == Xml.Document || xml.nodeType == Xml.Element) {
+		throw haxe_Exception.thrown("Bad node type, unexpected " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+	}
+	xml.nodeValue = data;
+	return xml;
+};
+Xml.createProcessingInstruction = function(data) {
+	var xml = new Xml(Xml.ProcessingInstruction);
+	if(xml.nodeType == Xml.Document || xml.nodeType == Xml.Element) {
+		throw haxe_Exception.thrown("Bad node type, unexpected " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+	}
+	xml.nodeValue = data;
+	return xml;
+};
+Xml.createDocument = function() {
+	return new Xml(Xml.Document);
+};
+Xml.prototype = {
+	nodeType: null
+	,nodeName: null
+	,nodeValue: null
+	,parent: null
+	,children: null
+	,attributeMap: null
+	,get: function(att) {
+		if(this.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element but found " + (this.nodeType == null ? "null" : XmlType.toString(this.nodeType)));
+		}
+		return this.attributeMap.h[att];
+	}
+	,set: function(att,value) {
+		if(this.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element but found " + (this.nodeType == null ? "null" : XmlType.toString(this.nodeType)));
+		}
+		this.attributeMap.h[att] = value;
+	}
+	,exists: function(att) {
+		if(this.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element but found " + (this.nodeType == null ? "null" : XmlType.toString(this.nodeType)));
+		}
+		return Object.prototype.hasOwnProperty.call(this.attributeMap.h,att);
+	}
+	,attributes: function() {
+		if(this.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element but found " + (this.nodeType == null ? "null" : XmlType.toString(this.nodeType)));
+		}
+		return new haxe_ds__$StringMap_StringMapKeyIterator(this.attributeMap.h);
+	}
+	,elements: function() {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (this.nodeType == null ? "null" : XmlType.toString(this.nodeType)));
+		}
+		var _g = [];
+		var _g1 = 0;
+		var _g2 = this.children;
+		while(_g1 < _g2.length) {
+			var child = _g2[_g1];
+			++_g1;
+			if(child.nodeType == Xml.Element) {
+				_g.push(child);
+			}
+		}
+		var ret = _g;
+		return new haxe_iterators_ArrayIterator(ret);
+	}
+	,firstElement: function() {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (this.nodeType == null ? "null" : XmlType.toString(this.nodeType)));
+		}
+		var _g = 0;
+		var _g1 = this.children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.nodeType == Xml.Element) {
+				return child;
+			}
+		}
+		return null;
+	}
+	,addChild: function(x) {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (this.nodeType == null ? "null" : XmlType.toString(this.nodeType)));
+		}
+		if(x.parent != null) {
+			x.parent.removeChild(x);
+		}
+		this.children.push(x);
+		x.parent = this;
+	}
+	,removeChild: function(x) {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (this.nodeType == null ? "null" : XmlType.toString(this.nodeType)));
+		}
+		if(HxOverrides.remove(this.children,x)) {
+			x.parent = null;
+			return true;
+		}
+		return false;
+	}
+	,toString: function() {
+		return haxe_xml_Printer.print(this);
+	}
+	,__class__: Xml
+};
+var core_Event = function(type) {
+	this.type = type;
+};
+$hxClasses["core.Event"] = core_Event;
+core_Event.__name__ = "core.Event";
+core_Event.prototype = {
+	type: null
+	,__class__: core_Event
+};
+var core_EventDispatcher = function() {
+	this._listeners = new haxe_ds_StringMap();
+};
+$hxClasses["core.EventDispatcher"] = core_EventDispatcher;
+core_EventDispatcher.__name__ = "core.EventDispatcher";
+core_EventDispatcher.prototype = {
+	_listeners: null
+	,listen: function(type,listener) {
+		var list = this._listeners.h[type];
+		if(list == null) {
+			list = [];
+			this._listeners.h[type] = list;
+		}
+		list.push(listener);
+	}
+	,unlisten: function(type,listener) {
+		var list = this._listeners.h[type];
+		if(list != null) {
+			HxOverrides.remove(list,listener);
+		}
+	}
+	,dispatch: function(event) {
+		var list = this._listeners.h[event.type];
+		if(list != null) {
+			var _g = 0;
+			while(_g < list.length) {
+				var l = list[_g];
+				++_g;
+				l(event);
+			}
+		}
+	}
+	,__class__: core_EventDispatcher
+};
+var haxe_ui_backend_EventBase = function() { };
+$hxClasses["haxe.ui.backend.EventBase"] = haxe_ui_backend_EventBase;
+haxe_ui_backend_EventBase.__name__ = "haxe.ui.backend.EventBase";
+haxe_ui_backend_EventBase.prototype = {
+	cancel: function() {
+	}
+	,postClone: function(event) {
+	}
+	,__class__: haxe_ui_backend_EventBase
+};
+var haxe_ui_backend_EventImpl = function() { };
+$hxClasses["haxe.ui.backend.EventImpl"] = haxe_ui_backend_EventImpl;
+haxe_ui_backend_EventImpl.__name__ = "haxe.ui.backend.EventImpl";
+haxe_ui_backend_EventImpl.__super__ = haxe_ui_backend_EventBase;
+haxe_ui_backend_EventImpl.prototype = $extend(haxe_ui_backend_EventBase.prototype,{
+	_originalEvent: null
+	,cancel: function() {
+		if(this._originalEvent != null) {
+			this._originalEvent.preventDefault();
+			this._originalEvent.stopImmediatePropagation();
+			this._originalEvent.stopPropagation();
+		}
+	}
+	,postClone: function(event) {
+		event._originalEvent = this._originalEvent;
+	}
+	,__class__: haxe_ui_backend_EventImpl
+});
+var haxe_ui_events_UIEvent = function(type,bubble,data) {
+	if(bubble == null) {
+		bubble = false;
+	}
+	this.type = type;
+	this.bubble = bubble;
+	this.data = data;
+	this.canceled = false;
+};
+$hxClasses["haxe.ui.events.UIEvent"] = haxe_ui_events_UIEvent;
+haxe_ui_events_UIEvent.__name__ = "haxe.ui.events.UIEvent";
+haxe_ui_events_UIEvent.__super__ = haxe_ui_backend_EventImpl;
+haxe_ui_events_UIEvent.prototype = $extend(haxe_ui_backend_EventImpl.prototype,{
+	bubble: null
+	,type: null
+	,target: null
+	,data: null
+	,canceled: null
+	,cancel: function() {
+		haxe_ui_backend_EventImpl.prototype.cancel.call(this);
+		this.canceled = true;
+	}
+	,clone: function() {
+		var c = new haxe_ui_events_UIEvent(this.type);
+		c.type = this.type;
+		c.bubble = this.bubble;
+		c.target = this.target;
+		c.data = this.data;
+		c.canceled = this.canceled;
+		this.postClone(c);
+		return c;
+	}
+	,__class__: haxe_ui_events_UIEvent
+});
+var core_dashboards_DashboardInstanceEvent = function(type,bubble,data) {
+	haxe_ui_events_UIEvent.call(this,type,bubble,data);
+};
+$hxClasses["core.dashboards.DashboardInstanceEvent"] = core_dashboards_DashboardInstanceEvent;
+core_dashboards_DashboardInstanceEvent.__name__ = "core.dashboards.DashboardInstanceEvent";
+core_dashboards_DashboardInstanceEvent.__super__ = haxe_ui_events_UIEvent;
+core_dashboards_DashboardInstanceEvent.prototype = $extend(haxe_ui_events_UIEvent.prototype,{
+	__class__: core_dashboards_DashboardInstanceEvent
+});
+var core_dashboards_DashboardInstance = function() {
+	this._container = new haxe_ui_containers_Box();
+	haxe_ui_containers_Box.call(this);
+	this._container.set_percentWidth(100);
+	this._container.set_percentHeight(100);
+	this.addComponent(this._container);
+};
+$hxClasses["core.dashboards.DashboardInstance"] = core_dashboards_DashboardInstance;
+core_dashboards_DashboardInstance.__name__ = "core.dashboards.DashboardInstance";
+core_dashboards_DashboardInstance.__super__ = haxe_ui_containers_Box;
+core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.prototype,{
+	_container: null
+	,buildDashboard: function(dashboard) {
+		var c = haxe_ui_RuntimeComponentBuilder.fromString(dashboard.layoutData);
+		this._container.removeAllComponents();
+		this._container.addComponent(c);
+	}
+	,portlets: null
+	,get_portlets: function() {
+		var list = this.findComponents(null,core_dashboards_Portlet);
+		return list;
+	}
+	,refreshAllPortlets: function() {
+		var _g = 0;
+		var _g1 = this.get_portlets();
+		while(_g < _g1.length) {
+			var p = _g1[_g];
+			++_g;
+			p.refresh();
+		}
+	}
+	,onFilterChanged: function() {
+		this.refreshAllPortlets();
+	}
+	,registerBehaviours: function() {
+		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_dashboards_DashboardInstance();
+	}
+	,__class__: core_dashboards_DashboardInstance
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{get_portlets:"get_portlets"})
+});
+var core_dashboards_Portlet = function() {
+	this._border = true;
+	haxe_ui_containers_Box.call(this);
+};
+$hxClasses["core.dashboards.Portlet"] = core_dashboards_Portlet;
+core_dashboards_Portlet.__name__ = "core.dashboards.Portlet";
+core_dashboards_Portlet.__super__ = haxe_ui_containers_Box;
+core_dashboards_Portlet.prototype = $extend(haxe_ui_containers_Box.prototype,{
+	_instance: null
+	,onReady: function() {
+		haxe_ui_containers_Box.prototype.onReady.call(this);
+		if(this._border == false) {
+			this.addClass("no-border");
+		}
+		this.addComponent(this._instance);
+	}
+	,_type: null
+	,get_type: function() {
+		return this._type;
+	}
+	,set_type: function(value) {
+		if(value == this._type) {
+			return value;
+		}
+		this._type = value;
+		switch(this._type) {
+		case "chart-bar":
+			this._instance = new core_dashboards_portlets_BarGraphPortletInstance();
+			this._instance.set_percentWidth(100);
+			this._instance.set_percentHeight(100);
+			break;
+		case "filter":
+			this._instance = new core_dashboards_portlets_FilterPortletInstance();
+			break;
+		case "table":
+			this._instance = new core_dashboards_portlets_TableDataPortletInstance();
+			this._instance.set_percentWidth(100);
+			this._instance.set_percentHeight(100);
+			break;
+		}
+		return value;
+	}
+	,_border: null
+	,get_border: function() {
+		return this._border;
+	}
+	,set_border: function(value) {
+		if(value == this._border) {
+			return value;
+		}
+		this._border = value;
+		return value;
+	}
+	,refresh: function() {
+		if(this._instance == null) {
+			return;
+		}
+		this._instance.refresh();
+	}
+	,registerBehaviours: function() {
+		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_dashboards_Portlet();
+	}
+	,__class__: core_dashboards_Portlet
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{set_border:"set_border",get_border:"get_border",set_type:"set_type",get_type:"get_type"})
+});
+var core_dashboards_portlets_PortletInstance = function() {
+	haxe_ui_containers_Box.call(this);
+};
+$hxClasses["core.dashboards.portlets.PortletInstance"] = core_dashboards_portlets_PortletInstance;
+core_dashboards_portlets_PortletInstance.__name__ = "core.dashboards.portlets.PortletInstance";
+core_dashboards_portlets_PortletInstance.__super__ = haxe_ui_containers_Box;
+core_dashboards_portlets_PortletInstance.prototype = $extend(haxe_ui_containers_Box.prototype,{
+	refresh: function() {
+	}
+	,dashboardInstance: null
+	,get_dashboardInstance: function() {
+		return this.findAncestor(null,core_dashboards_DashboardInstance);
+	}
+	,registerBehaviours: function() {
+		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_dashboards_portlets_PortletInstance();
+	}
+	,__class__: core_dashboards_portlets_PortletInstance
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{get_dashboardInstance:"get_dashboardInstance"})
+});
+var core_dashboards_portlets_BarGraphPortletInstance = function() {
+	core_dashboards_portlets_PortletInstance.call(this);
+	this._bar = new core_graphs_BarGraph();
+	this._bar.set_percentWidth(100);
+	this._bar.set_percentHeight(100);
+	this._bar.createRandomData();
+	this.addComponent(this._bar);
+};
+$hxClasses["core.dashboards.portlets.BarGraphPortletInstance"] = core_dashboards_portlets_BarGraphPortletInstance;
+core_dashboards_portlets_BarGraphPortletInstance.__name__ = "core.dashboards.portlets.BarGraphPortletInstance";
+core_dashboards_portlets_BarGraphPortletInstance.__super__ = core_dashboards_portlets_PortletInstance;
+core_dashboards_portlets_BarGraphPortletInstance.prototype = $extend(core_dashboards_portlets_PortletInstance.prototype,{
+	_bar: null
+	,refresh: function() {
+		this._bar.createRandomData();
+	}
+	,registerBehaviours: function() {
+		core_dashboards_portlets_PortletInstance.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = core_dashboards_portlets_PortletInstance.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_dashboards_portlets_BarGraphPortletInstance();
+	}
+	,__class__: core_dashboards_portlets_BarGraphPortletInstance
+});
+var core_dashboards_portlets_FilterPortletInstance = function() {
+	var _gthis = this;
+	core_dashboards_portlets_PortletInstance.call(this);
+	var dd = new haxe_ui_components_DropDown();
+	var ds = new haxe_ui_data_ArrayDataSource();
+	ds.add({ text : "Filter Item 1"});
+	ds.add({ text : "Filter Item 2"});
+	ds.add({ text : "Filter Item 3"});
+	ds.add({ text : "Filter Item 4"});
+	ds.add({ text : "Filter Item 5"});
+	dd.set_dataSource(ds);
+	this.addComponent(dd);
+	dd.set_onChange(function(_) {
+		console.log("../../haxe/core/dashboards/portlets/FilterPortletInstance.hx:32:","filter changed");
+		if(_gthis.get_dashboardInstance() != null) {
+			_gthis.get_dashboardInstance().onFilterChanged();
+		}
+	});
+};
+$hxClasses["core.dashboards.portlets.FilterPortletInstance"] = core_dashboards_portlets_FilterPortletInstance;
+core_dashboards_portlets_FilterPortletInstance.__name__ = "core.dashboards.portlets.FilterPortletInstance";
+core_dashboards_portlets_FilterPortletInstance.__super__ = core_dashboards_portlets_PortletInstance;
+core_dashboards_portlets_FilterPortletInstance.prototype = $extend(core_dashboards_portlets_PortletInstance.prototype,{
+	registerBehaviours: function() {
+		core_dashboards_portlets_PortletInstance.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = core_dashboards_portlets_PortletInstance.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_dashboards_portlets_FilterPortletInstance();
+	}
+	,__class__: core_dashboards_portlets_FilterPortletInstance
+});
+var core_dashboards_portlets_TableDataPortletInstance = function() {
+	var _gthis = this;
+	core_dashboards_portlets_PortletInstance.call(this);
+	var table = new haxe_ui_containers_TableView();
+	table.set_percentWidth(100);
+	table.set_percentHeight(100);
+	this.addComponent(table);
+	var header = new haxe_ui_containers_Header();
+	header.set_percentWidth(100);
+	var col = new haxe_ui_components_Column();
+	col.set_id("fieldA");
+	col.set_width(100);
+	col.set_text("Field A");
+	header.addComponent(col);
+	var col = new haxe_ui_components_Column();
+	col.set_id("fieldB");
+	col.set_width(100);
+	col.set_text("Field B");
+	header.addComponent(col);
+	var col = new haxe_ui_components_Column();
+	col.set_id("fieldC");
+	col.set_width(100);
+	col.set_text("Field C");
+	header.addComponent(col);
+	var col = new haxe_ui_components_Column();
+	col.set_id("fieldD");
+	col.set_percentWidth(100);
+	col.set_text("Field D");
+	header.addComponent(col);
+	table.addComponent(header);
+	var ds = new haxe_ui_data_ArrayDataSource();
+	var _g = 0;
+	while(_g < 20) {
+		var i = _g++;
+		ds.add({ fieldA : "Item " + (i + 1) + "A", fieldB : "Item " + (i + 1) + "B", fieldC : "Item " + (i + 1) + "C", fieldD : "Item " + (i + 1) + "D"});
+	}
+	table.set_dataSource(ds);
+	table.set_onChange(function(_) {
+		if(_gthis.get_dashboardInstance() != null) {
+			_gthis.get_dashboardInstance().onFilterChanged();
+		}
+	});
+};
+$hxClasses["core.dashboards.portlets.TableDataPortletInstance"] = core_dashboards_portlets_TableDataPortletInstance;
+core_dashboards_portlets_TableDataPortletInstance.__name__ = "core.dashboards.portlets.TableDataPortletInstance";
+core_dashboards_portlets_TableDataPortletInstance.__super__ = core_dashboards_portlets_PortletInstance;
+core_dashboards_portlets_TableDataPortletInstance.prototype = $extend(core_dashboards_portlets_PortletInstance.prototype,{
+	registerBehaviours: function() {
+		core_dashboards_portlets_PortletInstance.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = core_dashboards_portlets_PortletInstance.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_dashboards_portlets_TableDataPortletInstance();
+	}
+	,__class__: core_dashboards_portlets_TableDataPortletInstance
+});
+var core_data_FieldType = function() { };
+$hxClasses["core.data.FieldType"] = core_data_FieldType;
+core_data_FieldType.__name__ = "core.data.FieldType";
+var core_data_Dashboard = function(name) {
+	this.layoutData = null;
+	this.name = name;
+};
+$hxClasses["core.data.Dashboard"] = core_data_Dashboard;
+core_data_Dashboard.__name__ = "core.data.Dashboard";
+core_data_Dashboard.prototype = {
+	name: null
+	,layoutData: null
+	,update: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			core_data.updateTableData(core_data_DatabaseManager.get_instance().internalData.name,core_data_DatabaseManager.get_instance().dashboardsData.name,"dashboardName",_gthis.name,[_gthis.name,_gthis.layoutData]).then(function(r) {
+				resolve(r);
+			});
+		});
+	}
+	,__class__: core_data_Dashboard
+};
+var core_data_DashboardManager = function() {
+};
+$hxClasses["core.data.DashboardManager"] = core_data_DashboardManager;
+core_data_DashboardManager.__name__ = "core.data.DashboardManager";
+core_data_DashboardManager.__properties__ = {get_instance:"get_instance"};
+core_data_DashboardManager.get_instance = function() {
+	if(core_data_DashboardManager._instance == null) {
+		core_data_DashboardManager._instance = new core_data_DashboardManager();
+	}
+	return core_data_DashboardManager._instance;
+};
+core_data_DashboardManager.prototype = {
+	listDashboards: function(count) {
+		if(count == null) {
+			count = 100;
+		}
+		return new Promise(function(resolve,reject) {
+			core_data_DatabaseManager.get_instance().dashboardsData.getRows(0,count).then(function(fragment) {
+				var dashboards = [];
+				var _g = 0;
+				var _g1 = fragment.data;
+				while(_g < _g1.length) {
+					var r = _g1[_g];
+					++_g;
+					var dashboard = new core_data_Dashboard(r[0]);
+					dashboard.layoutData = r[1];
+					dashboards.push(dashboard);
+				}
+				resolve(dashboards);
+			});
+		});
+	}
+	,createDashboard: function(dashboard) {
+		return new Promise(function(resolve,reject) {
+			var data = [dashboard.name,dashboard.layoutData];
+			core_data_DatabaseManager.get_instance().dashboardsData.addData(data).commit().then(function(r) {
+				resolve(true);
+			});
+		});
+	}
+	,__class__: core_data_DashboardManager
+};
+var core_data_Database = function(name,info) {
+	this.name = name;
+	this._info = info;
+};
+$hxClasses["core.data.Database"] = core_data_Database;
+core_data_Database.__name__ = "core.data.Database";
+core_data_Database.prototype = {
+	name: null
+	,_info: null
+	,createTable: function(tableName,fieldDefinitions) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			core_data.createTable(_gthis.name,tableName,fieldDefinitions).then(function(createTableResult) {
+				_gthis.getTable(tableName).then(function(table) {
+					resolve(table);
+				});
+			});
+		});
+	}
+	,getTable: function(tableName) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			core_data.getTableInfo(_gthis.name,tableName).then(function(tableInfo) {
+				var table = new core_data_Table(tableName,_gthis,tableInfo);
+				resolve(table);
+			});
+		});
+	}
+	,listTables: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			core_data.getDatabaseInfo(_gthis.name).then(function(info) {
+				var tables = [];
+				var _g = 0;
+				var _g1 = info.tables;
+				while(_g < _g1.length) {
+					var t = _g1[_g];
+					++_g;
+					var table = new core_data_Table(t.tableName,_gthis,t);
+					tables.push(table);
+				}
+				resolve(tables);
+			});
+		});
+	}
+	,removeTable: function(tableName) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			core_data.removeTable(_gthis.name,tableName).then(function(r) {
+				resolve(r);
+			});
+		});
+	}
+	,__class__: core_data_Database
+};
+var core_data_DatabaseBatchOperationType = $hxEnums["core.data.DatabaseBatchOperationType"] = { __ename__:true,__constructs__:null
+	,CreateDatabase: {_hx_name:"CreateDatabase",_hx_index:0,__enum__:"core.data.DatabaseBatchOperationType",toString:$estr}
+	,CreateTable: {_hx_name:"CreateTable",_hx_index:1,__enum__:"core.data.DatabaseBatchOperationType",toString:$estr}
+	,AddTableData: {_hx_name:"AddTableData",_hx_index:2,__enum__:"core.data.DatabaseBatchOperationType",toString:$estr}
+};
+core_data_DatabaseBatchOperationType.__constructs__ = [core_data_DatabaseBatchOperationType.CreateDatabase,core_data_DatabaseBatchOperationType.CreateTable,core_data_DatabaseBatchOperationType.AddTableData];
+var core_data_DatabaseEvent = function(type) {
+	core_Event.call(this,type);
+};
+$hxClasses["core.data.DatabaseEvent"] = core_data_DatabaseEvent;
+core_data_DatabaseEvent.__name__ = "core.data.DatabaseEvent";
+core_data_DatabaseEvent.__super__ = core_Event;
+core_data_DatabaseEvent.prototype = $extend(core_Event.prototype,{
+	__class__: core_data_DatabaseEvent
+});
+var core_data_DatabaseManager = function() {
+	this._batchOperations = [];
+	this.dashboardsData = null;
+	this.internalData = null;
+	core_EventDispatcher.call(this);
+};
+$hxClasses["core.data.DatabaseManager"] = core_data_DatabaseManager;
+core_data_DatabaseManager.__name__ = "core.data.DatabaseManager";
+core_data_DatabaseManager.__properties__ = {get_instance:"get_instance"};
+core_data_DatabaseManager.get_instance = function() {
+	if(core_data_DatabaseManager._instance == null) {
+		core_data_DatabaseManager._instance = new core_data_DatabaseManager();
+	}
+	return core_data_DatabaseManager._instance;
+};
+core_data_DatabaseManager.__super__ = core_EventDispatcher;
+core_data_DatabaseManager.prototype = $extend(core_EventDispatcher.prototype,{
+	internalData: null
+	,dashboardsData: null
+	,_batchOperations: null
+	,addBatchOperation: function(type,data) {
+		this._batchOperations.push({ type : type, data : data});
+	}
+	,performBatchOperations: function(onProgress) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.performBatches(_gthis._batchOperations.slice(),onProgress,function() {
+				_gthis._batchOperations = [];
+				resolve({ errored : false, errorCode : 0, errorText : ""});
+			});
+		});
+	}
+	,performBatches: function(list,onProgress,complete) {
+		var _gthis = this;
+		if(list.length == 0) {
+			complete();
+			return;
+		}
+		var item = list.shift();
+		switch(item.type._hx_index) {
+		case 0:
+			var database = js_Boot.__cast(item.data , core_data_Database);
+			if(onProgress != null) {
+				onProgress("Creating database '" + database.name + "'");
+			}
+			this.createDatabase(database.name).then(function(createdDatabase) {
+				_gthis.performBatches(list,onProgress,complete);
+			});
+			break;
+		case 1:
+			var table = js_Boot.__cast(item.data , core_data_Table);
+			if(onProgress != null) {
+				onProgress("Creating table '" + table.name + "'");
+			}
+			core_data.createTable(table.database.name,table.name,table.get_fieldDefinitions()).then(function(createTableResult) {
+				_gthis.performBatches(list,onProgress,complete);
+			});
+			break;
+		case 2:
+			var table = js_Boot.__cast(item.data , core_data_Table);
+			table.commitData(table._dataToAdd,onProgress).then(function(addDataResult) {
+				_gthis.performBatches(list,onProgress,complete);
+			});
+			break;
+		}
+	}
+	,init: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var tables = [];
+			var table = new core_data_Table("dashboards");
+			table.defineField("dashboardName",1);
+			table.defineField("dashboardLayoutData",1);
+			tables.push(table);
+			_gthis.createDatabaseIfDoesntExist("__optex_internal_data",tables).then(function(r) {
+				_gthis.getDatabase("__optex_internal_data").then(function(db) {
+					_gthis.internalData = db;
+					_gthis.internalData.getTable("dashboards").then(function(t) {
+						_gthis.dashboardsData = t;
+						resolve(true);
+						_gthis.dispatch(new core_data_DatabaseEvent("initialized"));
+					});
+				});
+			});
+		});
+	}
+	,createDatabaseIfDoesntExist: function(databaseName,tablesToCreate) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			core_data.hasDatabase(databaseName).then(function(hasDatabase) {
+				if(hasDatabase == false) {
+					core_data.createDatabase(databaseName).then(function(createDatabaseResult) {
+						_gthis.createTablesIfDontExist(databaseName,tablesToCreate.slice(),function() {
+							resolve(true);
+						});
+					});
+				} else {
+					_gthis.createTablesIfDontExist(databaseName,tablesToCreate.slice(),function() {
+						resolve(true);
+					});
+				}
+			});
+		});
+	}
+	,createTablesIfDontExist: function(databaseName,tablesToCreate,complete) {
+		var _gthis = this;
+		if(tablesToCreate.length == 0) {
+			complete();
+			return;
+		}
+		var table = tablesToCreate.shift();
+		core_data.hasTable(databaseName,table.name).then(function(hasTable) {
+			if(hasTable) {
+				_gthis.createTablesIfDontExist(databaseName,tablesToCreate,complete);
+			} else {
+				core_data.createTable(databaseName,table.name,table.get_fieldDefinitions()).then(function(createTableResult) {
+					_gthis.createTablesIfDontExist(databaseName,tablesToCreate,complete);
+				});
+			}
+		});
+	}
+	,createDatabase: function(databaseName) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var tmp = "creating database '" + databaseName;
+			core_data_Logger.get_instance().log(tmp + "'");
+			core_data.createDatabase(databaseName).then(function(createDatabaseResult) {
+				var tmp = "database '" + databaseName;
+				core_data_Logger.get_instance().log(tmp + "' created successfully");
+				_gthis.getDatabase(databaseName).then(function(database) {
+					resolve(database);
+				});
+			});
+		});
+	}
+	,getDatabase: function(databaseName) {
+		return new Promise(function(resolve,reject) {
+			core_data.getDatabaseInfo(databaseName).then(function(info) {
+				var db = new core_data_Database(databaseName,info);
+				resolve(db);
+			});
+		});
+	}
+	,listDatabases: function(includeInternal) {
+		if(includeInternal == null) {
+			includeInternal = false;
+		}
+		return new Promise(function(resolve,reject) {
+			core_data.listDatabases().then(function(dbs) {
+				var list = [];
+				var _g = 0;
+				while(_g < dbs.length) {
+					var db = dbs[_g];
+					++_g;
+					if(includeInternal == false && StringTools.startsWith(db.databaseName,"__")) {
+						continue;
+					}
+					list.push(new core_data_Database(db.databaseName,db));
+				}
+				resolve(list);
+			});
+		});
+	}
+	,removeDatabase: function(databaseName) {
+		return new Promise(function(resolve,reject) {
+			core_data.removeDatabase(databaseName).then(function(result) {
+				resolve(result);
+			});
+		});
+	}
+	,__class__: core_data_DatabaseManager
+});
+var core_data_Logger = function() {
+};
+$hxClasses["core.data.Logger"] = core_data_Logger;
+core_data_Logger.__name__ = "core.data.Logger";
+core_data_Logger.__properties__ = {get_instance:"get_instance"};
+core_data_Logger.get_instance = function() {
+	if(core_data_Logger._instance == null) {
+		core_data_Logger._instance = new core_data_Logger();
+	}
+	return core_data_Logger._instance;
+};
+core_data_Logger.prototype = {
+	log: function(s) {
+		$global.console.log(s);
+	}
+	,__class__: core_data_Logger
+};
+var core_data_Table = function(name,database,info) {
+	this.addDataBatchSize = 5000;
+	this._dataToAdd = [];
+	this._fieldDefs = [];
+	this.name = name;
+	this.database = database;
+	this._info = info;
+	if(this._info != null) {
+		this._fieldDefs = this._info.fieldDefinitions;
+	}
+};
+$hxClasses["core.data.Table"] = core_data_Table;
+core_data_Table.__name__ = "core.data.Table";
+core_data_Table.prototype = {
+	name: null
+	,_info: null
+	,database: null
+	,_fieldDefs: null
+	,_dataToAdd: null
+	,get_fieldDefinitions: function() {
+		return this._fieldDefs;
+	}
+	,set_fieldDefinitions: function(value) {
+		this._fieldDefs = value;
+		return value;
+	}
+	,defineField: function(fieldName,fieldType) {
+		this._fieldDefs.push({ fieldName : fieldName, fieldType : fieldType});
+	}
+	,addData: function(values) {
+		this._dataToAdd.push(values);
+		return this;
+	}
+	,addDatas: function(values) {
+		var _g = 0;
+		while(_g < values.length) {
+			var v = values[_g];
+			++_g;
+			this.addData(v);
+		}
+	}
+	,getRowCount: function() {
+		if(this._info != null) {
+			return this._info.recordCount;
+		}
+		return 0;
+	}
+	,getRows: function(start,end) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			core_data.getTableData(_gthis.database.name,_gthis.name,start,end).then(function(f) {
+				resolve(f);
+			});
+		});
+	}
+	,updateData: function(fieldName,fieldValue,newData) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			core_data.updateTableData(_gthis.database.name,_gthis.name,fieldName,fieldValue,newData).then(function(result) {
+				resolve(result);
+			});
+		});
+	}
+	,commit: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			if(_gthis._dataToAdd != null && _gthis._dataToAdd.length > 0) {
+				_gthis.commitData(_gthis._dataToAdd,null).then(function(dataCreateResult) {
+					resolve(dataCreateResult);
+				});
+			} else {
+				resolve({ errored : false, errorCode : 0, errorText : ""});
+			}
+		});
+	}
+	,addDataBatchSize: null
+	,commitData: function(data,onProgress) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var batches = [];
+			var n = 0;
+			var fixedData = [];
+			var _g = 0;
+			while(_g < data.length) {
+				var r = data[_g];
+				++_g;
+				var fixedRow = [];
+				var _g1 = 0;
+				while(_g1 < r.length) {
+					var v = r[_g1];
+					++_g1;
+					fixedRow.push(Std.string(v));
+				}
+				fixedData.push(fixedRow);
+				++n;
+				if(n >= _gthis.addDataBatchSize) {
+					n = 0;
+					batches.push(fixedData);
+					fixedData = [];
+				}
+			}
+			if(fixedData.length > 0) {
+				batches.push(fixedData);
+			}
+			var tmp = "creating " + data.length + " row(s) in '" + _gthis.database.name + "." + _gthis.name + "' using " + batches.length;
+			core_data_Logger.get_instance().log(tmp + " batch(es)");
+			_gthis.batchCommitData(batches,function() {
+				var tmp = "creation of " + data.length + " row(s) in '" + _gthis.database.name + "." + _gthis.name;
+				core_data_Logger.get_instance().log(tmp + "' complete");
+				resolve({ errored : false, errorCode : 0, errorText : ""});
+			},onProgress,0,batches.length);
+		});
+	}
+	,batchCommitData: function(batches,complete,onProgress,current,max) {
+		var _gthis = this;
+		if(batches.length == 0) {
+			complete();
+			return;
+		}
+		if(onProgress != null) {
+			if(max > 1) {
+				onProgress("Adding data (batch " + (current + 1) + " of " + max + ")");
+			} else {
+				onProgress("Adding data");
+			}
+		}
+		var batch = batches.shift();
+		var tmp = "batching commiting " + batch.length + " row(s) to '" + this.database.name + "." + this.name;
+		core_data_Logger.get_instance().log(tmp + "'");
+		core_data.addTableData(this.database.name,this.name,batch).then(function(addDataResult) {
+			var tmp = "batch commit of " + batch.length + " row(s) to '" + _gthis.database.name + "." + _gthis.name;
+			core_data_Logger.get_instance().log(tmp + "' complete");
+			_gthis.batchCommitData(batches,complete,onProgress,current + 1,max);
+		});
+	}
+	,__class__: core_data_Table
+	,__properties__: {set_fieldDefinitions:"set_fieldDefinitions",get_fieldDefinitions:"get_fieldDefinitions"}
+};
+var core_graphs_BarGraph = function() {
+	this._data = null;
+	this._margins = { top : 5, right : 2, bottom : 20, left : 30};
+	this.roundBarWidths = false;
+	this.barSpacing = 0.2;
+	this.sort = "desc";
+	this.colorCalculator = null;
+	this.scheme = "blues";
+	this.hideXAxis = false;
+	this.yAxisMax = 10;
+	this.autoCalculateYAxisMax = true;
+	this.yAxisField = "value";
+	this.xAxisField = "group";
+	this.ANIMATION_DURATION = 500;
+	this.AXIS_COLOR = "#888888";
+	this._yAxis = null;
+	this._yScale = null;
+	this._xAxis = null;
+	this._xScale = null;
+	this._graphGraphics = null;
+	this._graph = null;
+	this._container = null;
+	haxe_ui_core_Component.call(this);
+	this.colorCalculator = new core_graphs_ValueBasedColourCalculator();
+	this.colorCalculator.set_scheme(this.scheme);
+};
+$hxClasses["core.graphs.BarGraph"] = core_graphs_BarGraph;
+core_graphs_BarGraph.__name__ = "core.graphs.BarGraph";
+core_graphs_BarGraph.__super__ = haxe_ui_core_Component;
+core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
+	_container: null
+	,_graph: null
+	,_graphGraphics: null
+	,_xScale: null
+	,_xAxis: null
+	,_yScale: null
+	,_yAxis: null
+	,AXIS_COLOR: null
+	,ANIMATION_DURATION: null
+	,xAxisField: null
+	,yAxisField: null
+	,autoCalculateYAxisMax: null
+	,yAxisMax: null
+	,hideXAxis: null
+	,scheme: null
+	,colorCalculator: null
+	,sort: null
+	,barSpacing: null
+	,roundBarWidths: null
+	,_margins: null
+	,get_margins: function() {
+		return this._margins;
+	}
+	,set_margins: function(value) {
+		this._margins = value;
+		return value;
+	}
+	,_data: null
+	,get_data: function() {
+		return this._data;
+	}
+	,set_data: function(value) {
+		this._data = value;
+		this.calculateMaxY();
+		if(this._graph != null) {
+			this.refreshData(true);
+		}
+		return value;
+	}
+	,calculateMaxY: function() {
+		if(this.autoCalculateYAxisMax == false) {
+			return;
+		}
+		var dd = this._data;
+		var m = 0;
+		var _g = 0;
+		while(_g < dd.length) {
+			var d = dd[_g];
+			++_g;
+			var c = Reflect.field(d,this.yAxisField);
+			if(c > m) {
+				m = c;
+			}
+		}
+		if(m % 2 != 0) {
+			++m;
+		}
+		this.yAxisMax = m;
+	}
+	,onReady: function() {
+		haxe_ui_core_Component.prototype.onReady.call(this);
+		this._container = window.document.createElement("div");
+		this.element.appendChild(this._container);
+		this._graph = d3.select(this._container).append("svg");
+		this._graphGraphics = this._graph.append("g");
+		if(!(this._layout == null || this._layoutLocked == true)) {
+			this.invalidateComponent("layout",false);
+		}
+	}
+	,refreshData: function(animate) {
+		if(animate == null) {
+			animate = false;
+		}
+		var _gthis = this;
+		if(this._data == null) {
+			return;
+		}
+		if(this.sort == "asc") {
+			this._data.sort(function(a,b) {
+				var va = Reflect.field(a,_gthis.yAxisField);
+				var vb = Reflect.field(b,_gthis.yAxisField);
+				return va - vb;
+			});
+		} else if(this.sort == "desc") {
+			this._data.sort(function(a,b) {
+				var va = Reflect.field(a,_gthis.yAxisField);
+				var vb = Reflect.field(b,_gthis.yAxisField);
+				return vb - va;
+			});
+		}
+		this.refreshXAxis();
+		this.refreshYAxis();
+		var cx = this.get_width() - this.get_margins().left - this.get_margins().right;
+		var cy = this.get_height() - this.get_margins().top - this.get_margins().bottom;
+		var update = this._graphGraphics.selectAll("rect").data(this._data);
+		update.exit().transition().duration(this.ANIMATION_DURATION).attr("width",0).remove();
+		var chain = update.enter().append("rect").attr("x",$bind(this,this.getBarX)).attr("y",function(d) {
+			return _gthis._yScale(d[_gthis.yAxisField]);
+		}).attr("width",0).attr("height",function(d) {
+			return cy - _gthis._yScale(d[_gthis.yAxisField]);
+		});
+		if(animate == true) {
+			chain = chain.transition().duration(this.ANIMATION_DURATION);
+		}
+		chain.attr("x",$bind(this,this.getBarX)).attr("y",function(d) {
+			return _gthis._yScale(d[_gthis.yAxisField]);
+		}).attr("width",$bind(this,this.getBarWidth)).attr("height",function(d) {
+			return cy - _gthis._yScale(d[_gthis.yAxisField]);
+		}).attr("fill",$bind(this,this.getBarFill)).style("opacity",1.7);
+		var chain = update;
+		if(animate == true) {
+			chain = chain.transition().duration(this.ANIMATION_DURATION);
+		}
+		chain.attr("x",$bind(this,this.getBarX)).attr("y",function(d) {
+			return _gthis._yScale(d[_gthis.yAxisField]);
+		}).attr("width",$bind(this,this.getBarWidth)).attr("height",function(d) {
+			return cy - _gthis._yScale(d[_gthis.yAxisField]);
+		}).attr("fill",$bind(this,this.getBarFill)).style("opacity",1.7);
+	}
+	,getBarX: function(d) {
+		if(this.roundBarWidths == true) {
+			return Math.floor(this._xScale(d[this.xAxisField]));
+		}
+		return this._xScale(d[this.xAxisField]);
+	}
+	,getBarWidth: function(d) {
+		if(this.roundBarWidths == true) {
+			return Math.ceil(this._xScale.bandwidth()) + 1;
+		}
+		return this._xScale.bandwidth();
+	}
+	,getBarFill: function(d,i) {
+		return this.colorCalculator.get(d,i,{ valueMax : this.yAxisMax, valueField : this.yAxisField});
+	}
+	,validateComponentLayout: function() {
+		var b = haxe_ui_core_Component.prototype.validateComponentLayout.call(this);
+		if(this.get_width() > 0 && this.get_height() > 0 && this._graph != null) {
+			var cx = this.get_width() - this.get_margins().left - this.get_margins().right;
+			var cy = this.get_height() - this.get_margins().top - this.get_margins().bottom;
+			this._graph.attr("width",cx + this.get_margins().left + this.get_margins().right).attr("height",cy + this.get_margins().top + this.get_margins().bottom);
+			this._graphGraphics.attr("transform","translate(" + Std.string(this.get_margins().left) + "," + Std.string(this.get_margins().top) + ")");
+			this.refreshData();
+		}
+		return b;
+	}
+	,refreshXAxis: function() {
+		var _gthis = this;
+		if(this._data == null) {
+			return;
+		}
+		var cx = this.get_width() - this.get_margins().left - this.get_margins().right;
+		var cy = this.get_height() - this.get_margins().top - this.get_margins().bottom;
+		if(this._xAxis != null) {
+			this._xAxis.remove();
+		}
+		this._xScale = d3.scaleBand().range([0,cx]).domain(this._data.map(function(d) {
+			return d[_gthis.xAxisField];
+		})).padding(this.barSpacing);
+		this._xAxis = this._graphGraphics.append("g").attr("transform","translate(0," + cy + ")").call(d3.axisBottom(this._xScale));
+		this._xAxis.selectAll("path").attr("stroke",this.AXIS_COLOR);
+		this._xAxis.selectAll("text").attr("fill",this.AXIS_COLOR);
+		this._xAxis.selectAll("line").attr("stroke",this.AXIS_COLOR);
+		if(this.hideXAxis == true) {
+			this._xAxis.selectAll("text").remove();
+			this._xAxis.selectAll("line").remove();
+		}
+	}
+	,refreshYAxis: function() {
+		if(this._data == null) {
+			return;
+		}
+		var cy = this.get_height() - this.get_margins().top - this.get_margins().bottom;
+		if(this._yAxis != null) {
+			this._yAxis.remove();
+		}
+		this._yScale = d3.scaleLinear().domain([0,this.yAxisMax]).range([cy,0]);
+		this._yAxis = this._graphGraphics.append("g").attr("class","myYaxis").call(d3.axisLeft(this._yScale));
+		this._yAxis.selectAll("path").attr("stroke",this.AXIS_COLOR);
+		this._yAxis.selectAll("text").attr("fill",this.AXIS_COLOR);
+		this._yAxis.selectAll("line").attr("stroke",this.AXIS_COLOR);
+	}
+	,createRandomData: function(count) {
+		if(count == null) {
+			count = 20;
+		}
+		var randomData = [];
+		var _g = 0;
+		var _g1 = count;
+		while(_g < _g1) {
+			var n = _g++;
+			randomData.push({ group : core_graphs_BarGraph.LETTERS[n], value : Std.random(100) + 10});
+		}
+		this.set_data(randomData);
+	}
+	,registerBehaviours: function() {
+		haxe_ui_core_Component.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_core_Component.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_graphs_BarGraph();
+	}
+	,__class__: core_graphs_BarGraph
+	,__properties__: $extend(haxe_ui_core_Component.prototype.__properties__,{set_data:"set_data",get_data:"get_data",set_margins:"set_margins",get_margins:"get_margins"})
+});
+var core_graphs_ColorCalculator = function() {
+	this._colorsReverse = null;
+	this._colors = null;
+};
+$hxClasses["core.graphs.ColorCalculator"] = core_graphs_ColorCalculator;
+core_graphs_ColorCalculator.__name__ = "core.graphs.ColorCalculator";
+core_graphs_ColorCalculator.prototype = {
+	_colors: null
+	,_colorsReverse: null
+	,_scheme: null
+	,get_scheme: function() {
+		return this._scheme;
+	}
+	,set_scheme: function(value) {
+		this._scheme = value;
+		var schemaName = "scheme" + haxe_ui_util_StringUtil.capitalizeFirstLetter(this._scheme);
+		var colors = d3[schemaName];
+		this._colors = colors.slice().pop();
+		this._colorsReverse = this._colors.slice();
+		this._colorsReverse.reverse();
+		return value;
+	}
+	,get: function(data,index,graphInfo) {
+		return null;
+	}
+	,__class__: core_graphs_ColorCalculator
+	,__properties__: {set_scheme:"set_scheme",get_scheme:"get_scheme"}
+};
+var core_graphs_ValueBasedColourCalculator = function() {
+	core_graphs_ColorCalculator.call(this);
+};
+$hxClasses["core.graphs.ValueBasedColourCalculator"] = core_graphs_ValueBasedColourCalculator;
+core_graphs_ValueBasedColourCalculator.__name__ = "core.graphs.ValueBasedColourCalculator";
+core_graphs_ValueBasedColourCalculator.__super__ = core_graphs_ColorCalculator;
+core_graphs_ValueBasedColourCalculator.prototype = $extend(core_graphs_ColorCalculator.prototype,{
+	get: function(data,index,graphInfo) {
+		var max = graphInfo.valueMax;
+		var value = Reflect.field(data,graphInfo.valueField);
+		var colMax = this._colors.length;
+		var colIndex = Math.round(value / max * colMax) - 1;
+		if(colIndex < 0) {
+			colIndex = 0;
+		}
+		return this._colorsReverse[colIndex];
+	}
+	,__class__: core_graphs_ValueBasedColourCalculator
+});
 var haxe_IMap = function() { };
 $hxClasses["haxe.IMap"] = haxe_IMap;
 haxe_IMap.__name__ = "haxe.IMap";
@@ -4783,6 +6354,15 @@ var haxe_Exception = function(message,previous,native) {
 };
 $hxClasses["haxe.Exception"] = haxe_Exception;
 haxe_Exception.__name__ = "haxe.Exception";
+haxe_Exception.caught = function(value) {
+	if(((value) instanceof haxe_Exception)) {
+		return value;
+	} else if(((value) instanceof Error)) {
+		return new haxe_Exception(value.message,null,value);
+	} else {
+		return new haxe_ValueException(value,null,value);
+	}
+};
 haxe_Exception.thrown = function(value) {
 	if(((value) instanceof haxe_Exception)) {
 		return value.get_native();
@@ -4798,11 +6378,17 @@ haxe_Exception.prototype = $extend(Error.prototype,{
 	__skipStack: null
 	,__nativeException: null
 	,__previousException: null
+	,toString: function() {
+		return this.get_message();
+	}
+	,get_message: function() {
+		return this.message;
+	}
 	,get_native: function() {
 		return this.__nativeException;
 	}
 	,__class__: haxe_Exception
-	,__properties__: {get_native:"get_native"}
+	,__properties__: {get_native:"get_native",get_message:"get_message"}
 });
 var haxe_Resource = function() { };
 $hxClasses["haxe.Resource"] = haxe_Resource;
@@ -5237,14 +6823,6 @@ haxe_ds_ObjectMap.prototype = {
 		}
 		return new haxe_iterators_ArrayIterator(a);
 	}
-	,iterator: function() {
-		return { ref : this.h, it : this.keys(), hasNext : function() {
-			return this.it.hasNext();
-		}, next : function() {
-			var i = this.it.next();
-			return this.ref[i.__id__];
-		}};
-	}
 	,__class__: haxe_ds_ObjectMap
 };
 var haxe_ds_StringMap = function() {
@@ -5278,6 +6856,36 @@ haxe_ds__$StringMap_StringMapKeyIterator.prototype = {
 	}
 	,__class__: haxe_ds__$StringMap_StringMapKeyIterator
 };
+var haxe_exceptions_PosException = function(message,previous,pos) {
+	haxe_Exception.call(this,message,previous);
+	if(pos == null) {
+		this.posInfos = { fileName : "(unknown)", lineNumber : 0, className : "(unknown)", methodName : "(unknown)"};
+	} else {
+		this.posInfos = pos;
+	}
+};
+$hxClasses["haxe.exceptions.PosException"] = haxe_exceptions_PosException;
+haxe_exceptions_PosException.__name__ = "haxe.exceptions.PosException";
+haxe_exceptions_PosException.__super__ = haxe_Exception;
+haxe_exceptions_PosException.prototype = $extend(haxe_Exception.prototype,{
+	posInfos: null
+	,toString: function() {
+		return "" + haxe_Exception.prototype.toString.call(this) + " in " + this.posInfos.className + "." + this.posInfos.methodName + " at " + this.posInfos.fileName + ":" + this.posInfos.lineNumber;
+	}
+	,__class__: haxe_exceptions_PosException
+});
+var haxe_exceptions_NotImplementedException = function(message,previous,pos) {
+	if(message == null) {
+		message = "Not implemented";
+	}
+	haxe_exceptions_PosException.call(this,message,previous,pos);
+};
+$hxClasses["haxe.exceptions.NotImplementedException"] = haxe_exceptions_NotImplementedException;
+haxe_exceptions_NotImplementedException.__name__ = "haxe.exceptions.NotImplementedException";
+haxe_exceptions_NotImplementedException.__super__ = haxe_exceptions_PosException;
+haxe_exceptions_NotImplementedException.prototype = $extend(haxe_exceptions_PosException.prototype,{
+	__class__: haxe_exceptions_NotImplementedException
+});
 var haxe_io_Error = $hxEnums["haxe.io.Error"] = { __ename__:true,__constructs__:null
 	,Blocked: {_hx_name:"Blocked",_hx_index:0,__enum__:"haxe.io.Error",toString:$estr}
 	,Overflow: {_hx_name:"Overflow",_hx_index:1,__enum__:"haxe.io.Error",toString:$estr}
@@ -5285,6 +6893,79 @@ var haxe_io_Error = $hxEnums["haxe.io.Error"] = { __ename__:true,__constructs__:
 	,Custom: ($_=function(e) { return {_hx_index:3,e:e,__enum__:"haxe.io.Error",toString:$estr}; },$_._hx_name="Custom",$_.__params__ = ["e"],$_)
 };
 haxe_io_Error.__constructs__ = [haxe_io_Error.Blocked,haxe_io_Error.Overflow,haxe_io_Error.OutsideBounds,haxe_io_Error.Custom];
+var haxe_io_Path = function() { };
+$hxClasses["haxe.io.Path"] = haxe_io_Path;
+haxe_io_Path.__name__ = "haxe.io.Path";
+haxe_io_Path.normalize = function(path) {
+	var slash = "/";
+	path = path.split("\\").join(slash);
+	if(path == slash) {
+		return slash;
+	}
+	var target = [];
+	var _g = 0;
+	var _g1 = path.split(slash);
+	while(_g < _g1.length) {
+		var token = _g1[_g];
+		++_g;
+		if(token == ".." && target.length > 0 && target[target.length - 1] != "..") {
+			target.pop();
+		} else if(token == "") {
+			if(target.length > 0 || HxOverrides.cca(path,0) == 47) {
+				target.push(token);
+			}
+		} else if(token != ".") {
+			target.push(token);
+		}
+	}
+	var tmp = target.join(slash);
+	var acc_b = "";
+	var colon = false;
+	var slashes = false;
+	var _g2_offset = 0;
+	var _g2_s = tmp;
+	while(_g2_offset < _g2_s.length) {
+		var s = _g2_s;
+		var index = _g2_offset++;
+		var c = s.charCodeAt(index);
+		if(c >= 55296 && c <= 56319) {
+			c = c - 55232 << 10 | s.charCodeAt(index + 1) & 1023;
+		}
+		var c1 = c;
+		if(c1 >= 65536) {
+			++_g2_offset;
+		}
+		var c2 = c1;
+		switch(c2) {
+		case 47:
+			if(!colon) {
+				slashes = true;
+			} else {
+				var i = c2;
+				colon = false;
+				if(slashes) {
+					acc_b += "/";
+					slashes = false;
+				}
+				acc_b += String.fromCodePoint(i);
+			}
+			break;
+		case 58:
+			acc_b += ":";
+			colon = true;
+			break;
+		default:
+			var i1 = c2;
+			colon = false;
+			if(slashes) {
+				acc_b += "/";
+				slashes = false;
+			}
+			acc_b += String.fromCodePoint(i1);
+		}
+	}
+	return acc_b;
+};
 var haxe_iterators_ArrayIterator = function(array) {
 	this.current = 0;
 	this.array = array;
@@ -5515,25 +7196,25 @@ haxe_ui_HaxeUIApp.prototype = $extend(haxe_ui_backend_AppImpl.prototype,{
 	,__class__: haxe_ui_HaxeUIApp
 });
 var haxe_ui_Preloader = function() {
-	haxe_ui_core_Component.call(this);
+	haxe_ui_containers_Box.call(this);
 	this.set_id("preloader");
-	this.set_styleString("width:auto;height:auto;");
+	this.set_styleString("width:100%;height:100%;");
+	this.set_styleNames("default-background");
 };
 $hxClasses["haxe.ui.Preloader"] = haxe_ui_Preloader;
 haxe_ui_Preloader.__name__ = "haxe.ui.Preloader";
-haxe_ui_Preloader.__super__ = haxe_ui_core_Component;
-haxe_ui_Preloader.prototype = $extend(haxe_ui_core_Component.prototype,{
+haxe_ui_Preloader.__super__ = haxe_ui_containers_Box;
+haxe_ui_Preloader.prototype = $extend(haxe_ui_containers_Box.prototype,{
 	createChildren: function() {
 		var label = new haxe_ui_components_Label();
 		label.set_text("Loading");
+		label.set_verticalAlign("center");
+		label.set_horizontalAlign("center");
 		this.addComponent(label);
 	}
 	,validateComponentLayout: function() {
-		var b = haxe_ui_core_Component.prototype.validateComponentLayout.call(this);
-		if(this.get_width() > 0 && this.get_height() > 0) {
-			this.set_left(haxe_ui_core_Screen.get_instance().get_width() / 2 - this.get_width() / 2);
-			this.set_top(haxe_ui_core_Screen.get_instance().get_height() / 2 - this.get_height() / 2);
-		}
+		var b = haxe_ui_containers_Box.prototype.validateComponentLayout.call(this);
+		var tmp = this.get_actualComponentWidth() > 0 && this.get_actualComponentHeight() > 0;
 		return b;
 	}
 	,_current: null
@@ -5557,10 +7238,10 @@ haxe_ui_Preloader.prototype = $extend(haxe_ui_core_Component.prototype,{
 		haxe_ui_core_Screen.get_instance().removeComponent(this);
 	}
 	,registerBehaviours: function() {
-		haxe_ui_core_Component.prototype.registerBehaviours.call(this);
+		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
 	}
 	,cloneComponent: function() {
-		var c = haxe_ui_core_Component.prototype.cloneComponent.call(this);
+		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
 		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
 			var _g = 0;
 			var _g1 = this._children == null ? [] : this._children;
@@ -5577,6 +7258,168 @@ haxe_ui_Preloader.prototype = $extend(haxe_ui_core_Component.prototype,{
 	}
 	,__class__: haxe_ui_Preloader
 });
+var haxe_ui_RuntimeComponentBuilder = function() { };
+$hxClasses["haxe.ui.RuntimeComponentBuilder"] = haxe_ui_RuntimeComponentBuilder;
+haxe_ui_RuntimeComponentBuilder.__name__ = "haxe.ui.RuntimeComponentBuilder";
+haxe_ui_RuntimeComponentBuilder.fromAsset = function(assetId) {
+	var data = haxe_ui_ToolkitAssets.get_instance().getText(assetId);
+	return haxe_ui_RuntimeComponentBuilder.fromString(data,null,new haxe_ui_parsers_ui_resolvers_AssetResourceResolver(assetId));
+};
+haxe_ui_RuntimeComponentBuilder.fromString = function(data,type,resourceResolver,callback) {
+	if(data == null || data.length == 0) {
+		return null;
+	}
+	if(type == null) {
+		if(StringTools.startsWith(StringTools.trim(data),"<")) {
+			type = "xml";
+		}
+	}
+	var parser = haxe_ui_parsers_ui_ComponentParser.get(type);
+	if(parser == null) {
+		console.log("haxe/ui/RuntimeComponentBuilder.hx:38:","WARNING: type \"" + type + "\" not recognised");
+		return null;
+	}
+	var c = parser.parse(data,resourceResolver);
+	var _g = 0;
+	var _g1 = c.styles;
+	while(_g < _g1.length) {
+		var style = _g1[_g];
+		++_g;
+		if(style.scope == "global") {
+			haxe_ui_Toolkit.styleSheet.parse(style.style);
+		}
+	}
+	var component = haxe_ui_RuntimeComponentBuilder.buildComponentFromInfo(c,callback);
+	var fullScript = "";
+	var _g = 0;
+	var _g1 = c.scriptlets;
+	while(_g < _g1.length) {
+		var scriptString = _g1[_g];
+		++_g;
+		fullScript += scriptString;
+	}
+	return component;
+};
+haxe_ui_RuntimeComponentBuilder.buildComponentFromInfo = function(c,callback) {
+	if(c.condition != null && haxe_ui_util_SimpleExpressionEvaluator.evalCondition(c.condition) == false) {
+		return null;
+	}
+	var className = haxe_ui_core_ComponentClassMap.get(c.type.toLowerCase());
+	if(className == null) {
+		console.log("haxe/ui/RuntimeComponentBuilder.hx:67:","WARNING: no class found for component: " + c.type);
+		return null;
+	}
+	var component = Type.createInstance($hxClasses[className],[]);
+	if(component == null) {
+		console.log("haxe/ui/RuntimeComponentBuilder.hx:73:","WARNING: could not create class instance: " + className);
+		return null;
+	}
+	if(c.id != null) {
+		component.set_id(c.id);
+	}
+	if(c.left != null) {
+		component.set_left(c.left);
+	}
+	if(c.top != null) {
+		component.set_top(c.top);
+	}
+	if(c.width != null) {
+		component.set_width(c.width);
+	}
+	if(c.height != null) {
+		component.set_height(c.height);
+	}
+	if(c.percentWidth != null) {
+		component.set_percentWidth(c.percentWidth);
+	}
+	if(c.percentHeight != null) {
+		component.set_percentHeight(c.percentHeight);
+	}
+	if(c.text != null) {
+		component.set_text(c.text);
+	}
+	if(c.styleNames != null) {
+		component.set_styleNames(c.styleNames);
+	}
+	if(c.style != null) {
+		component.set_styleString(c.style);
+	}
+	if(c.layout != null) {
+		var layout = haxe_ui_RuntimeComponentBuilder.buildLayoutFromInfo(c.layout);
+		component.set_layout(layout);
+	}
+	if(((component) instanceof haxe_ui_containers_ScrollView)) {
+		var scrollview = js_Boot.__cast(component , haxe_ui_containers_ScrollView);
+		if(c.contentWidth != null) {
+			scrollview.set_contentWidth(c.contentWidth);
+		}
+		if(c.contentHeight != null) {
+			scrollview.set_contentHeight(c.contentHeight);
+		}
+		if(c.percentContentWidth != null) {
+			scrollview.set_percentContentWidth(c.percentContentWidth);
+		}
+		if(c.percentContentHeight != null) {
+			scrollview.set_percentContentHeight(c.percentContentHeight);
+		}
+	}
+	var h = c.properties.h;
+	var propName_h = h;
+	var propName_keys = Object.keys(h);
+	var propName_length = propName_keys.length;
+	var propName_current = 0;
+	while(propName_current < propName_length) {
+		var propName = propName_keys[propName_current++];
+		var propValue = c.properties.h[propName];
+		if(Object.prototype.hasOwnProperty.call(haxe_ui_core_ComponentFieldMap.MAP.h,propName)) {
+			propName = haxe_ui_core_ComponentFieldMap.MAP.h[propName];
+		}
+		if(!StringTools.startsWith(propName,"on")) {
+			propValue = haxe_ui_util_TypeConverter.convertFrom(propValue);
+			Reflect.setProperty(component,propName,propValue);
+		}
+	}
+	if(js_Boot.__implements(component,haxe_ui_core_IDataComponent) && c.data != null) {
+		(js_Boot.__cast(component , haxe_ui_core_IDataComponent)).set_dataSource(new haxe_ui_data_DataSourceFactory().fromString(c.get_dataString(),haxe_ui_data_ArrayDataSource));
+	}
+	var _g = 0;
+	var _g1 = c.children;
+	while(_g < _g1.length) {
+		var childInfo = _g1[_g];
+		++_g;
+		var childComponent = haxe_ui_RuntimeComponentBuilder.buildComponentFromInfo(childInfo,callback);
+		if(childComponent != null) {
+			component.addComponent(childComponent);
+		}
+	}
+	if(callback != null) {
+		callback(component);
+	}
+	return component;
+};
+haxe_ui_RuntimeComponentBuilder.buildLayoutFromInfo = function(l) {
+	var className = haxe_ui_core_LayoutClassMap.get(l.type.toLowerCase());
+	if(className == null) {
+		console.log("haxe/ui/RuntimeComponentBuilder.hx:132:","WARNING: no class found for layout: " + l.type);
+		return null;
+	}
+	var layout = Type.createInstance($hxClasses[className],[]);
+	if(layout == null) {
+		console.log("haxe/ui/RuntimeComponentBuilder.hx:138:","WARNING: could not create class instance: " + className);
+		return null;
+	}
+	var h = l.properties.h;
+	var propName_h = h;
+	var propName_keys = Object.keys(h);
+	var propName_length = propName_keys.length;
+	var propName_current = 0;
+	while(propName_current < propName_length) {
+		var propName = propName_keys[propName_current++];
+		var propValue = l.properties.h[propName];
+		Reflect.setProperty(layout,propName,haxe_ui_util_Variant.fromDynamic(propValue));
+	}
+	return layout;
+};
 var haxe_ui_util_Properties = function() {
 	this._props = new haxe_ds_StringMap();
 };
@@ -6029,9 +7872,71 @@ haxe_ui_Toolkit.build = function() {
 	haxe_ui_themes_ThemeManager.get_instance().addStyleResource("dark","haxeui-core/styles/dark/sidebars.css",-1.74999999999999978);
 	haxe_ui_locale_LocaleManager.get_instance().parseResource("en","haxeui-core/locale/en/dialog.properties");
 	haxe_ui_locale_LocaleManager.get_instance().parseResource("es","haxeui-core/locale/es/dialog.properties");
+	haxe_ui_locale_LocaleManager.get_instance().parseResource("de","haxeui-core/locale/de/dialog.properties");
+	haxe_ui_locale_LocaleManager.get_instance().parseResource("fr","haxeui-core/locale/fr/dialog.properties");
+	haxe_ui_locale_LocaleManager.get_instance().parseResource("it","haxeui-core/locale/it/dialog.properties");
 	haxe_ui_themes_ThemeManager.get_instance().addStyleResource("native","styles/native/main.css",-1);
 	haxe_ui_themes_ThemeManager.get_instance().addStyleResource("global","styles/main.css",-2);
 	haxe_ui_themes_ThemeManager.get_instance().addStyleResource("default","styles/default/main.css",-1);
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/right_arrow_circled.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/haxeui_small.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/check.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/haxeui_tiny.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/down_arrow_white.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/down_arrow.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/left_arrow.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/up_arrow.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/haxeui.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/up_arrow_white.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/sortable_desc.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/right_arrow_white.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/up_down_arrows.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/left_arrow_white.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/sortable_arrows.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/blank.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/collapsed.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/sortable_asc.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/left_arrow_circled.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/folder.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/sizer_gripper_horizontal.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/tiny-close-button.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/up_arrow_circled.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/small-close-button.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/right_arrow_square.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/down_arrow_square.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/option.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/dialogs/cross-circle-small.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/dialogs/exclamation.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/dialogs/question.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/dialogs/information.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/dialogs/cross-circle.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/dialogs/exclamation-small.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/dialogs/question-small.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/dialogs/information-small.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/down_arrow_circled.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/transparent_px.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/sizer_gripper_vertical.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/right_arrow.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/default/expanded.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/right_arrow_circled.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/check.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/down_arrow_white.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/down_arrow.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/left_arrow.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/up_arrow.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/up_arrow_white.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/right_arrow_white.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/up_down_arrows.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/left_arrow_white.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/left_arrow_circled.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/tiny-close-button.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/up_arrow_circled.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/right_arrow_square.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/down_arrow_square.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/option.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/down_arrow_circled.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "haxeui-core/styles/dark/right_arrow.png"});
+	haxe_ui_ToolkitAssets.get_instance().preloadList.push({ type : "image", resourceId : "icons/icons8-dashboard-48.png"});
 	haxe_ui_core_TypeMap.addTypeInfo("haxe.ui.core.InteractiveComponent","allowInteraction","Bool");
 	haxe_ui_core_TypeMap.addTypeInfo("haxe.ui.core.ComponentContainer","value","Dynamic");
 	haxe_ui_core_TypeMap.addTypeInfo("haxe.ui.core.ComponentContainer","tooltipRenderer","Component");
@@ -6466,345 +8371,6 @@ haxe_ui_assets_AssetPlugin.prototype = {
 	}
 	,__class__: haxe_ui_assets_AssetPlugin
 };
-var haxe_ui_backend_DialogBase = function() {
-	this._buttonsCreated = false;
-	this._dialogParent = null;
-	this._autoSizeDialog = false;
-	this.destroyOnClose = true;
-	this.button = null;
-	this.centerDialog = true;
-	this.buttons = null;
-	this.autoCenterDialog = true;
-	this.modal = true;
-	var _gthis = this;
-	haxe_ui_containers_Box.call(this);
-	this.dialogContainer = new haxe_ui_containers_VBox();
-	this.dialogContainer.set_id("dialog-container");
-	this.dialogContainer.set_styleNames("dialog-container");
-	this.addComponent(this.dialogContainer);
-	this.dialogTitle = new haxe_ui_containers_HBox();
-	this.dialogTitle.set_id("dialog-title");
-	this.dialogTitle.set_styleNames("dialog-title");
-	this.set_dragInitiator(this.dialogTitle);
-	this.dialogContainer.addComponent(this.dialogTitle);
-	this.dialogTitleLabel = new haxe_ui_components_Label();
-	this.dialogTitleLabel.set_id("dialog-title-label");
-	this.dialogTitleLabel.set_styleNames("dialog-title-label");
-	this.dialogTitleLabel.set_text("HaxeUI");
-	this.dialogTitle.addComponent(this.dialogTitleLabel);
-	this.dialogCloseButton = new haxe_ui_components_Image();
-	this.dialogCloseButton.set_id("dialog-close-button");
-	this.dialogCloseButton.set_styleNames("dialog-close-button");
-	this.dialogTitle.addComponent(this.dialogCloseButton);
-	this.dialogContent = new haxe_ui_containers_VBox();
-	this.dialogContent.set_id("dialog-content");
-	this.dialogContent.set_styleNames("dialog-content");
-	this.dialogContent.registerEvent("resize",$bind(this,this.onContentResize));
-	this.dialogContainer.addComponent(this.dialogContent);
-	this.dialogFooterContainer = new haxe_ui_containers_Box();
-	this.dialogFooterContainer.set_id("dialog-footer-container");
-	this.dialogFooterContainer.set_styleNames("dialog-footer-container");
-	this.dialogContainer.addComponent(this.dialogFooterContainer);
-	this.dialogFooter = new haxe_ui_containers_HBox();
-	this.dialogFooter.set_id("dialog-footer");
-	this.dialogFooter.set_styleNames("dialog-footer");
-	this.dialogFooter.registerEvent("resize",$bind(this,this.onFooterResize));
-	this.dialogFooterContainer.addComponent(this.dialogFooter);
-	this.dialogFooterContainer.hide();
-	this.dialogCloseButton.set_onClick(function(e) {
-		_gthis.hideDialog("{{dialog.cancel}}");
-	});
-};
-$hxClasses["haxe.ui.backend.DialogBase"] = haxe_ui_backend_DialogBase;
-haxe_ui_backend_DialogBase.__name__ = "haxe.ui.backend.DialogBase";
-haxe_ui_backend_DialogBase.__super__ = haxe_ui_containers_Box;
-haxe_ui_backend_DialogBase.prototype = $extend(haxe_ui_containers_Box.prototype,{
-	modal: null
-	,autoCenterDialog: null
-	,buttons: null
-	,centerDialog: null
-	,button: null
-	,_overlay: null
-	,dialogContainer: null
-	,dialogTitle: null
-	,dialogTitleLabel: null
-	,dialogCloseButton: null
-	,dialogContent: null
-	,dialogFooterContainer: null
-	,dialogFooter: null
-	,destroyOnClose: null
-	,_autoSizeDialog: null
-	,onReady: function() {
-		haxe_ui_containers_Box.prototype.onReady.call(this);
-		this._autoSizeDialog = this.get_autoWidth();
-	}
-	,_dialogParent: null
-	,get_dialogParent: function() {
-		return this._dialogParent;
-	}
-	,set_dialogParent: function(value) {
-		this._dialogParent = value;
-		return value;
-	}
-	,showDialog: function(modal) {
-		if(modal == null) {
-			modal = true;
-		}
-		this.modal = modal;
-		this.show();
-	}
-	,show: function() {
-		var _gthis = this;
-		this.handleVisibility(false);
-		var dp = this.get_dialogParent();
-		if(this.modal) {
-			this._overlay = new haxe_ui_core_Component();
-			this._overlay.set_id("modal-background");
-			this._overlay.addClass("modal-background");
-			this._overlay.set_percentWidth(this._overlay.set_percentHeight(100));
-			if(dp != null) {
-				dp.addComponent(this._overlay);
-			} else {
-				haxe_ui_core_Screen.get_instance().addComponent(this._overlay);
-			}
-		}
-		this.createButtons();
-		if(dp != null) {
-			dp.addComponent(this);
-		} else {
-			haxe_ui_core_Screen.get_instance().addComponent(this);
-		}
-		this.syncComponentValidation();
-		if(this.get_autoHeight() == false) {
-			this.dialogContainer.set_percentHeight(100);
-			this.dialogContent.set_percentHeight(100);
-		}
-		if(this.centerDialog) {
-			this.centerDialogComponent(js_Boot.__cast(this , haxe_ui_containers_dialogs_Dialog));
-		}
-		haxe_ui_Toolkit.callLater(function() {
-			if(_gthis.centerDialog) {
-				_gthis.centerDialogComponent(js_Boot.__cast(_gthis , haxe_ui_containers_dialogs_Dialog));
-			}
-			haxe_ui_Toolkit.callLater(function() {
-				_gthis.handleVisibility(true);
-			});
-		});
-	}
-	,_buttonsCreated: null
-	,createButtons: function() {
-		if(this._buttonsCreated == true) {
-			return;
-		}
-		if(this.buttons != null) {
-			var _g = 0;
-			var _g1 = haxe_ui_containers_dialogs_DialogButton.toArray(this.buttons);
-			while(_g < _g1.length) {
-				var button = _g1[_g];
-				++_g;
-				var buttonComponent = new haxe_ui_components_Button();
-				buttonComponent.set_id(haxe_ui_containers_dialogs_DialogButton.toString(button));
-				var text = buttonComponent.get_id();
-				buttonComponent.set_text(text);
-				buttonComponent.userData = button;
-				buttonComponent.registerEvent("click",$bind(this,this.onFooterButtonClick));
-				this.addFooterComponent(buttonComponent);
-			}
-			this._buttonsCreated = true;
-		}
-	}
-	,get_closable: function() {
-		return !this.dialogCloseButton.get_hidden();
-	}
-	,set_closable: function(value) {
-		if(value == true) {
-			this.dialogCloseButton.show();
-		} else {
-			this.dialogCloseButton.hide();
-		}
-		return value;
-	}
-	,validateDialog: function(button,fn) {
-		fn(true);
-	}
-	,hide: function() {
-		var _gthis = this;
-		this.validateDialog(this.button,function(result) {
-			if(result == true) {
-				var dp = _gthis.get_dialogParent();
-				var event = new haxe_ui_containers_dialogs_DialogEvent("dialogClosed");
-				event.button = _gthis.button;
-				_gthis.dispatch(event);
-				if(event.canceled == true) {
-					return;
-				}
-				if(_gthis.modal && _gthis._overlay != null) {
-					if(dp != null) {
-						dp.removeComponent(_gthis._overlay);
-					} else {
-						haxe_ui_core_Screen.get_instance().removeComponent(_gthis._overlay);
-					}
-				}
-				if(dp != null) {
-					dp.removeComponent(_gthis,_gthis.destroyOnClose);
-				} else {
-					haxe_ui_core_Screen.get_instance().removeComponent(_gthis,_gthis.destroyOnClose);
-				}
-			}
-		});
-	}
-	,hideDialog: function(button) {
-		this.button = button;
-		this.hide();
-	}
-	,get_title: function() {
-		return this.dialogTitleLabel.get_text();
-	}
-	,set_title: function(value) {
-		this.dialogTitleLabel.set_text(value);
-		return value;
-	}
-	,addComponent: function(child) {
-		if(child.classes.indexOf("dialog-container") != -1) {
-			return haxe_ui_containers_Box.prototype.addComponent.call(this,child);
-		}
-		return this.dialogContent.addComponent(child);
-	}
-	,validateComponentLayout: function() {
-		var b = haxe_ui_containers_Box.prototype.validateComponentLayout.call(this);
-		this.dialogTitle.set_width(this.get_layout().get_innerWidth());
-		if(this._autoSizeDialog == false) {
-			var offset = this.get_layout().get_paddingLeft() + this.get_layout().get_paddingRight();
-			if(this.dialogContent.get_width() != this.get_width() - offset) {
-				this.dialogContent.set_width(this.get_width() - offset);
-			}
-			if(this.dialogFooterContainer.get_width() != this.get_width() - offset) {
-				this.dialogFooterContainer.set_width(this.get_width() - offset);
-			}
-		}
-		return b;
-	}
-	,onDestroy: function() {
-		haxe_ui_containers_Box.prototype.onDestroy.call(this);
-		if(this._overlay != null) {
-			haxe_ui_core_Screen.get_instance().removeComponent(this._overlay);
-			this._overlay = null;
-		}
-	}
-	,onContentResize: function(e) {
-		if(this.dialogFooter.get_width() <= 0 || this.dialogFooterContainer.get_width() <= 0 || this._autoSizeDialog == false) {
-			return;
-		}
-		var cx = Math.max(this.dialogFooter.get_width(),this.dialogContent.get_width());
-		var offset = this.get_layout().get_paddingLeft() + this.get_layout().get_paddingRight();
-		var recenter = false;
-		if(cx > 0 && cx != this.get_width() + offset) {
-			this.set_width(cx + offset);
-			recenter = true;
-		}
-		if(this.dialogFooterContainer.get_width() != this.get_width() - offset) {
-			this.dialogFooterContainer.set_width(this.get_width() - offset);
-		}
-		if(recenter == true && this.autoCenterDialog == true) {
-			this.centerDialogComponent(js_Boot.__cast(this , haxe_ui_containers_dialogs_Dialog),false);
-		}
-	}
-	,onFooterResize: function(e) {
-		if(this.dialogFooter.get_width() <= 0 || this.dialogFooterContainer.get_width() <= 0 || this._autoSizeDialog == false) {
-			return;
-		}
-		var cx = Math.max(this.dialogFooter.get_width(),this.dialogContent.get_width());
-		var offset = this.get_layout().get_paddingLeft() + this.get_layout().get_paddingRight();
-		var recenter = false;
-		if(cx > 0 && cx != this.get_width() + offset) {
-			this.set_width(cx + offset);
-			recenter = true;
-		}
-		if(this.dialogFooterContainer.get_width() != this.get_width() - offset) {
-			this.dialogFooterContainer.set_width(this.get_width() - offset);
-		}
-		if(recenter == true && this.autoCenterDialog == true) {
-			this.centerDialogComponent(js_Boot.__cast(this , haxe_ui_containers_dialogs_Dialog),false);
-		}
-	}
-	,addFooterComponent: function(c) {
-		this.dialogFooterContainer.show();
-		this.dialogFooter.addComponent(c);
-	}
-	,centerDialogComponent: function(dialog,validate) {
-		if(validate == null) {
-			validate = true;
-		}
-		if(validate == true) {
-			dialog.syncComponentValidation();
-		}
-		var dp = this.get_dialogParent();
-		if(dp != null) {
-			if(validate == true) {
-				dp.syncComponentValidation();
-			}
-			var x = dp.get_actualComponentWidth() / 2 - dialog.get_actualComponentWidth() / 2;
-			var y = dp.get_actualComponentHeight() / 2 - dialog.get_actualComponentHeight() / 2;
-			dialog.moveComponent(x,y);
-		} else {
-			var x = haxe_ui_core_Screen.get_instance().get_actualWidth() / 2 - dialog.get_actualComponentWidth() / 2;
-			var y = haxe_ui_core_Screen.get_instance().get_actualHeight() / 2 - dialog.get_actualComponentHeight() / 2;
-			dialog.moveComponent(x,y);
-		}
-	}
-	,onFooterButtonClick: function(event) {
-		this.hideDialog(event.target.userData);
-	}
-	,registerBehaviours: function() {
-		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new haxe_ui_backend_DialogBase();
-	}
-	,__class__: haxe_ui_backend_DialogBase
-	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{set_title:"set_title",get_title:"get_title",set_closable:"set_closable",get_closable:"get_closable",set_dialogParent:"set_dialogParent",get_dialogParent:"get_dialogParent"})
-});
-var haxe_ui_backend_EventBase = function() { };
-$hxClasses["haxe.ui.backend.EventBase"] = haxe_ui_backend_EventBase;
-haxe_ui_backend_EventBase.__name__ = "haxe.ui.backend.EventBase";
-haxe_ui_backend_EventBase.prototype = {
-	cancel: function() {
-	}
-	,postClone: function(event) {
-	}
-	,__class__: haxe_ui_backend_EventBase
-};
-var haxe_ui_backend_EventImpl = function() { };
-$hxClasses["haxe.ui.backend.EventImpl"] = haxe_ui_backend_EventImpl;
-haxe_ui_backend_EventImpl.__name__ = "haxe.ui.backend.EventImpl";
-haxe_ui_backend_EventImpl.__super__ = haxe_ui_backend_EventBase;
-haxe_ui_backend_EventImpl.prototype = $extend(haxe_ui_backend_EventBase.prototype,{
-	_originalEvent: null
-	,cancel: function() {
-		if(this._originalEvent != null) {
-			this._originalEvent.preventDefault();
-			this._originalEvent.stopImmediatePropagation();
-			this._originalEvent.stopPropagation();
-		}
-	}
-	,postClone: function(event) {
-		event._originalEvent = this._originalEvent;
-	}
-	,__class__: haxe_ui_backend_EventImpl
-});
 var haxe_ui_backend_ImageSurface = function() {
 };
 $hxClasses["haxe.ui.backend.ImageSurface"] = haxe_ui_backend_ImageSurface;
@@ -6887,106 +8453,6 @@ haxe_ui_backend_ImageDisplayImpl.prototype = $extend(haxe_ui_backend_ImageBase.p
 	}
 	,__class__: haxe_ui_backend_ImageDisplayImpl
 });
-var haxe_ui_containers_dialogs_Dialog = function() {
-	haxe_ui_backend_DialogBase.call(this);
-};
-$hxClasses["haxe.ui.containers.dialogs.Dialog"] = haxe_ui_containers_dialogs_Dialog;
-haxe_ui_containers_dialogs_Dialog.__name__ = "haxe.ui.containers.dialogs.Dialog";
-haxe_ui_containers_dialogs_Dialog.__super__ = haxe_ui_backend_DialogBase;
-haxe_ui_containers_dialogs_Dialog.prototype = $extend(haxe_ui_backend_DialogBase.prototype,{
-	__onDialogClosed: null
-	,onDialogClosed: null
-	,set_onDialogClosed: function(value) {
-		if(this.__onDialogClosed != null) {
-			this.unregisterEvent("dialogClosed",this.__onClick);
-			this.__onDialogClosed = null;
-		}
-		this.registerEvent("dialogClosed",value);
-		this.__onDialogClosed = value;
-		return value;
-	}
-	,registerBehaviours: function() {
-		haxe_ui_backend_DialogBase.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_backend_DialogBase.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new haxe_ui_containers_dialogs_Dialog();
-	}
-	,__class__: haxe_ui_containers_dialogs_Dialog
-	,__properties__: $extend(haxe_ui_backend_DialogBase.prototype.__properties__,{set_onDialogClosed:"set_onDialogClosed"})
-});
-var haxe_ui_backend_MessageBoxBase = function() {
-	this._type = null;
-	haxe_ui_containers_dialogs_Dialog.call(this);
-	var hbox = new haxe_ui_containers_HBox();
-	hbox.set_percentWidth(100);
-	hbox.set_styleString("spacing:10px;");
-	this.addComponent(hbox);
-	this.iconImage = new haxe_ui_components_Image();
-	this.iconImage.set_id("iconImage");
-	hbox.addComponent(this.iconImage);
-	this.messageLabel = new haxe_ui_components_Label();
-	this.messageLabel.set_id("messageLabel");
-	this.messageLabel.set_percentWidth(100);
-	hbox.addComponent(this.messageLabel);
-};
-$hxClasses["haxe.ui.backend.MessageBoxBase"] = haxe_ui_backend_MessageBoxBase;
-haxe_ui_backend_MessageBoxBase.__name__ = "haxe.ui.backend.MessageBoxBase";
-haxe_ui_backend_MessageBoxBase.__super__ = haxe_ui_containers_dialogs_Dialog;
-haxe_ui_backend_MessageBoxBase.prototype = $extend(haxe_ui_containers_dialogs_Dialog.prototype,{
-	iconImage: null
-	,messageLabel: null
-	,get_message: function() {
-		return this.messageLabel.get_text();
-	}
-	,set_message: function(value) {
-		this.messageLabel.set_text(value);
-		return value;
-	}
-	,_type: null
-	,get_type: function() {
-		return this._type;
-	}
-	,set_type: function(value) {
-		this._type = haxe_ui_containers_dialogs_MessageBoxType.toString(value);
-		this.iconImage.addClass(this._type);
-		this.addClass(this._type);
-		return value;
-	}
-	,registerBehaviours: function() {
-		haxe_ui_containers_dialogs_Dialog.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_containers_dialogs_Dialog.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new haxe_ui_backend_MessageBoxBase();
-	}
-	,__class__: haxe_ui_backend_MessageBoxBase
-	,__properties__: $extend(haxe_ui_containers_dialogs_Dialog.prototype.__properties__,{set_type:"set_type",get_type:"get_type",set_message:"set_message",get_message:"get_message"})
-});
 var haxe_ui_backend_PlatformBase = function() {
 };
 $hxClasses["haxe.ui.backend.PlatformBase"] = haxe_ui_backend_PlatformBase;
@@ -7000,6 +8466,9 @@ haxe_ui_backend_PlatformBase.prototype = {
 	}
 	,getSystemLocale: function() {
 		return null;
+	}
+	,perf: function() {
+		return HxOverrides.now() / 1000 * 1000;
 	}
 	,__class__: haxe_ui_backend_PlatformBase
 };
@@ -7039,6 +8508,9 @@ haxe_ui_backend_PlatformImpl.prototype = $extend(haxe_ui_backend_PlatformBase.pr
 	}
 	,getSystemLocale: function() {
 		return $global.navigator.language;
+	}
+	,perf: function() {
+		return window.performance.now();
 	}
 	,__class__: haxe_ui_backend_PlatformImpl
 });
@@ -7187,8 +8659,11 @@ haxe_ui_backend_ScreenBase.prototype = {
 var haxe_ui_backend_ScreenImpl = function() {
 	this._hasListener = false;
 	this._pageRoot = null;
+	this._container = null;
 	this._percentContainerHeightAdded = false;
 	this._percentContainerWidthAdded = false;
+	this._height = null;
+	this._width = null;
 	haxe_ui_backend_ScreenBase.call(this);
 	this._mapping = new haxe_ds_StringMap();
 };
@@ -7220,7 +8695,11 @@ haxe_ui_backend_ScreenImpl.prototype = $extend(haxe_ui_backend_ScreenBase.protot
 		window.document.title = s;
 		return s;
 	}
+	,_width: null
 	,get_width: function() {
+		if(this._width != null) {
+			return this._width;
+		}
 		var cx = this.get_container().offsetWidth;
 		if(cx <= 0) {
 			var _g = 0;
@@ -7233,9 +8712,14 @@ haxe_ui_backend_ScreenImpl.prototype = $extend(haxe_ui_backend_ScreenBase.protot
 				}
 			}
 		}
-		return cx / haxe_ui_Toolkit.get_scaleX();
+		this._width = cx / haxe_ui_Toolkit.get_scaleX();
+		return this._width;
 	}
+	,_height: null
 	,get_height: function() {
+		if(this._height != null) {
+			return this._height;
+		}
 		var cy = this.get_container().offsetHeight;
 		if(cy <= 0) {
 			var _g = 0;
@@ -7248,7 +8732,8 @@ haxe_ui_backend_ScreenImpl.prototype = $extend(haxe_ui_backend_ScreenBase.protot
 				}
 			}
 		}
-		return cy / haxe_ui_Toolkit.get_scaleY();
+		this._height = cy / haxe_ui_Toolkit.get_scaleY();
+		return this._height;
 	}
 	,get_isRetina: function() {
 		return haxe_ui_backend_html5_HtmlUtils.isRetinaDisplay();
@@ -7314,8 +8799,12 @@ haxe_ui_backend_ScreenImpl.prototype = $extend(haxe_ui_backend_ScreenBase.protot
 			haxe_ui_backend_html5_HtmlUtils.insertBefore((js_Boot.__cast(this , haxe_ui_core_Screen)).rootComponents[index + 1].element,child.element);
 		}
 	}
+	,_container: null
 	,container: null
 	,get_container: function() {
+		if(this._container != null) {
+			return this._container;
+		}
 		var c = null;
 		if(this.get_options() == null || this.get_options().container == null) {
 			c = window.document.body;
@@ -7331,6 +8820,7 @@ haxe_ui_backend_ScreenImpl.prototype = $extend(haxe_ui_backend_ScreenBase.protot
 				c.parentElement.id = "haxeui-container-parent";
 			}
 		}
+		this._container = c;
 		return c;
 	}
 	,_pageRoot: null
@@ -7358,6 +8848,8 @@ haxe_ui_backend_ScreenImpl.prototype = $extend(haxe_ui_backend_ScreenBase.protot
 		}
 		this._hasListener = true;
 		window.addEventListener("resize",function(e) {
+			_gthis._width = null;
+			_gthis._height = null;
 			_gthis.resizeRootComponents();
 		});
 	}
@@ -7492,6 +8984,7 @@ haxe_ui_backend_ScreenImpl.prototype = $extend(haxe_ui_backend_ScreenBase.protot
 	,__properties__: $extend(haxe_ui_backend_ScreenBase.prototype.__properties__,{get_container:"get_container"})
 });
 var haxe_ui_backend_TextBase = function() {
+	this.forceStaticSize = false;
 	this._textHeight = 0;
 	this._textWidth = 0;
 	this._height = 0;
@@ -7518,6 +9011,7 @@ haxe_ui_backend_TextBase.prototype = {
 	,_textHeight: null
 	,_textStyle: null
 	,_fontInfo: null
+	,forceStaticSize: null
 	,focus: function() {
 	}
 	,blur: function() {
@@ -7561,6 +9055,7 @@ haxe_ui_backend_TextBase.prototype = {
 var haxe_ui_backend_TextDisplayImpl = function() {
 	this._fixedHeight = false;
 	this._fixedWidth = false;
+	this._isHTML = false;
 	haxe_ui_backend_TextBase.call(this);
 	this._displayData.multiline = false;
 	this.element = this.createElement();
@@ -7571,18 +9066,27 @@ haxe_ui_backend_TextDisplayImpl.__super__ = haxe_ui_backend_TextBase;
 haxe_ui_backend_TextDisplayImpl.prototype = $extend(haxe_ui_backend_TextBase.prototype,{
 	element: null
 	,_html: null
+	,_isHTML: null
 	,validateData: function() {
 		var html = null;
 		if(this._text != null) {
 			html = this.normalizeText(this._text);
+			this._isHTML = false;
 		} else if(this._htmlText != null) {
 			html = this.normalizeText(this._htmlText,false);
+			this._isHTML = true;
 		}
 		if(html != null && this._html != html) {
-			this.element.innerHTML = html;
+			if(this._isHTML == false) {
+				this.element.textContent = html;
+			} else {
+				this.element.innerHTML = html;
+			}
 			this._html = html;
-			if(this.get_autoWidth() == false) {
+			if(this.get_autoWidth() == true) {
 				this._fixedWidth = false;
+			}
+			if(this.get_autoHeight() == true) {
 				this._fixedHeight = false;
 			}
 		}
@@ -7634,8 +9138,12 @@ haxe_ui_backend_TextDisplayImpl.prototype = $extend(haxe_ui_backend_TextBase.pro
 			}
 		}
 		if(measureTextRequired == true) {
-			this._fixedWidth = false;
-			this._fixedHeight = false;
+			if(this.get_autoWidth() == true) {
+				this._fixedWidth = false;
+			}
+			if(this.get_autoHeight() == true) {
+				this._fixedHeight = false;
+			}
 		}
 		return measureTextRequired;
 	}
@@ -7660,11 +9168,14 @@ haxe_ui_backend_TextDisplayImpl.prototype = $extend(haxe_ui_backend_TextBase.pro
 			this._fixedHeight = true;
 			style.height = "" + this._height + "px";
 		}
-		if(allowFixed == false) {
-			this._fixedHeight = false;
-		}
+		var tmp = allowFixed == false;
 	}
 	,measureText: function() {
+		if(this.forceStaticSize == true) {
+			if(this._textWidth > 0 && this._textHeight > 0) {
+				return;
+			}
+		}
 		if(this._fixedWidth == true && this._fixedHeight == true) {
 			return;
 		}
@@ -7706,26 +9217,29 @@ haxe_ui_backend_TextDisplayImpl.prototype = $extend(haxe_ui_backend_TextBase.pro
 		} else {
 			div.style.width = "";
 		}
-		div.innerHTML = t;
+		if(this._isHTML == false) {
+			div.textContent = t;
+		} else {
+			div.innerHTML = t;
+		}
 	}
 	,normalizeText: function(text,$escape) {
 		if($escape == null) {
 			$escape = true;
 		}
-		var html = text;
-		if($escape == true) {
-			html = haxe_ui_backend_html5_HtmlUtils.escape(text);
-		}
-		html = StringTools.replace(html,"\\n","\n");
-		html = StringTools.replace(html,"\r\n","<br/>");
-		html = StringTools.replace(html,"\r","<br/>");
-		html = StringTools.replace(html,"\n","<br/>");
-		return html;
+		return text;
 	}
 	,autoWidth: null
 	,get_autoWidth: function() {
 		if(((this.parentComponent) instanceof haxe_ui_components_Label)) {
 			return (js_Boot.__cast(this.parentComponent , haxe_ui_components_Label)).get_autoWidth();
+		}
+		return false;
+	}
+	,autoHeight: null
+	,get_autoHeight: function() {
+		if(((this.parentComponent) instanceof haxe_ui_components_Label)) {
+			return (js_Boot.__cast(this.parentComponent , haxe_ui_components_Label)).get_autoHeight();
 		}
 		return false;
 	}
@@ -7742,7 +9256,7 @@ haxe_ui_backend_TextDisplayImpl.prototype = $extend(haxe_ui_backend_TextBase.pro
 		return div.clientWidth;
 	}
 	,__class__: haxe_ui_backend_TextDisplayImpl
-	,__properties__: $extend(haxe_ui_backend_TextBase.prototype.__properties__,{get_autoWidth:"get_autoWidth"})
+	,__properties__: $extend(haxe_ui_backend_TextBase.prototype.__properties__,{get_autoHeight:"get_autoHeight",get_autoWidth:"get_autoWidth"})
 });
 var haxe_ui_backend_TextInputImpl = function() {
 	haxe_ui_backend_TextDisplayImpl.call(this);
@@ -10139,7 +11653,7 @@ haxe_ui_components_ButtonEvents.prototype = $extend(haxe_ui_events_Events.protot
 			this.registerEvent("move",$bind(this,this.onMove));
 		}
 		if(this._button.get_toggle() == true) {
-			this.registerEvent("click",$bind(this,this.onMouseClick));
+			this.registerEvent("click",$bind(this,this.onMouseClick),100);
 		}
 	}
 	,unregister: function() {
@@ -10379,6 +11893,1015 @@ haxe_ui_components_ButtonBuilder.prototype = $extend(haxe_ui_core_CompositeBuild
 	}
 	,__class__: haxe_ui_components_ButtonBuilder
 });
+var haxe_ui_components_CalendarEvent = function(type,bubble,data) {
+	haxe_ui_events_UIEvent.call(this,type,bubble,data);
+};
+$hxClasses["haxe.ui.components.CalendarEvent"] = haxe_ui_components_CalendarEvent;
+haxe_ui_components_CalendarEvent.__name__ = "haxe.ui.components.CalendarEvent";
+haxe_ui_components_CalendarEvent.__super__ = haxe_ui_events_UIEvent;
+haxe_ui_components_CalendarEvent.prototype = $extend(haxe_ui_events_UIEvent.prototype,{
+	clone: function() {
+		var c = new haxe_ui_components_CalendarEvent(this.type);
+		c.type = this.type;
+		c.bubble = this.bubble;
+		c.target = this.target;
+		c.data = this.data;
+		c.canceled = this.canceled;
+		this.postClone(c);
+		return c;
+	}
+	,__class__: haxe_ui_components_CalendarEvent
+});
+var haxe_ui_containers_Grid = function() {
+	this._columns = -1;
+	haxe_ui_containers_Box.call(this);
+	if(this._columns == -1) {
+		this.set_columns(2);
+	}
+};
+$hxClasses["haxe.ui.containers.Grid"] = haxe_ui_containers_Grid;
+haxe_ui_containers_Grid.__name__ = "haxe.ui.containers.Grid";
+haxe_ui_containers_Grid.__super__ = haxe_ui_containers_Box;
+haxe_ui_containers_Grid.prototype = $extend(haxe_ui_containers_Box.prototype,{
+	_columns: null
+	,get_columns: function() {
+		return (js_Boot.__cast(this._layout , haxe_ui_layouts_VerticalGridLayout)).get_columns();
+	}
+	,set_columns: function(value) {
+		if(this._layout == null) {
+			this.set_layout(this.createLayout());
+		}
+		(js_Boot.__cast(this._layout , haxe_ui_layouts_VerticalGridLayout)).set_columns(value);
+		this._columns = value;
+		return value;
+	}
+	,createDefaults: function() {
+		haxe_ui_containers_Box.prototype.createDefaults.call(this);
+		this._defaultLayoutClass = haxe_ui_layouts_VerticalGridLayout;
+	}
+	,registerBehaviours: function() {
+		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
+		c.set_columns(this.get_columns());
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new haxe_ui_containers_Grid();
+	}
+	,__class__: haxe_ui_containers_Grid
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{set_columns:"set_columns",get_columns:"get_columns"})
+});
+var haxe_ui_components_Calendar = function() {
+	haxe_ui_containers_Grid.call(this);
+};
+$hxClasses["haxe.ui.components.Calendar"] = haxe_ui_components_Calendar;
+haxe_ui_components_Calendar.__name__ = "haxe.ui.components.Calendar";
+haxe_ui_components_Calendar.__super__ = haxe_ui_containers_Grid;
+haxe_ui_components_Calendar.prototype = $extend(haxe_ui_containers_Grid.prototype,{
+	previousMonth: function() {
+		return this.behaviours.call("previousMonth",null);
+	}
+	,nextMonth: function() {
+		return this.behaviours.call("nextMonth",null);
+	}
+	,previousYear: function() {
+		return this.behaviours.call("previousYear",null);
+	}
+	,nextYear: function() {
+		return this.behaviours.call("nextYear",null);
+	}
+	,createDefaults: function() {
+		haxe_ui_containers_Grid.prototype.createDefaults.call(this);
+		this._defaultLayoutClass = haxe_ui_components__$Calendar_Layout;
+	}
+	,registerComposite: function() {
+		haxe_ui_containers_Grid.prototype.registerComposite.call(this);
+		this._internalEventsClass = haxe_ui_components__$Calendar_Events;
+		this._compositeBuilderClass = haxe_ui_components__$Calendar_Builder;
+		this._defaultLayoutClass = haxe_ui_components__$Calendar_Layout;
+	}
+	,registerBehaviours: function() {
+		haxe_ui_containers_Grid.prototype.registerBehaviours.call(this);
+		this.behaviours.register("date",haxe_ui_components__$Calendar_DateBehaviour);
+		this.behaviours.register("selectedDate",haxe_ui_components__$Calendar_SelectedDateBehaviour);
+		this.behaviours.register("previousMonth",haxe_ui_components__$Calendar_PreviousMonthBehaviour);
+		this.behaviours.register("nextMonth",haxe_ui_components__$Calendar_NextMonthBehaviour);
+		this.behaviours.register("previousYear",haxe_ui_components__$Calendar_PreviousYearBehaviour);
+		this.behaviours.register("nextYear",haxe_ui_components__$Calendar_NextYearBehaviour);
+	}
+	,get_date: function() {
+		return haxe_ui_util_Variant.toDate(this.behaviours.get("date"));
+	}
+	,set_date: function(value) {
+		this.behaviours.set("date",haxe_ui_util_Variant.fromDate(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"date"));
+		return value;
+	}
+	,get_selectedDate: function() {
+		return haxe_ui_util_Variant.toDate(this.behaviours.get("selectedDate"));
+	}
+	,set_selectedDate: function(value) {
+		this.behaviours.set("selectedDate",haxe_ui_util_Variant.fromDate(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"selectedDate"));
+		return value;
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_Grid.prototype.cloneComponent.call(this);
+		if(this.get_date() != null) {
+			c.set_date(this.get_date());
+		}
+		if(this.get_selectedDate() != null) {
+			c.set_selectedDate(this.get_selectedDate());
+		}
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new haxe_ui_components_Calendar();
+	}
+	,__class__: haxe_ui_components_Calendar
+	,__properties__: $extend(haxe_ui_containers_Grid.prototype.__properties__,{set_selectedDate:"set_selectedDate",get_selectedDate:"get_selectedDate",set_date:"set_date",get_date:"get_date"})
+});
+var haxe_ui_components__$Calendar_PreviousMonthBehaviour = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._Calendar.PreviousMonthBehaviour"] = haxe_ui_components__$Calendar_PreviousMonthBehaviour;
+haxe_ui_components__$Calendar_PreviousMonthBehaviour.__name__ = "haxe.ui.components._Calendar.PreviousMonthBehaviour";
+haxe_ui_components__$Calendar_PreviousMonthBehaviour.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_components__$Calendar_PreviousMonthBehaviour.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	call: function(param) {
+		var calendar = js_Boot.__cast(this._component , haxe_ui_components_Calendar);
+		calendar.set_date(haxe_ui_components__$Calendar_DateUtils.previousMonth(calendar.get_date()));
+		return null;
+	}
+	,__class__: haxe_ui_components__$Calendar_PreviousMonthBehaviour
+});
+var haxe_ui_components__$Calendar_NextMonthBehaviour = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._Calendar.NextMonthBehaviour"] = haxe_ui_components__$Calendar_NextMonthBehaviour;
+haxe_ui_components__$Calendar_NextMonthBehaviour.__name__ = "haxe.ui.components._Calendar.NextMonthBehaviour";
+haxe_ui_components__$Calendar_NextMonthBehaviour.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_components__$Calendar_NextMonthBehaviour.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	call: function(param) {
+		var calendar = js_Boot.__cast(this._component , haxe_ui_components_Calendar);
+		calendar.set_date(haxe_ui_components__$Calendar_DateUtils.nextMonth(calendar.get_date()));
+		return null;
+	}
+	,__class__: haxe_ui_components__$Calendar_NextMonthBehaviour
+});
+var haxe_ui_components__$Calendar_PreviousYearBehaviour = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._Calendar.PreviousYearBehaviour"] = haxe_ui_components__$Calendar_PreviousYearBehaviour;
+haxe_ui_components__$Calendar_PreviousYearBehaviour.__name__ = "haxe.ui.components._Calendar.PreviousYearBehaviour";
+haxe_ui_components__$Calendar_PreviousYearBehaviour.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_components__$Calendar_PreviousYearBehaviour.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	call: function(param) {
+		var calendar = js_Boot.__cast(this._component , haxe_ui_components_Calendar);
+		calendar.set_date(haxe_ui_components__$Calendar_DateUtils.previousYear(calendar.get_date()));
+		return null;
+	}
+	,__class__: haxe_ui_components__$Calendar_PreviousYearBehaviour
+});
+var haxe_ui_components__$Calendar_NextYearBehaviour = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._Calendar.NextYearBehaviour"] = haxe_ui_components__$Calendar_NextYearBehaviour;
+haxe_ui_components__$Calendar_NextYearBehaviour.__name__ = "haxe.ui.components._Calendar.NextYearBehaviour";
+haxe_ui_components__$Calendar_NextYearBehaviour.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_components__$Calendar_NextYearBehaviour.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	call: function(param) {
+		var calendar = js_Boot.__cast(this._component , haxe_ui_components_Calendar);
+		calendar.set_date(haxe_ui_components__$Calendar_DateUtils.nextYear(calendar.get_date()));
+		return null;
+	}
+	,__class__: haxe_ui_components__$Calendar_NextYearBehaviour
+});
+var haxe_ui_components__$Calendar_SelectedDateBehaviour = function(component) {
+	haxe_ui_behaviours_DefaultBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._Calendar.SelectedDateBehaviour"] = haxe_ui_components__$Calendar_SelectedDateBehaviour;
+haxe_ui_components__$Calendar_SelectedDateBehaviour.__name__ = "haxe.ui.components._Calendar.SelectedDateBehaviour";
+haxe_ui_components__$Calendar_SelectedDateBehaviour.__super__ = haxe_ui_behaviours_DefaultBehaviour;
+haxe_ui_components__$Calendar_SelectedDateBehaviour.prototype = $extend(haxe_ui_behaviours_DefaultBehaviour.prototype,{
+	set: function(value) {
+		haxe_ui_behaviours_DefaultBehaviour.prototype.set.call(this,value);
+		var date = haxe_ui_util_Variant.toDate(value);
+		this._component.invalidateComponent("data",false);
+		var calendar = js_Boot.__cast(this._component , haxe_ui_components_Calendar);
+		calendar.set_date(date);
+		this._component.dispatch(new haxe_ui_events_UIEvent("change"));
+	}
+	,__class__: haxe_ui_components__$Calendar_SelectedDateBehaviour
+});
+var haxe_ui_components__$Calendar_DateBehaviour = function(component) {
+	haxe_ui_behaviours_DataBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._Calendar.DateBehaviour"] = haxe_ui_components__$Calendar_DateBehaviour;
+haxe_ui_components__$Calendar_DateBehaviour.__name__ = "haxe.ui.components._Calendar.DateBehaviour";
+haxe_ui_components__$Calendar_DateBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_components__$Calendar_DateBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	validateData: function() {
+		var date = haxe_ui_util_Variant.toDate(this._value);
+		if(date == null) {
+			return;
+		}
+		var year = date.getFullYear();
+		var month = date.getMonth();
+		var startDay = new Date(year,month,1,0,0,0).getDay();
+		var endDay = haxe_ui_components__$Calendar_DateUtils.getEndDay(month,year);
+		var _g = 0;
+		var _this = this._component;
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			child.set_opacity(.3);
+			child.removeClass("calendar-off-day");
+			child.removeClass("calendar-day");
+			child.removeClass("calendar-day-selected");
+			child.removeClass(":hover");
+		}
+		var prevMonth = haxe_ui_components__$Calendar_DateUtils.previousMonth(date);
+		var last = haxe_ui_components__$Calendar_DateUtils.getEndDay(prevMonth.getMonth(),prevMonth.getFullYear());
+		var n = startDay - 1;
+		var _g = 0;
+		var _g1 = startDay;
+		while(_g < _g1) {
+			var _ = _g++;
+			var _this = this._component;
+			var item = (_this._children == null ? [] : _this._children)[n];
+			item.addClass("calendar-off-day");
+			--n;
+			item.set_text("" + last);
+			--last;
+		}
+		var selectedDate = (js_Boot.__cast(this._component , haxe_ui_components_Calendar)).get_selectedDate();
+		if(selectedDate == null) {
+			selectedDate = new Date();
+		}
+		var _g = 0;
+		var _g1 = endDay;
+		while(_g < _g1) {
+			var i = _g++;
+			var _this = this._component;
+			var item = (_this._children == null ? [] : _this._children)[i + startDay];
+			item.addClass("calendar-day");
+			item.set_opacity(1);
+			item.set_hidden(false);
+			item.set_text("" + (i + 1));
+			if(i + 1 == selectedDate.getDate() && month == selectedDate.getMonth() && year == selectedDate.getFullYear()) {
+				item.addClass("calendar-day-selected");
+			}
+			last = i + startDay;
+		}
+		++last;
+		var n = 0;
+		var _g = last;
+		var _this = this._component;
+		var _g1 = (_this._children == null ? [] : _this._children).length;
+		while(_g < _g1) {
+			var i = _g++;
+			var _this = this._component;
+			var item = (_this._children == null ? [] : _this._children)[i];
+			item.addClass("calendar-off-day");
+			item.set_text("" + (n + 1));
+			++n;
+		}
+		this._component.registerInternalEvents(null,true);
+		this._component.dispatch(new haxe_ui_components_CalendarEvent("datechange"));
+	}
+	,__class__: haxe_ui_components__$Calendar_DateBehaviour
+});
+var haxe_ui_components__$Calendar_DateUtils = function() { };
+$hxClasses["haxe.ui.components._Calendar.DateUtils"] = haxe_ui_components__$Calendar_DateUtils;
+haxe_ui_components__$Calendar_DateUtils.__name__ = "haxe.ui.components._Calendar.DateUtils";
+haxe_ui_components__$Calendar_DateUtils.getEndDay = function(month,year) {
+	var endDay = -1;
+	switch(month) {
+	case 1:
+		if(year % 400 == 0 || year % 100 != 0 && year % 4 == 0) {
+			endDay = 29;
+		} else {
+			endDay = 28;
+		}
+		break;
+	case 3:case 5:case 8:case 10:
+		endDay = 30;
+		break;
+	default:
+		endDay = 31;
+	}
+	return endDay;
+};
+haxe_ui_components__$Calendar_DateUtils.previousMonth = function(date) {
+	var year = date.getFullYear();
+	var month = date.getMonth();
+	var day = date.getDate();
+	--month;
+	if(month < 0) {
+		month = 11;
+		--year;
+	}
+	day = js_Boot.__cast(Math.min(day,haxe_ui_components__$Calendar_DateUtils.getEndDay(month,year)) , Int);
+	date = new Date(year,month,day,0,0,0);
+	return date;
+};
+haxe_ui_components__$Calendar_DateUtils.nextMonth = function(date) {
+	var year = date.getFullYear();
+	var month = date.getMonth();
+	var day = date.getDate();
+	++month;
+	if(month > 11) {
+		month = 0;
+		++year;
+	}
+	day = js_Boot.__cast(Math.min(day,haxe_ui_components__$Calendar_DateUtils.getEndDay(month,year)) , Int);
+	date = new Date(year,month,day,0,0,0);
+	return date;
+};
+haxe_ui_components__$Calendar_DateUtils.previousYear = function(date) {
+	var year = date.getFullYear();
+	var month = date.getMonth();
+	var day = date.getDate();
+	--year;
+	day = js_Boot.__cast(Math.min(day,haxe_ui_components__$Calendar_DateUtils.getEndDay(month,year)) , Int);
+	date = new Date(year,month,day,0,0,0);
+	return date;
+};
+haxe_ui_components__$Calendar_DateUtils.nextYear = function(date) {
+	var year = date.getFullYear();
+	var month = date.getMonth();
+	var day = date.getDate();
+	++year;
+	day = js_Boot.__cast(Math.min(day,haxe_ui_components__$Calendar_DateUtils.getEndDay(month,year)) , Int);
+	date = new Date(year,month,day,0,0,0);
+	return date;
+};
+var haxe_ui_components__$Calendar_Events = function(target) {
+	haxe_ui_events_Events.call(this,target);
+};
+$hxClasses["haxe.ui.components._Calendar.Events"] = haxe_ui_components__$Calendar_Events;
+haxe_ui_components__$Calendar_Events.__name__ = "haxe.ui.components._Calendar.Events";
+haxe_ui_components__$Calendar_Events.__super__ = haxe_ui_events_Events;
+haxe_ui_components__$Calendar_Events.prototype = $extend(haxe_ui_events_Events.prototype,{
+	register: function() {
+		this.unregister();
+		var _g = 0;
+		var _this = this._target;
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.hasEvent("click",$bind(this,this.onDayClicked)) == false && child.classes.indexOf("calendar-day") != -1) {
+				child.registerEvent("click",$bind(this,this.onDayClicked));
+			}
+		}
+	}
+	,unregister: function() {
+		var _g = 0;
+		var _this = this._target;
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			child.unregisterEvent("click",$bind(this,this.onDayClicked));
+		}
+	}
+	,onDayClicked: function(event) {
+		var calendar = js_Boot.__cast(this._target , haxe_ui_components_Calendar);
+		var day = Std.parseInt(event.target.get_text());
+		var month = calendar.get_date().getMonth();
+		var year = calendar.get_date().getFullYear();
+		calendar.set_selectedDate(new Date(year,month,day,0,0,0));
+	}
+	,__class__: haxe_ui_components__$Calendar_Events
+});
+var haxe_ui_components__$Calendar_Builder = function(calendar) {
+	haxe_ui_core_CompositeBuilder.call(this,calendar);
+	this._calendar = calendar;
+};
+$hxClasses["haxe.ui.components._Calendar.Builder"] = haxe_ui_components__$Calendar_Builder;
+haxe_ui_components__$Calendar_Builder.__name__ = "haxe.ui.components._Calendar.Builder";
+haxe_ui_components__$Calendar_Builder.__super__ = haxe_ui_core_CompositeBuilder;
+haxe_ui_components__$Calendar_Builder.prototype = $extend(haxe_ui_core_CompositeBuilder.prototype,{
+	_calendar: null
+	,create: function() {
+		this._calendar.set_columns(7);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		var item = new haxe_ui_components_Button();
+		item.set_scriptAccess(false);
+		this._calendar.addComponent(item);
+		this._calendar.set_date(new Date());
+	}
+	,__class__: haxe_ui_components__$Calendar_Builder
+});
+var haxe_ui_layouts_VerticalGridLayout = function() {
+	this._columns = 1;
+	haxe_ui_layouts_Layout.call(this);
+};
+$hxClasses["haxe.ui.layouts.VerticalGridLayout"] = haxe_ui_layouts_VerticalGridLayout;
+haxe_ui_layouts_VerticalGridLayout.__name__ = "haxe.ui.layouts.VerticalGridLayout";
+haxe_ui_layouts_VerticalGridLayout.__super__ = haxe_ui_layouts_Layout;
+haxe_ui_layouts_VerticalGridLayout.prototype = $extend(haxe_ui_layouts_Layout.prototype,{
+	_columns: null
+	,get_columns: function() {
+		return this._columns;
+	}
+	,set_columns: function(value) {
+		if(this._columns == value) {
+			return value;
+		}
+		this._columns = value;
+		if(this._component != null) {
+			var _this = this._component;
+			if(!(_this._layout == null || _this._layoutLocked == true)) {
+				_this.invalidateComponent("layout",false);
+			}
+		}
+		return value;
+	}
+	,get_usableSize: function() {
+		var size = haxe_ui_layouts_Layout.prototype.get_usableSize.call(this);
+		var columnWidths = this.calcColumnWidths(size,false);
+		var rowHeights = this.calcRowHeights(size,false);
+		var _g = 0;
+		while(_g < columnWidths.length) {
+			var columnWidth = columnWidths[_g];
+			++_g;
+			size.width -= columnWidth;
+		}
+		var _g = 0;
+		while(_g < rowHeights.length) {
+			var rowHeight = rowHeights[_g];
+			++_g;
+			size.height -= rowHeight;
+		}
+		var _this = this.get_component();
+		if((_this._children == null ? [] : _this._children).length > 1) {
+			var _this = this.get_component();
+			var rows = Math.ceil((_this._children == null ? [] : _this._children).length / this.get_columns());
+			var c = this.get_columns();
+			var _this = this.get_component();
+			var c1 = Math.min(c,(_this._children == null ? [] : _this._children).length);
+			size.width -= this.get_horizontalSpacing() * (c1 - 1);
+			size.height -= this.get_verticalSpacing() * (rows - 1);
+		}
+		if(size.width < 0) {
+			size.width = 0;
+		}
+		if(size.height < 0) {
+			size.height = 0;
+		}
+		return size;
+	}
+	,resizeChildren: function() {
+		var size = this.get_usableSize();
+		var columnWidths = this.calcColumnWidths(size,true);
+		var rowHeights = this.calcRowHeights(size,true);
+		var explicitWidths = this.calcExplicitWidths();
+		var explicitHeights = this.calcExplicitHeights();
+		var rowIndex = 0;
+		var columnIndex = 0;
+		var _g = 0;
+		var _this = this.get_component();
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.get_includeInLayout() == false) {
+				continue;
+			}
+			var cx = null;
+			var cy = null;
+			if(child.get_percentWidth() != null) {
+				var ucx = columnWidths[columnIndex];
+				if(explicitWidths[columnIndex] == false) {
+					cx = ucx;
+				} else {
+					cx = ucx * child.get_percentWidth() / 100;
+				}
+			}
+			if(child.get_percentHeight() != null) {
+				var ucy = rowHeights[rowIndex];
+				if(explicitHeights[rowIndex] == false) {
+					cy = ucy;
+				} else {
+					cy = ucy * child.get_percentHeight() / 100;
+				}
+			}
+			child.resizeComponent(cx,cy);
+			++columnIndex;
+			if(columnIndex >= this._columns) {
+				columnIndex = 0;
+				++rowIndex;
+			}
+		}
+	}
+	,repositionChildren: function() {
+		var size = this.get_usableSize();
+		var columnWidths = this.calcColumnWidths(size,true);
+		var rowHeights = this.calcRowHeights(size,true);
+		var rowIndex = 0;
+		var columnIndex = 0;
+		var xpos = this.get_paddingLeft();
+		var ypos = this.get_paddingTop();
+		var _g = 0;
+		var _this = this.get_component();
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.get_includeInLayout() == false) {
+				continue;
+			}
+			var halign = this.horizontalAlign(child);
+			var valign = this.verticalAlign(child);
+			var xposChild = 0;
+			var yposChild = 0;
+			switch(halign) {
+			case "center":
+				xposChild = xpos + (columnWidths[columnIndex] - child.get_componentWidth()) * 0.5 + this.marginLeft(child) - this.marginRight(child);
+				break;
+			case "right":
+				xposChild = xpos + (columnWidths[columnIndex] - child.get_componentWidth()) + this.marginLeft(child) - this.marginRight(child);
+				break;
+			default:
+				xposChild = xpos + this.marginLeft(child) - this.marginRight(child);
+			}
+			switch(valign) {
+			case "bottom":
+				yposChild = ypos + (rowHeights[rowIndex] - child.get_componentHeight()) + this.marginTop(child) - this.marginBottom(child);
+				break;
+			case "center":
+				yposChild = ypos + (rowHeights[rowIndex] - child.get_componentHeight()) * 0.5 + this.marginTop(child) - this.marginBottom(child);
+				break;
+			default:
+				yposChild = ypos + this.marginTop(child) - this.marginBottom(child);
+			}
+			child.moveComponent(xposChild,yposChild);
+			xpos += columnWidths[columnIndex] + this.get_horizontalSpacing();
+			++columnIndex;
+			if(columnIndex >= this.get_columns()) {
+				xpos = this.get_paddingLeft();
+				ypos += rowHeights[rowIndex] + this.get_verticalSpacing();
+				columnIndex = 0;
+				++rowIndex;
+			}
+		}
+	}
+	,calcColumnWidths: function(usableSize,includePercentage) {
+		var columnWidths = [];
+		var _g = 0;
+		var _g1 = this._columns;
+		while(_g < _g1) {
+			var _ = _g++;
+			columnWidths.push(0);
+		}
+		var rowIndex = 0;
+		var columnIndex = 0;
+		var _g = 0;
+		var _this = this.get_component();
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.get_includeInLayout() == false) {
+				continue;
+			}
+			if(child.get_percentWidth() == null) {
+				if(child.get_componentWidth() > columnWidths[columnIndex]) {
+					columnWidths[columnIndex] = child.get_componentWidth();
+				}
+			}
+			++columnIndex;
+			if(columnIndex >= this._columns) {
+				columnIndex = 0;
+				++rowIndex;
+			}
+		}
+		if(includePercentage) {
+			rowIndex = 0;
+			columnIndex = 0;
+			var fullWidthsCounts = [0];
+			var _g = 0;
+			var _this = this.get_component();
+			var _g1 = _this._children == null ? [] : _this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				if(child.get_includeInLayout() == false) {
+					continue;
+				}
+				if(child.get_percentWidth() != null && child.get_percentWidth() == 100) {
+					fullWidthsCounts[rowIndex]++;
+				}
+				++columnIndex;
+				if(columnIndex >= this._columns) {
+					columnIndex = 0;
+					++rowIndex;
+					fullWidthsCounts.push(0);
+				}
+			}
+			rowIndex = 0;
+			columnIndex = 0;
+			var _g = 0;
+			var _this = this.get_component();
+			var _g1 = _this._children == null ? [] : _this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				if(child.get_includeInLayout() == false) {
+					continue;
+				}
+				if(child.get_percentWidth() != null) {
+					var childPercentWidth = child.get_percentWidth();
+					if(childPercentWidth == 100 && fullWidthsCounts[rowIndex] != 0) {
+						var f = fullWidthsCounts[rowIndex];
+						if(rowIndex > 0 && fullWidthsCounts[rowIndex - 1] != 0) {
+							f = fullWidthsCounts[rowIndex - 1];
+						}
+						childPercentWidth = 100 / f;
+					}
+					var cx = usableSize.width * childPercentWidth / 100;
+					if(cx > columnWidths[columnIndex]) {
+						columnWidths[columnIndex] = cx;
+					}
+				}
+				++columnIndex;
+				if(columnIndex >= this._columns) {
+					columnIndex = 0;
+					++rowIndex;
+				}
+			}
+		}
+		return columnWidths;
+	}
+	,calcRowHeights: function(usableSize,includePercentage) {
+		var _this = this.get_component();
+		var visibleChildren = (_this._children == null ? [] : _this._children).length;
+		var _g = 0;
+		var _this = this.get_component();
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.get_includeInLayout() == false) {
+				--visibleChildren;
+			}
+		}
+		var rowCount = visibleChildren / this._columns | 0;
+		if(visibleChildren % this._columns != 0) {
+			++rowCount;
+		}
+		var rowHeights = [];
+		var _g = 0;
+		var _g1 = rowCount;
+		while(_g < _g1) {
+			var _ = _g++;
+			rowHeights.push(0);
+		}
+		var rowIndex = 0;
+		var columnIndex = 0;
+		var _g = 0;
+		var _this = this.get_component();
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.get_includeInLayout() == false) {
+				continue;
+			}
+			if(child.get_percentHeight() == null) {
+				if(child.get_height() > rowHeights[rowIndex]) {
+					rowHeights[rowIndex] = child.get_height();
+				}
+			}
+			++columnIndex;
+			if(columnIndex >= this._columns) {
+				columnIndex = 0;
+				++rowIndex;
+			}
+		}
+		if(includePercentage) {
+			rowIndex = 0;
+			columnIndex = 0;
+			var newRow = true;
+			var fullHeightRowCount = 0;
+			var _g = 0;
+			var _this = this.get_component();
+			var _g1 = _this._children == null ? [] : _this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				if(child.get_includeInLayout() == false) {
+					continue;
+				}
+				if(child.get_percentHeight() != null && child.get_percentHeight() == 100) {
+					if(newRow == true) {
+						newRow = false;
+						++fullHeightRowCount;
+					}
+				}
+				++columnIndex;
+				if(columnIndex >= this._columns) {
+					columnIndex = 0;
+					++rowIndex;
+					newRow = true;
+				}
+			}
+			rowIndex = 0;
+			columnIndex = 0;
+			var _g = 0;
+			var _this = this.get_component();
+			var _g1 = _this._children == null ? [] : _this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				if(child.get_includeInLayout() == false) {
+					continue;
+				}
+				if(child.get_percentHeight() != null) {
+					var childPercentHeight = child.get_percentHeight();
+					if(childPercentHeight == 100 && fullHeightRowCount > 1) {
+						childPercentHeight = 100 / fullHeightRowCount;
+					}
+					var cy = usableSize.height * childPercentHeight / 100;
+					if(cy > rowHeights[rowIndex]) {
+						rowHeights[rowIndex] = cy;
+					} else {
+						var tmp = usableSize.height > rowHeights[rowIndex];
+					}
+				}
+				++columnIndex;
+				if(columnIndex >= this._columns) {
+					columnIndex = 0;
+					++rowIndex;
+				}
+			}
+		}
+		return rowHeights;
+	}
+	,calcExplicitWidths: function() {
+		var explicitWidths = [];
+		var _g = 0;
+		var _g1 = this._columns;
+		while(_g < _g1) {
+			var _ = _g++;
+			explicitWidths.push(false);
+		}
+		var rowIndex = 0;
+		var columnIndex = 0;
+		var _g = 0;
+		var _this = this.get_component();
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.get_includeInLayout() == false) {
+				continue;
+			}
+			if(child.get_percentWidth() == null && child.get_componentWidth() > 0) {
+				explicitWidths[columnIndex] = true;
+			}
+			++columnIndex;
+			if(columnIndex >= this._columns) {
+				columnIndex = 0;
+				++rowIndex;
+			}
+		}
+		return explicitWidths;
+	}
+	,calcExplicitHeights: function() {
+		var _this = this.get_component();
+		var visibleChildren = (_this._children == null ? [] : _this._children).length;
+		var _g = 0;
+		var _this = this.get_component();
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.get_includeInLayout() == false) {
+				--visibleChildren;
+			}
+		}
+		var rowCount = visibleChildren / this.get_columns() | 0;
+		if(visibleChildren % this._columns != 0) {
+			++rowCount;
+		}
+		var explicitHeights = [];
+		var _g = 0;
+		var _g1 = rowCount;
+		while(_g < _g1) {
+			var _ = _g++;
+			explicitHeights.push(false);
+		}
+		var rowIndex = 0;
+		var columnIndex = 0;
+		var _g = 0;
+		var _this = this.get_component();
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.get_includeInLayout() == false) {
+				continue;
+			}
+			if(child.get_percentHeight() == null && child.get_componentHeight() > 0) {
+				explicitHeights[columnIndex % this._columns] = true;
+			}
+			++columnIndex;
+			if(columnIndex >= this._columns) {
+				columnIndex = 0;
+				++rowIndex;
+			}
+		}
+		return explicitHeights;
+	}
+	,__class__: haxe_ui_layouts_VerticalGridLayout
+	,__properties__: $extend(haxe_ui_layouts_Layout.prototype.__properties__,{set_columns:"set_columns",get_columns:"get_columns"})
+});
+var haxe_ui_components__$Calendar_Layout = function() {
+	haxe_ui_layouts_VerticalGridLayout.call(this);
+};
+$hxClasses["haxe.ui.components._Calendar.Layout"] = haxe_ui_components__$Calendar_Layout;
+haxe_ui_components__$Calendar_Layout.__name__ = "haxe.ui.components._Calendar.Layout";
+haxe_ui_components__$Calendar_Layout.__super__ = haxe_ui_layouts_VerticalGridLayout;
+haxe_ui_components__$Calendar_Layout.prototype = $extend(haxe_ui_layouts_VerticalGridLayout.prototype,{
+	resizeChildren: function() {
+		var max = 0;
+		var _g = 0;
+		var _this = this.get_component();
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.get_layout() == null) {
+				continue;
+			}
+			if(child.get_width() > child.get_layout().get_paddingLeft() + child.get_layout().get_paddingRight() && child.get_width() > max) {
+				max = child.get_width();
+			}
+			if(child.get_width() > child.get_layout().get_paddingTop() + child.get_layout().get_paddingBottom() && child.get_height() > max) {
+				max = child.get_height();
+			}
+		}
+		if(max > 0) {
+			var _g = 0;
+			var _this = this.get_component();
+			var _g1 = _this._children == null ? [] : _this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				child.set_width(max);
+				child.set_height(max);
+			}
+		}
+	}
+	,__class__: haxe_ui_components__$Calendar_Layout
+});
 var haxe_ui_components_Column = function() {
 	this._sortDirection = null;
 	haxe_ui_components_Button.call(this);
@@ -10477,6 +13000,779 @@ haxe_ui_components__$Column_Events.prototype = $extend(haxe_ui_components_Button
 		this._column.dispatch(sortEvent);
 	}
 	,__class__: haxe_ui_components__$Column_Events
+});
+var haxe_ui_core_IDataComponent = function() { };
+$hxClasses["haxe.ui.core.IDataComponent"] = haxe_ui_core_IDataComponent;
+haxe_ui_core_IDataComponent.__name__ = "haxe.ui.core.IDataComponent";
+haxe_ui_core_IDataComponent.__isInterface__ = true;
+haxe_ui_core_IDataComponent.prototype = {
+	get_dataSource: null
+	,set_dataSource: null
+	,__class__: haxe_ui_core_IDataComponent
+	,__properties__: {set_dataSource:"set_dataSource",get_dataSource:"get_dataSource"}
+};
+var haxe_ui_components_DropDown = function() {
+	haxe_ui_components_Button.call(this);
+};
+$hxClasses["haxe.ui.components.DropDown"] = haxe_ui_components_DropDown;
+haxe_ui_components_DropDown.__name__ = "haxe.ui.components.DropDown";
+haxe_ui_components_DropDown.__interfaces__ = [haxe_ui_core_IDataComponent];
+haxe_ui_components_DropDown.__super__ = haxe_ui_components_Button;
+haxe_ui_components_DropDown.prototype = $extend(haxe_ui_components_Button.prototype,{
+	hideDropDown: function() {
+		return this.behaviours.call("hideDropDown",null);
+	}
+	,onThemeChanged: function() {
+		haxe_ui_components_Button.prototype.onThemeChanged.call(this);
+		var builder = js_Boot.__cast(this._compositeBuilder , haxe_ui_components_DropDownBuilder);
+		builder.onThemeChanged();
+	}
+	,registerComposite: function() {
+		haxe_ui_components_Button.prototype.registerComposite.call(this);
+		this._internalEventsClass = haxe_ui_components_DropDownEvents;
+		this._compositeBuilderClass = haxe_ui_components_DropDownBuilder;
+	}
+	,registerBehaviours: function() {
+		haxe_ui_components_Button.prototype.registerBehaviours.call(this);
+		this.behaviours.register("handlerStyleNames",haxe_ui_behaviours_DefaultBehaviour);
+		this.behaviours.register("dataSource",haxe_ui_components__$DropDown_DataSourceBehaviour);
+		this.behaviours.register("type",haxe_ui_behaviours_DefaultBehaviour,haxe_ui_util_Variant.fromString("list"));
+		this.behaviours.register("virtual",haxe_ui_behaviours_DefaultBehaviour,haxe_ui_util_Variant.fromBool(false));
+		this.behaviours.register("dropdownWidth",haxe_ui_behaviours_DefaultBehaviour);
+		this.behaviours.register("dropdownHeight",haxe_ui_behaviours_DefaultBehaviour);
+		this.behaviours.register("dropdownSize",haxe_ui_behaviours_DefaultBehaviour);
+		this.behaviours.register("selectedIndex",haxe_ui_components__$DropDown_SelectedIndexBehaviour,haxe_ui_util_Variant.fromInt(-1));
+		this.behaviours.register("selectedItem",haxe_ui_components__$DropDown_SelectedItemBehaviour);
+		this.behaviours.register("hideDropDown",haxe_ui_components__$DropDown_HideDropDown);
+	}
+	,get_handlerStyleNames: function() {
+		return haxe_ui_util_Variant.toString(this.behaviours.get("handlerStyleNames"));
+	}
+	,set_handlerStyleNames: function(value) {
+		var _g = Type.typeof(value);
+		if(_g._hx_index == 6) {
+			if(_g.c == String) {
+				if(value != null && value.indexOf("{{") != -1 && value.indexOf("}}") != -1) {
+					haxe_ui_locale_LocaleManager.get_instance().registerComponent(this,"handlerStyleNames",null,value);
+					return value;
+				}
+			}
+		}
+		this.behaviours.set("handlerStyleNames",haxe_ui_util_Variant.fromString(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"handlerStyleNames"));
+		return value;
+	}
+	,get_dataSource: function() {
+		return haxe_ui_util_Variant.toDataSource(this.behaviours.get("dataSource"));
+	}
+	,set_dataSource: function(value) {
+		this.behaviours.set("dataSource",haxe_ui_util_Variant.fromDataSource(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"dataSource"));
+		return value;
+	}
+	,get_type: function() {
+		return haxe_ui_util_Variant.toString(this.behaviours.get("type"));
+	}
+	,set_type: function(value) {
+		var _g = Type.typeof(value);
+		if(_g._hx_index == 6) {
+			if(_g.c == String) {
+				if(value != null && value.indexOf("{{") != -1 && value.indexOf("}}") != -1) {
+					haxe_ui_locale_LocaleManager.get_instance().registerComponent(this,"type",null,value);
+					return value;
+				}
+			}
+		}
+		this.behaviours.set("type",haxe_ui_util_Variant.fromString(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"type"));
+		return value;
+	}
+	,get_virtual: function() {
+		return haxe_ui_util_Variant.toBool(this.behaviours.get("virtual"));
+	}
+	,set_virtual: function(value) {
+		this.behaviours.set("virtual",haxe_ui_util_Variant.fromBool(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"virtual"));
+		return value;
+	}
+	,get_dropdownWidth: function() {
+		return haxe_ui_util_Variant.toFloat(this.behaviours.get("dropdownWidth"));
+	}
+	,set_dropdownWidth: function(value) {
+		this.behaviours.set("dropdownWidth",haxe_ui_util_Variant.fromFloat(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"dropdownWidth"));
+		return value;
+	}
+	,get_dropdownHeight: function() {
+		return haxe_ui_util_Variant.toFloat(this.behaviours.get("dropdownHeight"));
+	}
+	,set_dropdownHeight: function(value) {
+		this.behaviours.set("dropdownHeight",haxe_ui_util_Variant.fromFloat(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"dropdownHeight"));
+		return value;
+	}
+	,get_dropdownSize: function() {
+		return haxe_ui_util_Variant.toInt(this.behaviours.get("dropdownSize"));
+	}
+	,set_dropdownSize: function(value) {
+		this.behaviours.set("dropdownSize",haxe_ui_util_Variant.fromInt(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"dropdownSize"));
+		return value;
+	}
+	,get_selectedIndex: function() {
+		return haxe_ui_util_Variant.toInt(this.behaviours.get("selectedIndex"));
+	}
+	,set_selectedIndex: function(value) {
+		this.behaviours.set("selectedIndex",haxe_ui_util_Variant.fromInt(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"selectedIndex"));
+		return value;
+	}
+	,get_selectedItem: function() {
+		return this.behaviours.getDynamic("selectedItem");
+	}
+	,set_selectedItem: function(value) {
+		this.behaviours.setDynamic("selectedItem",value);
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"selectedItem"));
+		return value;
+	}
+	,get_value: function() {
+		return this.get_selectedItem();
+	}
+	,set_value: function(value) {
+		this.set_selectedItem(value);
+		return value;
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_components_Button.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new haxe_ui_components_DropDown();
+	}
+	,__class__: haxe_ui_components_DropDown
+	,__properties__: $extend(haxe_ui_components_Button.prototype.__properties__,{set_selectedItem:"set_selectedItem",get_selectedItem:"get_selectedItem",set_selectedIndex:"set_selectedIndex",get_selectedIndex:"get_selectedIndex",set_dropdownSize:"set_dropdownSize",get_dropdownSize:"get_dropdownSize",set_dropdownHeight:"set_dropdownHeight",get_dropdownHeight:"get_dropdownHeight",set_dropdownWidth:"set_dropdownWidth",get_dropdownWidth:"get_dropdownWidth",set_virtual:"set_virtual",get_virtual:"get_virtual",set_type:"set_type",get_type:"get_type",set_dataSource:"set_dataSource",get_dataSource:"get_dataSource",set_handlerStyleNames:"set_handlerStyleNames",get_handlerStyleNames:"get_handlerStyleNames"})
+});
+var haxe_ui_components__$DropDown_HideDropDown = function(component) {
+	haxe_ui_behaviours_DefaultBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._DropDown.HideDropDown"] = haxe_ui_components__$DropDown_HideDropDown;
+haxe_ui_components__$DropDown_HideDropDown.__name__ = "haxe.ui.components._DropDown.HideDropDown";
+haxe_ui_components__$DropDown_HideDropDown.__super__ = haxe_ui_behaviours_DefaultBehaviour;
+haxe_ui_components__$DropDown_HideDropDown.prototype = $extend(haxe_ui_behaviours_DefaultBehaviour.prototype,{
+	call: function(param) {
+		var events = js_Boot.__cast(this._component._internalEvents , haxe_ui_components_DropDownEvents);
+		events.hideDropDown();
+		return null;
+	}
+	,__class__: haxe_ui_components__$DropDown_HideDropDown
+});
+var haxe_ui_components__$DropDown_DataSourceBehaviour = function(component) {
+	haxe_ui_behaviours_DefaultBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._DropDown.DataSourceBehaviour"] = haxe_ui_components__$DropDown_DataSourceBehaviour;
+haxe_ui_components__$DropDown_DataSourceBehaviour.__name__ = "haxe.ui.components._DropDown.DataSourceBehaviour";
+haxe_ui_components__$DropDown_DataSourceBehaviour.__super__ = haxe_ui_behaviours_DefaultBehaviour;
+haxe_ui_components__$DropDown_DataSourceBehaviour.prototype = $extend(haxe_ui_behaviours_DefaultBehaviour.prototype,{
+	get: function() {
+		if(this._value == null || haxe_ui_util_Variant.get_isNull(this._value) == true) {
+			this._value = haxe_ui_util_Variant.fromDataSource(new haxe_ui_data_ArrayDataSource());
+		}
+		return this._value;
+	}
+	,set: function(value) {
+		haxe_ui_behaviours_DefaultBehaviour.prototype.set.call(this,value);
+		if(haxe_ui_util_Variant.eq(value,this._value)) {
+			return;
+		}
+		var handler = (js_Boot.__cast(this._component._compositeBuilder , haxe_ui_components_DropDownBuilder)).get_handler();
+		handler.reset();
+		if(this._component.get_text() == null && this._component.get_isReady()) {
+			(js_Boot.__cast(this._component , haxe_ui_components_DropDown)).set_selectedIndex(0);
+		}
+	}
+	,__class__: haxe_ui_components__$DropDown_DataSourceBehaviour
+});
+var haxe_ui_components__$DropDown_SelectedIndexBehaviour = function(component) {
+	haxe_ui_behaviours_DataBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._DropDown.SelectedIndexBehaviour"] = haxe_ui_components__$DropDown_SelectedIndexBehaviour;
+haxe_ui_components__$DropDown_SelectedIndexBehaviour.__name__ = "haxe.ui.components._DropDown.SelectedIndexBehaviour";
+haxe_ui_components__$DropDown_SelectedIndexBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_components__$DropDown_SelectedIndexBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	validateData: function() {
+		var handler = (js_Boot.__cast(this._component._compositeBuilder , haxe_ui_components_DropDownBuilder)).get_handler();
+		handler.set_selectedIndex(haxe_ui_util_Variant.toInt(this._value));
+	}
+	,get: function() {
+		if(this._component.get_isReady() == false) {
+			return haxe_ui_behaviours_DataBehaviour.prototype.get.call(this);
+		}
+		var handler = (js_Boot.__cast(this._component._compositeBuilder , haxe_ui_components_DropDownBuilder)).get_handler();
+		return haxe_ui_util_Variant.fromInt(handler.get_selectedIndex());
+	}
+	,set: function(value) {
+		if(this._component.get_isReady() == false) {
+			haxe_ui_behaviours_DataBehaviour.prototype.set.call(this,value);
+			return;
+		}
+		if(haxe_ui_util_Variant.eq(value,this.get())) {
+			return;
+		}
+		this._value = value;
+		this.invalidateData();
+		var handler = (js_Boot.__cast(this._component._compositeBuilder , haxe_ui_components_DropDownBuilder)).get_handler();
+		handler.set_selectedIndex(haxe_ui_util_Variant.toInt(this._value));
+	}
+	,__class__: haxe_ui_components__$DropDown_SelectedIndexBehaviour
+});
+var haxe_ui_components__$DropDown_SelectedItemBehaviour = function(component) {
+	haxe_ui_behaviours_DataBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._DropDown.SelectedItemBehaviour"] = haxe_ui_components__$DropDown_SelectedItemBehaviour;
+haxe_ui_components__$DropDown_SelectedItemBehaviour.__name__ = "haxe.ui.components._DropDown.SelectedItemBehaviour";
+haxe_ui_components__$DropDown_SelectedItemBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_components__$DropDown_SelectedItemBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	validateData: function() {
+		var handler = (js_Boot.__cast(this._component._compositeBuilder , haxe_ui_components_DropDownBuilder)).get_handler();
+		handler.set_selectedItem(this._value);
+	}
+	,getDynamic: function() {
+		var handler = (js_Boot.__cast(this._component._compositeBuilder , haxe_ui_components_DropDownBuilder)).get_handler();
+		return handler.get_selectedItem();
+	}
+	,set: function(value) {
+		if(this._component.get_isReady() == false) {
+			haxe_ui_behaviours_DataBehaviour.prototype.set.call(this,value);
+			return;
+		}
+		if(haxe_ui_util_Variant.toDynamic(value) == this.getDynamic()) {
+			return;
+		}
+		this._value = value;
+		this.invalidateData();
+		var handler = (js_Boot.__cast(this._component._compositeBuilder , haxe_ui_components_DropDownBuilder)).get_handler();
+		handler.set_selectedItem(value);
+	}
+	,__class__: haxe_ui_components__$DropDown_SelectedItemBehaviour
+});
+var haxe_ui_components_IDropDownHandler = function() { };
+$hxClasses["haxe.ui.components.IDropDownHandler"] = haxe_ui_components_IDropDownHandler;
+haxe_ui_components_IDropDownHandler.__name__ = "haxe.ui.components.IDropDownHandler";
+haxe_ui_components_IDropDownHandler.__isInterface__ = true;
+haxe_ui_components_IDropDownHandler.prototype = {
+	get_component: null
+	,get_selectedIndex: null
+	,set_selectedIndex: null
+	,get_selectedItem: null
+	,set_selectedItem: null
+	,component: null
+	,prepare: null
+	,reset: null
+	,applyDefault: null
+	,__class__: haxe_ui_components_IDropDownHandler
+	,__properties__: {set_selectedItem:"set_selectedItem",get_selectedItem:"get_selectedItem",set_selectedIndex:"set_selectedIndex",get_selectedIndex:"get_selectedIndex",get_component:"get_component"}
+};
+var haxe_ui_components_DropDownHandler = function(dropdown) {
+	this._dropdown = dropdown;
+};
+$hxClasses["haxe.ui.components.DropDownHandler"] = haxe_ui_components_DropDownHandler;
+haxe_ui_components_DropDownHandler.__name__ = "haxe.ui.components.DropDownHandler";
+haxe_ui_components_DropDownHandler.__interfaces__ = [haxe_ui_components_IDropDownHandler];
+haxe_ui_components_DropDownHandler.prototype = {
+	_dropdown: null
+	,component: null
+	,get_component: function() {
+		return null;
+	}
+	,prepare: function(wrapper) {
+	}
+	,reset: function() {
+	}
+	,get_selectedIndex: function() {
+		return -1;
+	}
+	,set_selectedIndex: function(value) {
+		return value;
+	}
+	,get_selectedItem: function() {
+		return null;
+	}
+	,set_selectedItem: function(value) {
+		return value;
+	}
+	,applyDefault: function() {
+	}
+	,__class__: haxe_ui_components_DropDownHandler
+	,__properties__: {set_selectedItem:"set_selectedItem",get_selectedItem:"get_selectedItem",set_selectedIndex:"set_selectedIndex",get_selectedIndex:"get_selectedIndex",get_component:"get_component"}
+};
+var haxe_ui_components_ListDropDownHandler = function(dropdown) {
+	this._cachedSelectedItem = null;
+	this._cachedSelectedIndex = -1;
+	haxe_ui_components_DropDownHandler.call(this,dropdown);
+};
+$hxClasses["haxe.ui.components.ListDropDownHandler"] = haxe_ui_components_ListDropDownHandler;
+haxe_ui_components_ListDropDownHandler.__name__ = "haxe.ui.components.ListDropDownHandler";
+haxe_ui_components_ListDropDownHandler.__super__ = haxe_ui_components_DropDownHandler;
+haxe_ui_components_ListDropDownHandler.prototype = $extend(haxe_ui_components_DropDownHandler.prototype,{
+	_listview: null
+	,get_component: function() {
+		this.createListView();
+		return this._listview;
+	}
+	,reset: function() {
+		if(this._listview != null) {
+			this._listview.set_dataSource(this._dropdown.get_dataSource());
+		}
+	}
+	,prepare: function(wrapper) {
+		var itemCount = 4;
+		if(this._dropdown.get_dropdownSize() != null) {
+			itemCount = this._dropdown.get_dropdownSize();
+		}
+		if(this._listview.get_dataSource() != null && this._listview.get_dataSource().get_size() < itemCount) {
+			itemCount = this._listview.get_dataSource().get_size();
+		}
+		if(itemCount > 0 && this._dropdown.get_dropdownHeight() == null) {
+			this._listview.set_itemCount(itemCount);
+		}
+		if(this._dropdown.get_dropdownWidth() == null) {
+			wrapper.syncComponentValidation();
+			this._listview.set_width(this._dropdown.get_width() - (wrapper.get_layout().get_paddingLeft() + wrapper.get_layout().get_paddingRight()));
+		} else {
+			this._listview.set_width(this._dropdown.get_dropdownWidth());
+		}
+		if(this._dropdown.get_dropdownHeight() != null) {
+			this._listview.set_height(this._dropdown.get_dropdownHeight());
+		}
+		var selectedIndex = this._dropdown.get_selectedIndex();
+		if(this._dropdown.get_dataSource() != null && this._dropdown.get_text() != null && selectedIndex < 0) {
+			var text = this._dropdown.get_text();
+			var itemIndex = this.indexOfItem(text);
+			if(itemIndex != -1) {
+				selectedIndex = itemIndex;
+			}
+		}
+		this._listview.unregisterEvent("change",$bind(this,this.onListChange));
+		this._listview.set_selectedIndex(selectedIndex);
+		this._listview.syncComponentValidation();
+		this._listview.registerEvent("change",$bind(this,this.onListChange));
+	}
+	,_cachedSelectedIndex: null
+	,get_selectedIndex: function() {
+		if(this._listview == null) {
+			return this._cachedSelectedIndex;
+		}
+		return this._listview.get_selectedIndex();
+	}
+	,set_selectedIndex: function(value) {
+		if(this._listview != null && this._cachedSelectedIndex != value) {
+			this._cachedSelectedIndex = value;
+			this._listview.set_selectedIndex(value);
+		} else if(this._cachedSelectedIndex != value) {
+			this._cachedSelectedIndex = value;
+			var data = null;
+			if(this._dropdown.get_dataSource() != null && value >= 0 && value < this._dropdown.get_dataSource().get_size()) {
+				data = this._dropdown.get_dataSource().get(value);
+			}
+			this._dropdown.dispatch(new haxe_ui_events_UIEvent("change",false,data));
+		}
+		if(this._dropdown.get_dataSource() != null && value >= 0 && value < this._dropdown.get_dataSource().get_size()) {
+			var data = this._dropdown.get_dataSource().get(value);
+			var text = null;
+			if(Type.typeof(data) == ValueType.TObject) {
+				text = data.text;
+				if(text == null) {
+					text = data.value;
+				}
+			} else {
+				text = Std.string(data);
+			}
+			this._dropdown.set_text(text);
+		}
+		return value;
+	}
+	,indexOfItem: function(text) {
+		var index = -1;
+		if(this._dropdown.get_dataSource() != null) {
+			var _g = 0;
+			var _g1 = this._dropdown.get_dataSource().get_size();
+			while(_g < _g1) {
+				var i = _g++;
+				var item = this._dropdown.get_dataSource().get(i);
+				if(item == text || item.value == text || item.text == text) {
+					index = i;
+				}
+			}
+		}
+		if(index == -1 && this._dropdown.get_dataSource() != null) {
+			var expr = haxe_ui_locale_LocaleManager.get_instance().findBindingExpr(this._dropdown,"text");
+			if(expr != null) {
+				text = expr;
+				var _g = 0;
+				var _g1 = this._dropdown.get_dataSource().get_size();
+				while(_g < _g1) {
+					var i = _g++;
+					var item = this._dropdown.get_dataSource().get(i);
+					if(item == text || item.value == text || item.text == text) {
+						index = i;
+					}
+				}
+			}
+		}
+		return index;
+	}
+	,get_selectedItem: function() {
+		if(this._listview == null) {
+			if(this._cachedSelectedIndex >= 0 && this._cachedSelectedIndex < this._dropdown.get_dataSource().get_size()) {
+				var data = this._dropdown.get_dataSource().get(this._cachedSelectedIndex);
+				return data;
+			} else {
+				return this._cachedSelectedItem;
+			}
+		}
+		return this._listview.get_selectedItem();
+	}
+	,_cachedSelectedItem: null
+	,set_selectedItem: function(value) {
+		var v = value;
+		var index = this.indexOfItem(haxe_ui_util_Variant.toString(v));
+		var tmp;
+		if(index == -1) {
+			switch(v._hx_index) {
+			case 0:
+				var _g = v.s;
+				tmp = true;
+				break;
+			case 1:
+				var _g = v.s;
+				tmp = true;
+				break;
+			default:
+				tmp = false;
+			}
+		} else {
+			tmp = false;
+		}
+		if(tmp) {
+			index = haxe_ui_util_Variant.toInt(v);
+		}
+		this.set_selectedIndex(index);
+		return value;
+	}
+	,createListView: function() {
+		if(this._listview == null) {
+			this._listview = new haxe_ui_containers_ListView();
+			this._listview.set_virtual(this._dropdown.get_virtual());
+			this._listview.set_dataSource(this._dropdown.get_dataSource());
+			if(this._dropdown.get_id() != null) {
+				this._listview.addClass(this._dropdown.get_id() + "-listview");
+				this._listview.set_id(this._dropdown.get_id() + "_listview");
+			}
+		}
+	}
+	,onListChange: function(event) {
+		if(this._listview.get_selectedItem() == null) {
+			return;
+		}
+		var currentHover = this._listview.findComponent(":hover",null,true,"css");
+		if(currentHover != null) {
+			currentHover.removeClass(":hover");
+		}
+		var selectedItem = this._listview.get_selectedItem();
+		var text = null;
+		if(Type.typeof(selectedItem) == ValueType.TObject) {
+			text = this._listview.get_selectedItem().text;
+			if(text == null) {
+				text = this._listview.get_selectedItem().value;
+			}
+		} else {
+			text = Std.string(selectedItem);
+		}
+		this._dropdown.set_text(text);
+		(js_Boot.__cast(this._dropdown._internalEvents , haxe_ui_components_DropDownEvents)).hideDropDown();
+		this._dropdown.dispatch(new haxe_ui_events_UIEvent("change",false,selectedItem));
+	}
+	,applyDefault: function() {
+		var indexToSelect = 0;
+		if(this._cachedSelectedItem != null) {
+			var v = this._cachedSelectedItem;
+			var index = this.indexOfItem(haxe_ui_util_Variant.toString(v));
+			if(index != -1) {
+				indexToSelect = index;
+			}
+		}
+		this._dropdown.set_selectedIndex(indexToSelect);
+	}
+	,__class__: haxe_ui_components_ListDropDownHandler
+});
+var haxe_ui_components_CalendarDropDownHandler = function(dropdown) {
+	this._cachedSelectedDate = null;
+	haxe_ui_components_DropDownHandler.call(this,dropdown);
+};
+$hxClasses["haxe.ui.components.CalendarDropDownHandler"] = haxe_ui_components_CalendarDropDownHandler;
+haxe_ui_components_CalendarDropDownHandler.__name__ = "haxe.ui.components.CalendarDropDownHandler";
+haxe_ui_components_CalendarDropDownHandler.__super__ = haxe_ui_components_DropDownHandler;
+haxe_ui_components_CalendarDropDownHandler.prototype = $extend(haxe_ui_components_DropDownHandler.prototype,{
+	_calendar: null
+	,get_component: function() {
+		if(this._calendar == null) {
+			this._calendar = new haxe_ui_containers_CalendarView();
+			if(this._dropdown.get_id() != null) {
+				this._calendar.addClass(this._dropdown.get_id() + "-calendar");
+				this._calendar.set_id(this._dropdown.get_id() + "_calendar");
+			}
+			this._calendar.registerEvent("change",$bind(this,this.onCalendarChange));
+		}
+		return this._calendar;
+	}
+	,prepare: function(wrapper) {
+		if(this._dropdown.get_dropdownWidth() != null) {
+			this._calendar.set_width(this._dropdown.get_dropdownWidth());
+		}
+		if(this._dropdown.get_dropdownHeight() != null) {
+			this._calendar.set_height(this._dropdown.get_dropdownHeight());
+		}
+		if(this._cachedSelectedDate != null) {
+			this._calendar.unregisterEvent("change",$bind(this,this.onCalendarChange));
+			this._calendar.set_selectedDate(this._cachedSelectedDate);
+			this._calendar.registerEvent("change",$bind(this,this.onCalendarChange));
+		}
+		this._calendar.syncComponentValidation();
+	}
+	,_cachedSelectedDate: null
+	,get_selectedItem: function() {
+		if(this._calendar == null) {
+			return this._cachedSelectedDate;
+		}
+		return this._calendar.get_selectedDate();
+	}
+	,set_selectedItem: function(value) {
+		if(value == null) {
+			return value;
+		}
+		var v = value;
+		var date = null;
+		if(haxe_ui_util_Variant.get_isString(v) == true) {
+			date = HxOverrides.strDate(haxe_ui_util_Variant.toString(v));
+		} else if(haxe_ui_util_Variant.get_isDate(v)) {
+			date = haxe_ui_util_Variant.toDate(v);
+		}
+		if(this._calendar != null && date != null) {
+			if(HxOverrides.dateStr(date) == HxOverrides.dateStr(this._calendar.get_selectedDate())) {
+				this._dropdown.set_text(DateTools.format(date,haxe_ui_components_CalendarDropDownHandler.DATE_FORMAT));
+				return value;
+			}
+			this._cachedSelectedDate = date;
+			this._calendar.set_selectedDate(date);
+		} else if(date != null) {
+			this._cachedSelectedDate = date;
+			this._dropdown.set_text(DateTools.format(this._cachedSelectedDate,haxe_ui_components_CalendarDropDownHandler.DATE_FORMAT));
+		}
+		return value;
+	}
+	,onCalendarChange: function(event) {
+		if(this._calendar.get_selectedDate() == null) {
+			return;
+		}
+		this._cachedSelectedDate = this._calendar.get_selectedDate();
+		this._dropdown.set_text(DateTools.format(this._calendar.get_selectedDate(),haxe_ui_components_CalendarDropDownHandler.DATE_FORMAT));
+		(js_Boot.__cast(this._dropdown._internalEvents , haxe_ui_components_DropDownEvents)).hideDropDown();
+		this._dropdown.dispatch(new haxe_ui_events_UIEvent("change",false,this._calendar.get_selectedDate()));
+	}
+	,applyDefault: function() {
+		var now = new Date();
+		this._dropdown.set_selectedItem(now);
+	}
+	,__class__: haxe_ui_components_CalendarDropDownHandler
+});
+var haxe_ui_components_DropDownEvents = function(dropdown) {
+	this._wrapper = null;
+	this._overlay = null;
+	haxe_ui_components_ButtonEvents.call(this,dropdown);
+	this._dropdown = dropdown;
+};
+$hxClasses["haxe.ui.components.DropDownEvents"] = haxe_ui_components_DropDownEvents;
+haxe_ui_components_DropDownEvents.__name__ = "haxe.ui.components.DropDownEvents";
+haxe_ui_components_DropDownEvents.__super__ = haxe_ui_components_ButtonEvents;
+haxe_ui_components_DropDownEvents.prototype = $extend(haxe_ui_components_ButtonEvents.prototype,{
+	_dropdown: null
+	,register: function() {
+		haxe_ui_components_ButtonEvents.prototype.register.call(this);
+		this.registerEvent("mousedown",$bind(this,this.onClick));
+	}
+	,unregister: function() {
+		haxe_ui_components_ButtonEvents.prototype.unregister.call(this);
+		this.unregisterEvent("mousedown",$bind(this,this.onClick));
+	}
+	,onClick: function(event) {
+		this._dropdown.set_selected(!this._dropdown.get_selected());
+		if(this._dropdown.get_selected() == true) {
+			this.showDropDown();
+		} else {
+			this.hideDropDown();
+		}
+	}
+	,onMouseClick: function(event) {
+	}
+	,_overlay: null
+	,_wrapper: null
+	,showDropDown: function() {
+		var handler = (js_Boot.__cast(this._dropdown._compositeBuilder , haxe_ui_components_DropDownBuilder)).get_handler();
+		if(handler == null) {
+			return;
+		}
+		if(this._wrapper == null) {
+			this._wrapper = new haxe_ui_containers_Box();
+			this._wrapper.addClass("popup");
+			this._wrapper.addClass("dropdown-popup");
+			if(this._button.get_id() != null) {
+				this._wrapper.addClass(this._button.get_id() + "-popup");
+				this._wrapper.set_id(this._button.get_id() + "_popup");
+			}
+			this._wrapper.set_styleNames(this._dropdown.get_handlerStyleNames());
+			this._wrapper.addComponent(handler.get_component());
+			var filler = new haxe_ui_core_Component();
+			filler.set_horizontalAlign("right");
+			filler.set_includeInLayout(false);
+			filler.addClass("dropdown-filler");
+			filler.set_id("dropdown-filler");
+			this._wrapper.addComponent(filler);
+		}
+		var componentOffset = this._dropdown.getComponentOffset();
+		if(this._dropdown.get_style().mode != null && this._dropdown.get_style().mode == "mobile") {
+			if(this._overlay == null) {
+				this._overlay = new haxe_ui_core_Component();
+				this._overlay.set_id("modal-background");
+				this._overlay.addClass("modal-background");
+				this._overlay.set_percentWidth(this._overlay.set_percentHeight(100));
+			}
+			haxe_ui_core_Screen.get_instance().addComponent(this._overlay);
+			handler.prepare(this._wrapper);
+			haxe_ui_core_Screen.get_instance().addComponent(this._wrapper);
+			this._wrapper.set_left(haxe_ui_core_Screen.get_instance().get_actualWidth() / 2 - this._wrapper.get_actualComponentWidth() / 2);
+			this._wrapper.set_top(haxe_ui_core_Screen.get_instance().get_actualHeight() / 2 - this._wrapper.get_actualComponentHeight() / 2);
+		} else {
+			this._wrapper.set_left(this._dropdown.get_screenLeft() + componentOffset.x);
+			this._wrapper.set_top(this._dropdown.get_screenTop() + (this._dropdown.get_actualComponentHeight() - haxe_ui_Toolkit.get_scaleY()) + componentOffset.y);
+			haxe_ui_core_Screen.get_instance().addComponent(this._wrapper);
+			handler.prepare(this._wrapper);
+			this._wrapper.syncComponentValidation();
+			var cx = this._wrapper.get_width() - this._dropdown.get_width();
+			var filler = this._wrapper.findComponent("dropdown-filler",null,false);
+			if(cx > 0 && filler != null) {
+				this._wrapper.addClass("dropdown-popup-expanded");
+				cx += 2;
+				filler.set_width(cx);
+				filler.set_left(this._wrapper.get_width() - cx);
+				filler.set_hidden(false);
+			} else if(filler != null) {
+				filler.set_hidden(true);
+				this._wrapper.removeClass("dropdown-popup-expanded");
+			}
+			if(this._wrapper.get_screenLeft() + this._wrapper.get_actualComponentWidth() > haxe_ui_core_Screen.get_instance().get_actualWidth()) {
+				this._wrapper.set_left(this._wrapper.get_screenLeft() - this._wrapper.get_actualComponentWidth() + this._dropdown.get_actualComponentWidth());
+			}
+			if(this._wrapper.get_screenTop() + this._wrapper.get_actualComponentHeight() > haxe_ui_core_Screen.get_instance().get_actualHeight()) {
+				this._wrapper.set_top(this._dropdown.get_screenTop() - this._wrapper.get_actualComponentHeight());
+			}
+		}
+		haxe_ui_core_Screen.get_instance().registerEvent("mousedown",$bind(this,this.onScreenMouseDown));
+		haxe_ui_core_Screen.get_instance().registerEvent("rightmousedown",$bind(this,this.onScreenMouseDown));
+	}
+	,hideDropDown: function() {
+		var handler = (js_Boot.__cast(this._dropdown._compositeBuilder , haxe_ui_components_DropDownBuilder)).get_handler();
+		if(handler == null) {
+			return;
+		}
+		if(this._overlay != null) {
+			haxe_ui_core_Screen.get_instance().removeComponent(this._overlay);
+			this._overlay = null;
+		}
+		this._dropdown.set_selected(false);
+		if(this._wrapper != null) {
+			haxe_ui_core_Screen.get_instance().removeComponent(this._wrapper,false);
+		}
+		haxe_ui_core_Screen.get_instance().unregisterEvent("mousedown",$bind(this,this.onScreenMouseDown));
+		haxe_ui_core_Screen.get_instance().unregisterEvent("rightmousedown",$bind(this,this.onScreenMouseDown));
+	}
+	,onScreenMouseDown: function(event) {
+		var handler = (js_Boot.__cast(this._dropdown._compositeBuilder , haxe_ui_components_DropDownBuilder)).get_handler();
+		if(handler.get_component().hitTest(event.screenX,event.screenY) == true) {
+			return;
+		}
+		var componentOffset = this._dropdown.getComponentOffset();
+		if(this._dropdown.hitTest(event.screenX - componentOffset.x,event.screenY - componentOffset.y) == true) {
+			return;
+		}
+		this.hideDropDown();
+	}
+	,dispatchChanged: function() {
+	}
+	,__class__: haxe_ui_components_DropDownEvents
+});
+var haxe_ui_components_DropDownBuilder = function(dropdown) {
+	haxe_ui_components_ButtonBuilder.call(this,dropdown);
+	this._dropdown = dropdown;
+	var this1 = haxe_ui_components_DropDownBuilder.HANDLER_MAP;
+	var value = haxe_ui_components_ListDropDownHandler.__name__;
+	this1.h["list"] = value;
+	var this1 = haxe_ui_components_DropDownBuilder.HANDLER_MAP;
+	var value = haxe_ui_components_CalendarDropDownHandler.__name__;
+	this1.h["date"] = value;
+};
+$hxClasses["haxe.ui.components.DropDownBuilder"] = haxe_ui_components_DropDownBuilder;
+haxe_ui_components_DropDownBuilder.__name__ = "haxe.ui.components.DropDownBuilder";
+haxe_ui_components_DropDownBuilder.__super__ = haxe_ui_components_ButtonBuilder;
+haxe_ui_components_DropDownBuilder.prototype = $extend(haxe_ui_components_ButtonBuilder.prototype,{
+	_dropdown: null
+	,_handler: null
+	,handler: null
+	,get_handler: function() {
+		if(this._handler == null) {
+			var this1 = haxe_ui_components_DropDownBuilder.HANDLER_MAP;
+			var key = this._dropdown.get_type();
+			var handlerClass = this1.h[key];
+			if(handlerClass == null) {
+				handlerClass = this._dropdown.get_type();
+			}
+			this._handler = Type.createInstance($hxClasses[handlerClass],[this._dropdown]);
+		}
+		return this._handler;
+	}
+	,onReady: function() {
+		haxe_ui_components_ButtonBuilder.prototype.onReady.call(this);
+		if(this._dropdown.get_text() == null) {
+			this.get_handler().applyDefault();
+		}
+	}
+	,create: function() {
+		this._dropdown.set_toggle(true);
+	}
+	,destroy: function() {
+		var events = js_Boot.__cast(this._dropdown._internalEvents , haxe_ui_components_DropDownEvents);
+		events.hideDropDown();
+		if(events._wrapper != null) {
+			haxe_ui_core_Screen.get_instance().removeComponent(events._wrapper);
+			events._wrapper = null;
+		}
+	}
+	,onThemeChanged: function() {
+		if(this._handler != null) {
+			haxe_ui_core_Screen.get_instance().invalidateChildren(this._handler.get_component());
+			haxe_ui_core_Screen.get_instance().onThemeChangedChildren(this._handler.get_component());
+		}
+	}
+	,__class__: haxe_ui_components_DropDownBuilder
+	,__properties__: $extend(haxe_ui_components_ButtonBuilder.prototype.__properties__,{get_handler:"get_handler"})
 });
 var haxe_ui_core_IDirectionalComponent = function() { };
 $hxClasses["haxe.ui.core.IDirectionalComponent"] = haxe_ui_core_IDirectionalComponent;
@@ -11043,7 +14339,25 @@ $hxClasses["haxe.ui.components.Label"] = haxe_ui_components_Label;
 haxe_ui_components_Label.__name__ = "haxe.ui.components.Label";
 haxe_ui_components_Label.__super__ = haxe_ui_core_Component;
 haxe_ui_components_Label.prototype = $extend(haxe_ui_core_Component.prototype,{
-	registerComposite: function() {
+	cloneComponent: function() {
+		var c = haxe_ui_core_Component.prototype.cloneComponent.call(this);
+		if(this.get_htmlText() != null) {
+			c.set_htmlText(this.get_htmlText());
+		}
+		haxe_ui_core_Component.prototype.cloneComponent.call(this);
+		c.getTextDisplay().forceStaticSize = this.getTextDisplay().forceStaticSize;
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,registerComposite: function() {
 		haxe_ui_core_Component.prototype.registerComposite.call(this);
 		this._compositeBuilderClass = haxe_ui_components__$Label_Builder;
 		this._defaultLayoutClass = haxe_ui_components__$Label_LabelLayout;
@@ -11130,22 +14444,6 @@ haxe_ui_components_Label.prototype = $extend(haxe_ui_core_Component.prototype,{
 			this.invalidateComponent("layout",false);
 		}
 		return value;
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_core_Component.prototype.cloneComponent.call(this);
-		if(this.get_htmlText() != null) {
-			c.set_htmlText(this.get_htmlText());
-		}
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
 	}
 	,self: function() {
 		return new haxe_ui_components_Label();
@@ -11400,18 +14698,114 @@ haxe_ui_components__$Scroll_ScrollValueBehaviour.prototype = $extend(haxe_ui_beh
 	}
 	,__class__: haxe_ui_components__$Scroll_ScrollValueBehaviour
 });
-var haxe_ui_components_Spacer = function() {
-	haxe_ui_core_Component.call(this);
+var haxe_ui_components_Stepper = function() {
+	haxe_ui_containers_VBox.call(this);
 };
-$hxClasses["haxe.ui.components.Spacer"] = haxe_ui_components_Spacer;
-haxe_ui_components_Spacer.__name__ = "haxe.ui.components.Spacer";
-haxe_ui_components_Spacer.__super__ = haxe_ui_core_Component;
-haxe_ui_components_Spacer.prototype = $extend(haxe_ui_core_Component.prototype,{
-	registerBehaviours: function() {
-		haxe_ui_core_Component.prototype.registerBehaviours.call(this);
+$hxClasses["haxe.ui.components.Stepper"] = haxe_ui_components_Stepper;
+haxe_ui_components_Stepper.__name__ = "haxe.ui.components.Stepper";
+haxe_ui_components_Stepper.__super__ = haxe_ui_containers_VBox;
+haxe_ui_components_Stepper.prototype = $extend(haxe_ui_containers_VBox.prototype,{
+	increment: function() {
+		return this.behaviours.call("increment",null);
+	}
+	,deincrement: function() {
+		return this.behaviours.call("deincrement",null);
+	}
+	,registerComposite: function() {
+		haxe_ui_containers_VBox.prototype.registerComposite.call(this);
+		this._internalEventsClass = haxe_ui_components__$Stepper_Events;
+		this._compositeBuilderClass = haxe_ui_components__$Stepper_Builder;
+	}
+	,registerBehaviours: function() {
+		haxe_ui_containers_VBox.prototype.registerBehaviours.call(this);
+		this.behaviours.register("pos",haxe_ui_components__$Stepper_PosBehaviour);
+		this.behaviours.register("step",haxe_ui_behaviours_DefaultBehaviour,haxe_ui_util_Variant.fromInt(1));
+		this.behaviours.register("min",haxe_ui_behaviours_DefaultBehaviour,null);
+		this.behaviours.register("max",haxe_ui_behaviours_DefaultBehaviour,null);
+		this.behaviours.register("precision",haxe_ui_behaviours_DefaultBehaviour,null);
+		this.behaviours.register("repeater",haxe_ui_behaviours_DefaultBehaviour,haxe_ui_util_Variant.fromBool(true));
+		this.behaviours.register("repeatInterval",haxe_ui_behaviours_DefaultBehaviour,haxe_ui_util_Variant.fromInt(100));
+		this.behaviours.register("increment",haxe_ui_components__$Stepper_IncBehaviour);
+		this.behaviours.register("deincrement",haxe_ui_components__$Stepper_DeincBehaviour);
+	}
+	,get_pos: function() {
+		return haxe_ui_util_Variant.toFloat(this.behaviours.get("pos"));
+	}
+	,set_pos: function(value) {
+		this.behaviours.set("pos",haxe_ui_util_Variant.fromFloat(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"pos"));
+		return value;
+	}
+	,get_step: function() {
+		return haxe_ui_util_Variant.toFloat(this.behaviours.get("step"));
+	}
+	,set_step: function(value) {
+		this.behaviours.set("step",haxe_ui_util_Variant.fromFloat(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"step"));
+		return value;
+	}
+	,get_min: function() {
+		return haxe_ui_util_Variant.toFloat(this.behaviours.get("min"));
+	}
+	,set_min: function(value) {
+		this.behaviours.set("min",haxe_ui_util_Variant.fromFloat(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"min"));
+		return value;
+	}
+	,get_max: function() {
+		return haxe_ui_util_Variant.toFloat(this.behaviours.get("max"));
+	}
+	,set_max: function(value) {
+		this.behaviours.set("max",haxe_ui_util_Variant.fromFloat(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"max"));
+		return value;
+	}
+	,get_precision: function() {
+		return haxe_ui_util_Variant.toInt(this.behaviours.get("precision"));
+	}
+	,set_precision: function(value) {
+		this.behaviours.set("precision",haxe_ui_util_Variant.fromInt(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"precision"));
+		return value;
+	}
+	,get_repeater: function() {
+		return haxe_ui_util_Variant.toBool(this.behaviours.get("repeater"));
+	}
+	,set_repeater: function(value) {
+		this.behaviours.set("repeater",haxe_ui_util_Variant.fromBool(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"repeater"));
+		return value;
+	}
+	,get_repeatInterval: function() {
+		return haxe_ui_util_Variant.toInt(this.behaviours.get("repeatInterval"));
+	}
+	,set_repeatInterval: function(value) {
+		this.behaviours.set("repeatInterval",haxe_ui_util_Variant.fromInt(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"repeatInterval"));
+		return value;
+	}
+	,get_value: function() {
+		return this.get_pos();
+	}
+	,set_value: function(value) {
+		this.set_pos(value);
+		return value;
 	}
 	,cloneComponent: function() {
-		var c = haxe_ui_core_Component.prototype.cloneComponent.call(this);
+		var c = haxe_ui_containers_VBox.prototype.cloneComponent.call(this);
+		c.set_pos(this.get_pos());
+		c.set_step(this.get_step());
+		if(this.get_min() != null) {
+			c.set_min(this.get_min());
+		}
+		if(this.get_max() != null) {
+			c.set_max(this.get_max());
+		}
+		if(this.get_precision() != null) {
+			c.set_precision(this.get_precision());
+		}
+		c.set_repeater(this.get_repeater());
+		c.set_repeatInterval(this.get_repeatInterval());
 		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
 			var _g = 0;
 			var _g1 = this._children == null ? [] : this._children;
@@ -11424,9 +14818,154 @@ haxe_ui_components_Spacer.prototype = $extend(haxe_ui_core_Component.prototype,{
 		return c;
 	}
 	,self: function() {
-		return new haxe_ui_components_Spacer();
+		return new haxe_ui_components_Stepper();
 	}
-	,__class__: haxe_ui_components_Spacer
+	,__class__: haxe_ui_components_Stepper
+	,__properties__: $extend(haxe_ui_containers_VBox.prototype.__properties__,{set_repeatInterval:"set_repeatInterval",get_repeatInterval:"get_repeatInterval",set_repeater:"set_repeater",get_repeater:"get_repeater",set_precision:"set_precision",get_precision:"get_precision",set_max:"set_max",get_max:"get_max",set_min:"set_min",get_min:"get_min",set_step:"set_step",get_step:"get_step",set_pos:"set_pos",get_pos:"get_pos"})
+});
+var haxe_ui_components__$Stepper_PosBehaviour = function(component) {
+	haxe_ui_behaviours_DataBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._Stepper.PosBehaviour"] = haxe_ui_components__$Stepper_PosBehaviour;
+haxe_ui_components__$Stepper_PosBehaviour.__name__ = "haxe.ui.components._Stepper.PosBehaviour";
+haxe_ui_components__$Stepper_PosBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_components__$Stepper_PosBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	validateData: function() {
+		var stepper = js_Boot.__cast(this._component , haxe_ui_components_Stepper);
+		var v = haxe_ui_util_Variant.toFloat(this._value);
+		var min = stepper.get_min();
+		var max = stepper.get_max();
+		var v1;
+		if(v == null || isNaN(v)) {
+			v1 = min;
+		} else {
+			if(min != null && v < min) {
+				v = min;
+			} else if(max != null && v > max) {
+				v = max;
+			}
+			v1 = v;
+		}
+		stepper.set_pos(v1);
+		this._value = haxe_ui_util_Variant.fromFloat(v1);
+		var event = new haxe_ui_events_UIEvent("change");
+		this._component.dispatch(event);
+	}
+	,__class__: haxe_ui_components__$Stepper_PosBehaviour
+});
+var haxe_ui_components__$Stepper_IncBehaviour = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._Stepper.IncBehaviour"] = haxe_ui_components__$Stepper_IncBehaviour;
+haxe_ui_components__$Stepper_IncBehaviour.__name__ = "haxe.ui.components._Stepper.IncBehaviour";
+haxe_ui_components__$Stepper_IncBehaviour.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_components__$Stepper_IncBehaviour.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	call: function(param) {
+		var stepper = js_Boot.__cast(this._component , haxe_ui_components_Stepper);
+		var newPos = stepper.get_pos();
+		newPos += stepper.get_step();
+		if(stepper.get_max() != null && newPos > stepper.get_max()) {
+			newPos = stepper.get_max();
+		}
+		if(stepper.get_precision() != null) {
+			var precision = stepper.get_precision();
+			if(precision == null) {
+				precision = 0;
+			}
+			newPos = Math.round(newPos * Math.pow(10,precision)) / Math.pow(10,precision);
+		}
+		stepper.set_pos(newPos);
+		return null;
+	}
+	,__class__: haxe_ui_components__$Stepper_IncBehaviour
+});
+var haxe_ui_components__$Stepper_DeincBehaviour = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.components._Stepper.DeincBehaviour"] = haxe_ui_components__$Stepper_DeincBehaviour;
+haxe_ui_components__$Stepper_DeincBehaviour.__name__ = "haxe.ui.components._Stepper.DeincBehaviour";
+haxe_ui_components__$Stepper_DeincBehaviour.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_components__$Stepper_DeincBehaviour.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	call: function(param) {
+		var stepper = js_Boot.__cast(this._component , haxe_ui_components_Stepper);
+		var newPos = stepper.get_pos();
+		newPos -= stepper.get_step();
+		if(stepper.get_min() != null && newPos < stepper.get_min()) {
+			newPos = stepper.get_min();
+		}
+		if(stepper.get_precision() != null) {
+			var precision = stepper.get_precision();
+			if(precision == null) {
+				precision = 0;
+			}
+			newPos = Math.round(newPos * Math.pow(10,precision)) / Math.pow(10,precision);
+		}
+		stepper.set_pos(newPos);
+		return null;
+	}
+	,__class__: haxe_ui_components__$Stepper_DeincBehaviour
+});
+var haxe_ui_components__$Stepper_Builder = function(stepper) {
+	haxe_ui_core_CompositeBuilder.call(this,stepper);
+	this._stepper = stepper;
+};
+$hxClasses["haxe.ui.components._Stepper.Builder"] = haxe_ui_components__$Stepper_Builder;
+haxe_ui_components__$Stepper_Builder.__name__ = "haxe.ui.components._Stepper.Builder";
+haxe_ui_components__$Stepper_Builder.__super__ = haxe_ui_core_CompositeBuilder;
+haxe_ui_components__$Stepper_Builder.prototype = $extend(haxe_ui_core_CompositeBuilder.prototype,{
+	_stepper: null
+	,create: function() {
+		var button = new haxe_ui_components_Button();
+		button.set_styleNames("stepper-button stepper-inc");
+		button.set_id("stepper-inc");
+		button.set_repeater(this._stepper.get_repeater());
+		button.set_easeInRepeater(true);
+		button.set_allowFocus(false);
+		button.set_repeatInterval(this._stepper.get_repeatInterval());
+		this._stepper.addComponent(button);
+		var button = new haxe_ui_components_Button();
+		button.set_styleNames("stepper-button stepper-deinc");
+		button.set_id("stepper-deinc");
+		button.set_repeater(this._stepper.get_repeater());
+		button.set_easeInRepeater(true);
+		button.set_allowFocus(false);
+		button.set_repeatInterval(this._stepper.get_repeatInterval());
+		this._stepper.addComponent(button);
+	}
+	,__class__: haxe_ui_components__$Stepper_Builder
+});
+var haxe_ui_components__$Stepper_Events = function(stepper) {
+	haxe_ui_events_Events.call(this,stepper);
+	this._stepper = stepper;
+};
+$hxClasses["haxe.ui.components._Stepper.Events"] = haxe_ui_components__$Stepper_Events;
+haxe_ui_components__$Stepper_Events.__name__ = "haxe.ui.components._Stepper.Events";
+haxe_ui_components__$Stepper_Events.__super__ = haxe_ui_events_Events;
+haxe_ui_components__$Stepper_Events.prototype = $extend(haxe_ui_events_Events.prototype,{
+	_stepper: null
+	,register: function() {
+		var button = this._stepper.findComponent("stepper-inc",haxe_ui_components_Button);
+		if(!button.hasEvent("click",$bind(this,this.onInc))) {
+			button.registerEvent("click",$bind(this,this.onInc));
+		}
+		var button = this._stepper.findComponent("stepper-deinc",haxe_ui_components_Button);
+		if(!button.hasEvent("click",$bind(this,this.onDeinc))) {
+			button.registerEvent("click",$bind(this,this.onDeinc));
+		}
+	}
+	,unregister: function() {
+		var button = this._stepper.findComponent("stepper-inc",haxe_ui_components_Button);
+		button.unregisterEvent("click",$bind(this,this.onInc));
+		var button = this._stepper.findComponent("stepper-deinc",haxe_ui_components_Button);
+		button.unregisterEvent("click",$bind(this,this.onDeinc));
+	}
+	,onInc: function(event) {
+		this._stepper.increment();
+	}
+	,onDeinc: function(event) {
+		this._stepper.deincrement();
+	}
+	,__class__: haxe_ui_components__$Stepper_Events
 });
 var haxe_ui_components_TextField = function() {
 	haxe_ui_core_InteractiveComponent.call(this);
@@ -12088,27 +15627,58 @@ haxe_ui_components__$VerticalScroll_VerticalScrollLayout.prototype = $extend(hax
 	}
 	,__class__: haxe_ui_components__$VerticalScroll_VerticalScrollLayout
 });
-var haxe_ui_containers_Frame = function() {
+var haxe_ui_containers_ButtonBar = function() {
 	haxe_ui_containers_Box.call(this);
 };
-$hxClasses["haxe.ui.containers.Frame"] = haxe_ui_containers_Frame;
-haxe_ui_containers_Frame.__name__ = "haxe.ui.containers.Frame";
-haxe_ui_containers_Frame.__super__ = haxe_ui_containers_Box;
-haxe_ui_containers_Frame.prototype = $extend(haxe_ui_containers_Box.prototype,{
+$hxClasses["haxe.ui.containers.ButtonBar"] = haxe_ui_containers_ButtonBar;
+haxe_ui_containers_ButtonBar.__name__ = "haxe.ui.containers.ButtonBar";
+haxe_ui_containers_ButtonBar.__interfaces__ = [haxe_ui_core_IDirectionalComponent];
+haxe_ui_containers_ButtonBar.__super__ = haxe_ui_containers_Box;
+haxe_ui_containers_ButtonBar.prototype = $extend(haxe_ui_containers_Box.prototype,{
 	registerBehaviours: function() {
 		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
-		this.behaviours.register("text",haxe_ui_containers__$Frame_TextBehaviour);
-		this.behaviours.register("icon",haxe_ui_containers__$Frame_IconBehaviour);
+		this.behaviours.register("toggle",haxe_ui_behaviours_DefaultBehaviour,haxe_ui_util_Variant.fromBool(true));
+		this.behaviours.register("selectedIndex",haxe_ui_containers__$ButtonBar_SelectedIndex);
+		this.behaviours.register("selectedButton",haxe_ui_containers__$ButtonBar_SelectedButton);
+	}
+	,get_toggle: function() {
+		return haxe_ui_util_Variant.toBool(this.behaviours.get("toggle"));
+	}
+	,set_toggle: function(value) {
+		this.behaviours.set("toggle",haxe_ui_util_Variant.fromBool(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"toggle"));
+		return value;
+	}
+	,get_selectedIndex: function() {
+		return haxe_ui_util_Variant.toInt(this.behaviours.get("selectedIndex"));
+	}
+	,set_selectedIndex: function(value) {
+		this.behaviours.set("selectedIndex",haxe_ui_util_Variant.fromInt(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"selectedIndex"));
+		return value;
+	}
+	,get_selectedButton: function() {
+		return haxe_ui_util_Variant.toComponent(this.behaviours.get("selectedButton"));
+	}
+	,set_selectedButton: function(value) {
+		this.behaviours.set("selectedButton",haxe_ui_util_Variant.fromComponent(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"selectedButton"));
+		return value;
 	}
 	,get_value: function() {
-		return this.get_text();
+		return this.get_selectedIndex();
 	}
 	,set_value: function(value) {
-		this.set_text(value);
+		this.set_selectedIndex(value);
 		return value;
 	}
 	,cloneComponent: function() {
 		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
+		c.set_toggle(this.get_toggle());
+		c.set_selectedIndex(this.get_selectedIndex());
+		if(this.get_selectedButton() != null) {
+			c.set_selectedButton(this.get_selectedButton());
+		}
 		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
 			var _g = 0;
 			var _g1 = this._children == null ? [] : this._children;
@@ -12121,144 +15691,297 @@ haxe_ui_containers_Frame.prototype = $extend(haxe_ui_containers_Box.prototype,{
 		return c;
 	}
 	,self: function() {
-		return new haxe_ui_containers_Frame();
+		return new haxe_ui_containers_ButtonBar();
 	}
 	,registerComposite: function() {
 		haxe_ui_containers_Box.prototype.registerComposite.call(this);
-		this._compositeBuilderClass = haxe_ui_containers__$Frame_Builder;
-		this._defaultLayoutClass = haxe_ui_containers__$Frame_Layout;
+		this._internalEventsClass = haxe_ui_containers__$ButtonBar_Events;
+		this._compositeBuilderClass = haxe_ui_containers__$ButtonBar_Builder;
 	}
-	,__class__: haxe_ui_containers_Frame
+	,__class__: haxe_ui_containers_ButtonBar
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{set_selectedButton:"set_selectedButton",get_selectedButton:"get_selectedButton",set_selectedIndex:"set_selectedIndex",get_selectedIndex:"get_selectedIndex",set_toggle:"set_toggle",get_toggle:"get_toggle"})
 });
-var haxe_ui_containers__$Frame_TextBehaviour = function(component) {
+var haxe_ui_containers__$ButtonBar_SelectedIndex = function(component) {
 	haxe_ui_behaviours_DataBehaviour.call(this,component);
 };
-$hxClasses["haxe.ui.containers._Frame.TextBehaviour"] = haxe_ui_containers__$Frame_TextBehaviour;
-haxe_ui_containers__$Frame_TextBehaviour.__name__ = "haxe.ui.containers._Frame.TextBehaviour";
-haxe_ui_containers__$Frame_TextBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers__$Frame_TextBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+$hxClasses["haxe.ui.containers._ButtonBar.SelectedIndex"] = haxe_ui_containers__$ButtonBar_SelectedIndex;
+haxe_ui_containers__$ButtonBar_SelectedIndex.__name__ = "haxe.ui.containers._ButtonBar.SelectedIndex";
+haxe_ui_containers__$ButtonBar_SelectedIndex.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_containers__$ButtonBar_SelectedIndex.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
 	validateData: function() {
-		var label = this._component.findComponent(null,haxe_ui_components_Label,false);
-		label.set_text(haxe_ui_util_Variant.toString(this._value));
-	}
-	,__class__: haxe_ui_containers__$Frame_TextBehaviour
-});
-var haxe_ui_containers__$Frame_IconBehaviour = function(component) {
-	haxe_ui_behaviours_DataBehaviour.call(this,component);
-};
-$hxClasses["haxe.ui.containers._Frame.IconBehaviour"] = haxe_ui_containers__$Frame_IconBehaviour;
-haxe_ui_containers__$Frame_IconBehaviour.__name__ = "haxe.ui.containers._Frame.IconBehaviour";
-haxe_ui_containers__$Frame_IconBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers__$Frame_IconBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
-	validateData: function() {
-		var icon = this._component.findComponent("frame-icon",null,false);
-		if(icon == null) {
-			icon = new haxe_ui_components_Image();
-			icon.addClass("frame-icon");
-			icon.set_id("frame-icon");
-			icon.set_scriptAccess(false);
-			icon.set_includeInLayout(false);
-			this._component.addComponent(icon);
+		var builder = js_Boot.__cast(this._component._compositeBuilder , haxe_ui_containers__$ButtonBar_Builder);
+		var currentButton = builder._currentButton;
+		var button = js_Boot.__cast(this._component.getComponentAt(haxe_ui_util_Variant.toInt(this._value)) , haxe_ui_components_Button);
+		if(currentButton == button) {
+			return;
 		}
-		icon.set_resource(this._value);
+		if(currentButton != null) {
+			builder._currentButton.set_selected(false);
+		}
+		button.set_selected(true);
+		builder._currentButton = button;
+		this._component.dispatch(new haxe_ui_events_UIEvent("change"));
 	}
-	,__class__: haxe_ui_containers__$Frame_IconBehaviour
+	,__class__: haxe_ui_containers__$ButtonBar_SelectedIndex
 });
-var haxe_ui_containers__$Frame_Builder = function(frame) {
-	haxe_ui_core_CompositeBuilder.call(this,frame);
-	this._frame = frame;
+var haxe_ui_containers__$ButtonBar_SelectedButton = function(component) {
+	haxe_ui_behaviours_DataBehaviour.call(this,component);
 };
-$hxClasses["haxe.ui.containers._Frame.Builder"] = haxe_ui_containers__$Frame_Builder;
-haxe_ui_containers__$Frame_Builder.__name__ = "haxe.ui.containers._Frame.Builder";
-haxe_ui_containers__$Frame_Builder.__super__ = haxe_ui_core_CompositeBuilder;
-haxe_ui_containers__$Frame_Builder.prototype = $extend(haxe_ui_core_CompositeBuilder.prototype,{
-	_frame: null
-	,_contents: null
-	,_label: null
-	,create: function() {
-		this._contents = new haxe_ui_containers_Box();
-		this._contents.set_id("frame-contents");
-		this._contents.addClass("frame-contents");
-		this._frame.addComponent(this._contents);
-		this._label = new haxe_ui_components_Label();
-		this._label.set_text("My Frame");
-		this._label.set_id("frame-title");
-		this._label.addClass("frame-title");
-		this._label.set_includeInLayout(false);
-		this._frame.addComponent(this._label);
-		var line = new haxe_ui_core_Component();
-		line.set_id("frame-left-line");
-		line.addClass("frame-left-line");
-		line.set_includeInLayout(false);
-		this._frame.addComponent(line);
-		var line = new haxe_ui_core_Component();
-		line.set_id("frame-right-line");
-		line.addClass("frame-right-line");
-		line.set_includeInLayout(false);
-		this._frame.addComponent(line);
+$hxClasses["haxe.ui.containers._ButtonBar.SelectedButton"] = haxe_ui_containers__$ButtonBar_SelectedButton;
+haxe_ui_containers__$ButtonBar_SelectedButton.__name__ = "haxe.ui.containers._ButtonBar.SelectedButton";
+haxe_ui_containers__$ButtonBar_SelectedButton.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_containers__$ButtonBar_SelectedButton.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	get: function() {
+		var _g = 0;
+		var _this = this._component;
+		var _g1 = _this._children == null ? [] : _this._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(((child) instanceof haxe_ui_components_Button) && (js_Boot.__cast(child , haxe_ui_components_Button)).get_selected() == true) {
+				return haxe_ui_util_Variant.fromComponent(child);
+			}
+		}
+		return null;
 	}
+	,__class__: haxe_ui_containers__$ButtonBar_SelectedButton
+});
+var haxe_ui_containers__$ButtonBar_Events = function(bar) {
+	haxe_ui_events_Events.call(this,bar);
+	this._bar = bar;
+};
+$hxClasses["haxe.ui.containers._ButtonBar.Events"] = haxe_ui_containers__$ButtonBar_Events;
+haxe_ui_containers__$ButtonBar_Events.__name__ = "haxe.ui.containers._ButtonBar.Events";
+haxe_ui_containers__$ButtonBar_Events.__super__ = haxe_ui_events_Events;
+haxe_ui_containers__$ButtonBar_Events.prototype = $extend(haxe_ui_events_Events.prototype,{
+	_bar: null
+	,register: function() {
+		var buttons = this._target.findComponents(null,haxe_ui_components_Button,1);
+		var _g = 0;
+		while(_g < buttons.length) {
+			var button = buttons[_g];
+			++_g;
+			if(button.hasEvent("change",$bind(this,this.onButtonChanged)) == false) {
+				button.registerEvent("change",$bind(this,this.onButtonChanged));
+			}
+		}
+	}
+	,unregister: function() {
+		var buttons = this._target.findComponents(null,haxe_ui_components_Button,1);
+		var _g = 0;
+		while(_g < buttons.length) {
+			var button = buttons[_g];
+			++_g;
+			button.unregisterEvent("change",$bind(this,this.onButtonChanged));
+		}
+	}
+	,onButtonChanged: function(event) {
+		var button = js_Boot.__cast(event.target , haxe_ui_components_Button);
+		var index = this._bar.getComponentIndex(button);
+		if(index == this._bar.get_selectedIndex() && button.get_selected() == false) {
+			button.set_selected(true);
+			return;
+		}
+		if(button.get_selected() == true) {
+			this._bar.set_selectedIndex(index);
+		}
+	}
+	,__class__: haxe_ui_containers__$ButtonBar_Events
+});
+var haxe_ui_containers__$ButtonBar_Builder = function(bar) {
+	haxe_ui_core_CompositeBuilder.call(this,bar);
+	this._bar = bar;
+};
+$hxClasses["haxe.ui.containers._ButtonBar.Builder"] = haxe_ui_containers__$ButtonBar_Builder;
+haxe_ui_containers__$ButtonBar_Builder.__name__ = "haxe.ui.containers._ButtonBar.Builder";
+haxe_ui_containers__$ButtonBar_Builder.__super__ = haxe_ui_core_CompositeBuilder;
+haxe_ui_containers__$ButtonBar_Builder.prototype = $extend(haxe_ui_core_CompositeBuilder.prototype,{
+	_bar: null
+	,_currentButton: null
 	,addComponent: function(child) {
-		if(child.get_id() != "frame-contents" && child.get_id() != "frame-title" && child.get_id() != "frame-icon" && child.get_id() != "frame-left-line" && child.get_id() != "frame-right-line") {
-			return this._contents.addComponent(child);
+		if(((child) instanceof haxe_ui_components_Button)) {
+			(js_Boot.__cast(child , haxe_ui_components_Button)).set_toggle(this._bar.get_toggle());
 		}
-		return haxe_ui_core_CompositeBuilder.prototype.addComponent.call(this,child);
+		this._component.registerInternalEvents(null,true);
+		return null;
 	}
-	,__class__: haxe_ui_containers__$Frame_Builder
+	,onReady: function() {
+		this._component.registerInternalEvents(null,true);
+	}
+	,applyStyle: function(style) {
+		if(style.direction != null) {
+			var direction = style.direction;
+			if(direction == "vertical") {
+				this._component.swapClass("vertical-button-bar","horizontal-button-bar");
+			} else if(direction == "horizontal") {
+				this._component.swapClass("horizontal-button-bar","vertical-button-bar");
+			}
+			this._component.set_layout(haxe_ui_layouts_LayoutFactory.createFromName(direction));
+		}
+	}
+	,__class__: haxe_ui_containers__$ButtonBar_Builder
 });
-var haxe_ui_containers__$Frame_Layout = function() {
-	haxe_ui_layouts_DefaultLayout.call(this);
+var haxe_ui_containers_CalendarView = function() {
+	haxe_ui_containers_VBox.call(this);
 };
-$hxClasses["haxe.ui.containers._Frame.Layout"] = haxe_ui_containers__$Frame_Layout;
-haxe_ui_containers__$Frame_Layout.__name__ = "haxe.ui.containers._Frame.Layout";
-haxe_ui_containers__$Frame_Layout.__super__ = haxe_ui_layouts_DefaultLayout;
-haxe_ui_containers__$Frame_Layout.prototype = $extend(haxe_ui_layouts_DefaultLayout.prototype,{
-	resizeChildren: function() {
-		var contents = this.findComponent("frame-contents",haxe_ui_containers_Box,false);
-		var label = this.findComponent("frame-title",haxe_ui_components_Label,false);
-		var icon = this.findComponent("frame-icon",haxe_ui_components_Image,false);
-		var line1 = this.findComponent("frame-left-line",haxe_ui_core_Component,false);
-		var line2 = this.findComponent("frame-right-line",haxe_ui_core_Component,false);
-		if(this._component.get_autoWidth() == false) {
-			contents.set_width(this._component.get_width());
-		}
-		if(this._component.get_autoHeight() == false) {
-			contents.set_height(this._component.get_height() - label.get_height() / 2);
-		}
-		var offset = 2;
-		line1.set_width(this.get_paddingLeft() - offset);
-		var cx = label.get_width();
-		if(icon != null) {
-			cx += icon.get_width() + this.get_horizontalSpacing();
-		}
-		line2.set_width(this._component.get_width() - (this.get_paddingLeft() + cx) - offset);
+$hxClasses["haxe.ui.containers.CalendarView"] = haxe_ui_containers_CalendarView;
+haxe_ui_containers_CalendarView.__name__ = "haxe.ui.containers.CalendarView";
+haxe_ui_containers_CalendarView.__super__ = haxe_ui_containers_VBox;
+haxe_ui_containers_CalendarView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
+	registerComposite: function() {
+		haxe_ui_containers_VBox.prototype.registerComposite.call(this);
+		this._internalEventsClass = haxe_ui_containers__$CalendarView_Events;
+		this._compositeBuilderClass = haxe_ui_containers__$CalendarView_Builder;
 	}
-	,repositionChildren: function() {
-		var contents = this.findComponent("frame-contents",haxe_ui_containers_Box,false);
-		var label = this.findComponent("frame-title",haxe_ui_components_Label,false);
-		var icon = this.findComponent("frame-icon",haxe_ui_components_Image,false);
-		var line1 = this.findComponent("frame-left-line",haxe_ui_core_Component,false);
-		var line2 = this.findComponent("frame-right-line",haxe_ui_core_Component,false);
-		contents.set_top(this._component.get_height() - contents.get_height());
-		var offset = 2;
-		var x = this.get_paddingLeft();
-		if(icon != null) {
-			icon.set_top(label.get_height() / 2 - icon.get_height() / 2 - 1);
-			icon.set_left(this.get_paddingLeft());
-			x += icon.get_width() + this.get_horizontalSpacing();
+	,registerBehaviours: function() {
+		haxe_ui_containers_VBox.prototype.registerBehaviours.call(this);
+		this.behaviours.register("selectedDate",haxe_ui_containers__$CalendarView_SelectedDateBehaviour);
+	}
+	,get_selectedDate: function() {
+		return haxe_ui_util_Variant.toDate(this.behaviours.get("selectedDate"));
+	}
+	,set_selectedDate: function(value) {
+		this.behaviours.set("selectedDate",haxe_ui_util_Variant.fromDate(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"selectedDate"));
+		return value;
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_VBox.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
 		}
-		label.set_left(x);
-		line1.set_top(contents.get_top());
-		line2.set_left(this._component.get_width() - line2.get_width());
-		line2.set_top(contents.get_top());
+		return c;
 	}
-	,calcAutoSize: function(exclusions) {
-		var label = this.findComponent("frame-title",haxe_ui_components_Label,false);
-		var size = haxe_ui_layouts_DefaultLayout.prototype.calcAutoSize.call(this,exclusions);
-		size.height += label.get_height() / 2;
-		size.width -= this.get_paddingLeft();
-		return size;
+	,self: function() {
+		return new haxe_ui_containers_CalendarView();
 	}
-	,__class__: haxe_ui_containers__$Frame_Layout
+	,__class__: haxe_ui_containers_CalendarView
+	,__properties__: $extend(haxe_ui_containers_VBox.prototype.__properties__,{set_selectedDate:"set_selectedDate",get_selectedDate:"get_selectedDate"})
+});
+var haxe_ui_containers__$CalendarView_SelectedDateBehaviour = function(component) {
+	haxe_ui_behaviours_DefaultBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._CalendarView.SelectedDateBehaviour"] = haxe_ui_containers__$CalendarView_SelectedDateBehaviour;
+haxe_ui_containers__$CalendarView_SelectedDateBehaviour.__name__ = "haxe.ui.containers._CalendarView.SelectedDateBehaviour";
+haxe_ui_containers__$CalendarView_SelectedDateBehaviour.__super__ = haxe_ui_behaviours_DefaultBehaviour;
+haxe_ui_containers__$CalendarView_SelectedDateBehaviour.prototype = $extend(haxe_ui_behaviours_DefaultBehaviour.prototype,{
+	get: function() {
+		return haxe_ui_util_Variant.fromDate(this._component.findComponent(null,haxe_ui_components_Calendar).get_selectedDate());
+	}
+	,set: function(value) {
+		this._component.findComponent(null,haxe_ui_components_Calendar).set_selectedDate(haxe_ui_util_Variant.toDate(value));
+	}
+	,__class__: haxe_ui_containers__$CalendarView_SelectedDateBehaviour
+});
+var haxe_ui_containers__$CalendarView_Events = function(target) {
+	haxe_ui_events_Events.call(this,target);
+};
+$hxClasses["haxe.ui.containers._CalendarView.Events"] = haxe_ui_containers__$CalendarView_Events;
+haxe_ui_containers__$CalendarView_Events.__name__ = "haxe.ui.containers._CalendarView.Events";
+haxe_ui_containers__$CalendarView_Events.__super__ = haxe_ui_events_Events;
+haxe_ui_containers__$CalendarView_Events.prototype = $extend(haxe_ui_events_Events.prototype,{
+	register: function() {
+		var button = this._target.findComponent("prev-month");
+		if(button != null && button.hasEvent("click") == false) {
+			button.registerEvent("click",$bind(this,this.onPrevMonth));
+		}
+		var button = this._target.findComponent("next-month");
+		if(button != null && button.hasEvent("click") == false) {
+			button.registerEvent("click",$bind(this,this.onNextMonth));
+		}
+		var stepper = this._target.findComponent("current-year");
+		if(stepper != null && stepper.hasEvent("change") == false) {
+			stepper.registerEvent("change",$bind(this,this.onYearChange));
+		}
+		if(this._target.findComponent(null,haxe_ui_components_Calendar).hasEvent("datechange",$bind(this,this.onDateChange)) == false) {
+			this._target.findComponent(null,haxe_ui_components_Calendar).registerEvent("datechange",$bind(this,this.onDateChange));
+		}
+		if(this._target.findComponent(null,haxe_ui_components_Calendar).hasEvent("change",$bind(this,this.onCalendarChange)) == false) {
+			this._target.findComponent(null,haxe_ui_components_Calendar).registerEvent("change",$bind(this,this.onCalendarChange));
+		}
+		this.registerEvent("mousewheel",$bind(this,this.onMouseWheel));
+	}
+	,onPrevMonth: function(event) {
+		this._target.findComponent(null,haxe_ui_components_Calendar).previousMonth();
+	}
+	,onNextMonth: function(event) {
+		this._target.findComponent(null,haxe_ui_components_Calendar).nextMonth();
+	}
+	,onYearChange: function(event) {
+		var calendar = this._target.findComponent(null,haxe_ui_components_Calendar);
+		var stepper = this._target.findComponent("current-year");
+		if(stepper.get_pos() > calendar.get_date().getFullYear()) {
+			calendar.nextYear();
+		} else if(stepper.get_pos() < calendar.get_date().getFullYear()) {
+			calendar.previousYear();
+		}
+	}
+	,onDateChange: function(event) {
+		var calendar = this._target.findComponent(null,haxe_ui_components_Calendar);
+		var monthName = haxe_ui_containers_CalendarView.MONTH_NAMES[calendar.get_date().getMonth()];
+		this._target.findComponent("current-month",haxe_ui_components_Label).set_text(monthName + "  " + calendar.get_date().getFullYear());
+	}
+	,onCalendarChange: function(event) {
+		var calendar = this._target.findComponent(null,haxe_ui_components_Calendar);
+		var stepper = this._target.findComponent("current-year");
+		stepper.set_pos(calendar.get_selectedDate().getFullYear());
+		this._target.dispatch(new haxe_ui_events_UIEvent("change"));
+	}
+	,onMouseWheel: function(event) {
+		if(event.delta >= 1) {
+			this._target.findComponent(null,haxe_ui_components_Calendar).nextMonth();
+		} else {
+			this._target.findComponent(null,haxe_ui_components_Calendar).previousMonth();
+		}
+	}
+	,__class__: haxe_ui_containers__$CalendarView_Events
+});
+var haxe_ui_containers__$CalendarView_Builder = function(calendarView) {
+	haxe_ui_core_CompositeBuilder.call(this,calendarView);
+	this._calendarView = calendarView;
+};
+$hxClasses["haxe.ui.containers._CalendarView.Builder"] = haxe_ui_containers__$CalendarView_Builder;
+haxe_ui_containers__$CalendarView_Builder.__name__ = "haxe.ui.containers._CalendarView.Builder";
+haxe_ui_containers__$CalendarView_Builder.__super__ = haxe_ui_core_CompositeBuilder;
+haxe_ui_containers__$CalendarView_Builder.prototype = $extend(haxe_ui_core_CompositeBuilder.prototype,{
+	_calendarView: null
+	,create: function() {
+		var box = new haxe_ui_containers_Box();
+		box.set_percentWidth(100);
+		var button = new haxe_ui_components_Button();
+		button.set_id("prev-month");
+		box.addComponent(button);
+		var hbox = new haxe_ui_containers_HBox();
+		hbox.set_horizontalAlign("center");
+		hbox.set_verticalAlign("center");
+		var label = new haxe_ui_components_Label();
+		label.set_id("current-month");
+		var now = new Date();
+		label.set_text(haxe_ui_containers_CalendarView.MONTH_NAMES[now.getMonth()] + "  " + now.getFullYear());
+		hbox.addComponent(label);
+		var stepper = new haxe_ui_components_Stepper();
+		stepper.set_id("current-year");
+		stepper.set_min(0);
+		stepper.set_max(now.getFullYear() + 1000);
+		stepper.set_pos(now.getFullYear());
+		stepper.set_repeater(false);
+		hbox.addComponent(stepper);
+		box.addComponent(hbox);
+		var button = new haxe_ui_components_Button();
+		button.set_id("next-month");
+		button.set_horizontalAlign("right");
+		box.addComponent(button);
+		this._calendarView.addComponent(box);
+		var calendar = new haxe_ui_components_Calendar();
+		this._calendarView.addComponent(calendar);
+	}
+	,__class__: haxe_ui_containers__$CalendarView_Builder
 });
 var haxe_ui_containers_HBox = function() {
 	haxe_ui_containers_Box.call(this);
@@ -12723,326 +16446,186 @@ haxe_ui_containers_ScrollView.prototype = $extend(haxe_ui_core_Component.prototy
 	,__class__: haxe_ui_containers_ScrollView
 	,__properties__: $extend(haxe_ui_core_Component.prototype.__properties__,{set_autoHideScrolls:"set_autoHideScrolls",get_autoHideScrolls:"get_autoHideScrolls",set_contents:"set_contents",get_contents:"get_contents",set_scrollMode:"set_scrollMode",get_scrollMode:"get_scrollMode",set_vscrollPageSize:"set_vscrollPageSize",get_vscrollPageSize:"get_vscrollPageSize",set_vscrollMax:"set_vscrollMax",get_vscrollMax:"get_vscrollMax",set_vscrollPos:"set_vscrollPos",get_vscrollPos:"get_vscrollPos",set_hscrollPageSize:"set_hscrollPageSize",get_hscrollPageSize:"get_hscrollPageSize",set_hscrollMax:"set_hscrollMax",get_hscrollMax:"get_hscrollMax",set_hscrollPos:"set_hscrollPos",get_hscrollPos:"get_hscrollPos",set_percentContentHeight:"set_percentContentHeight",get_percentContentHeight:"get_percentContentHeight",set_contentHeight:"set_contentHeight",get_contentHeight:"get_contentHeight",set_percentContentWidth:"set_percentContentWidth",get_percentContentWidth:"get_percentContentWidth",set_contentWidth:"set_contentWidth",get_contentWidth:"get_contentWidth",set_contentLayoutName:"set_contentLayoutName",get_contentLayoutName:"get_contentLayoutName",set_virtual:"set_virtual",get_virtual:"get_virtual"})
 });
-var haxe_ui_containers__$ScrollView_Virtual = function(component) {
-	haxe_ui_behaviours_DefaultBehaviour.call(this,component);
+var haxe_ui_containers_ListView = function() {
+	haxe_ui_containers_ScrollView.call(this);
 };
-$hxClasses["haxe.ui.containers._ScrollView.Virtual"] = haxe_ui_containers__$ScrollView_Virtual;
-haxe_ui_containers__$ScrollView_Virtual.__name__ = "haxe.ui.containers._ScrollView.Virtual";
-haxe_ui_containers__$ScrollView_Virtual.__super__ = haxe_ui_behaviours_DefaultBehaviour;
-haxe_ui_containers__$ScrollView_Virtual.prototype = $extend(haxe_ui_behaviours_DefaultBehaviour.prototype,{
-	set: function(value) {
-		haxe_ui_behaviours_DefaultBehaviour.prototype.set.call(this,value);
-		if(this._component._compositeBuilder != null) {
-			(js_Boot.__cast(this._component._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).onVirtualChanged();
-		}
+$hxClasses["haxe.ui.containers.ListView"] = haxe_ui_containers_ListView;
+haxe_ui_containers_ListView.__name__ = "haxe.ui.containers.ListView";
+haxe_ui_containers_ListView.__interfaces__ = [haxe_ui_containers_IVirtualContainer,haxe_ui_core_IDataComponent];
+haxe_ui_containers_ListView.__super__ = haxe_ui_containers_ScrollView;
+haxe_ui_containers_ListView.prototype = $extend(haxe_ui_containers_ScrollView.prototype,{
+	_itemRendererClass: null
+	,get_itemRendererClass: function() {
+		return this._itemRendererClass;
 	}
-	,__class__: haxe_ui_containers__$ScrollView_Virtual
-});
-var haxe_ui_containers__$ScrollView_ContentLayoutName = function(component) {
-	haxe_ui_behaviours_DefaultBehaviour.call(this,component);
-};
-$hxClasses["haxe.ui.containers._ScrollView.ContentLayoutName"] = haxe_ui_containers__$ScrollView_ContentLayoutName;
-haxe_ui_containers__$ScrollView_ContentLayoutName.__name__ = "haxe.ui.containers._ScrollView.ContentLayoutName";
-haxe_ui_containers__$ScrollView_ContentLayoutName.__super__ = haxe_ui_behaviours_DefaultBehaviour;
-haxe_ui_containers__$ScrollView_ContentLayoutName.prototype = $extend(haxe_ui_behaviours_DefaultBehaviour.prototype,{
-	set: function(value) {
-		haxe_ui_behaviours_DefaultBehaviour.prototype.set.call(this,value);
-		var builder = js_Boot.__cast(this._component._compositeBuilder , haxe_ui_containers_ScrollViewBuilder);
-		if(builder != null && haxe_ui_util_Variant.fromString(builder._contentsLayoutName) != value) {
-			builder._contentsLayoutName = haxe_ui_util_Variant.toString(value);
-			builder._contents.set_layout(haxe_ui_layouts_LayoutFactory.createFromName(haxe_ui_util_Variant.toString(value)));
-		}
-	}
-	,__class__: haxe_ui_containers__$ScrollView_ContentLayoutName
-});
-var haxe_ui_containers__$ScrollView_ContentWidth = function(component) {
-	haxe_ui_behaviours_Behaviour.call(this,component);
-};
-$hxClasses["haxe.ui.containers._ScrollView.ContentWidth"] = haxe_ui_containers__$ScrollView_ContentWidth;
-haxe_ui_containers__$ScrollView_ContentWidth.__name__ = "haxe.ui.containers._ScrollView.ContentWidth";
-haxe_ui_containers__$ScrollView_ContentWidth.__super__ = haxe_ui_behaviours_Behaviour;
-haxe_ui_containers__$ScrollView_ContentWidth.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
-	get: function() {
-		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
-		if(contents == null) {
-			return null;
-		}
-		return haxe_ui_util_Variant.fromFloat(contents.get_width());
-	}
-	,set: function(value) {
-		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
-		if(contents != null) {
-			contents.set_percentWidth(null);
-			contents.set_width(haxe_ui_util_Variant.toFloat(value));
-		}
-	}
-	,__class__: haxe_ui_containers__$ScrollView_ContentWidth
-});
-var haxe_ui_containers__$ScrollView_PercentContentWidth = function(component) {
-	haxe_ui_behaviours_Behaviour.call(this,component);
-};
-$hxClasses["haxe.ui.containers._ScrollView.PercentContentWidth"] = haxe_ui_containers__$ScrollView_PercentContentWidth;
-haxe_ui_containers__$ScrollView_PercentContentWidth.__name__ = "haxe.ui.containers._ScrollView.PercentContentWidth";
-haxe_ui_containers__$ScrollView_PercentContentWidth.__super__ = haxe_ui_behaviours_Behaviour;
-haxe_ui_containers__$ScrollView_PercentContentWidth.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
-	get: function() {
-		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
-		if(contents == null) {
-			return null;
-		}
-		return haxe_ui_util_Variant.fromFloat(contents.get_percentWidth());
-	}
-	,set: function(value) {
-		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
-		if(contents != null) {
-			contents.set_componentWidth(null);
-			contents.set_percentWidth(haxe_ui_util_Variant.toFloat(value));
-		}
-	}
-	,__class__: haxe_ui_containers__$ScrollView_PercentContentWidth
-});
-var haxe_ui_containers__$ScrollView_ContentHeight = function(component) {
-	haxe_ui_behaviours_Behaviour.call(this,component);
-};
-$hxClasses["haxe.ui.containers._ScrollView.ContentHeight"] = haxe_ui_containers__$ScrollView_ContentHeight;
-haxe_ui_containers__$ScrollView_ContentHeight.__name__ = "haxe.ui.containers._ScrollView.ContentHeight";
-haxe_ui_containers__$ScrollView_ContentHeight.__super__ = haxe_ui_behaviours_Behaviour;
-haxe_ui_containers__$ScrollView_ContentHeight.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
-	get: function() {
-		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
-		if(contents == null) {
-			return null;
-		}
-		return haxe_ui_util_Variant.fromFloat(contents.get_height());
-	}
-	,set: function(value) {
-		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
-		if(contents != null) {
-			contents.set_percentHeight(null);
-			contents.set_height(haxe_ui_util_Variant.toFloat(value));
-		}
-	}
-	,__class__: haxe_ui_containers__$ScrollView_ContentHeight
-});
-var haxe_ui_containers__$ScrollView_PercentContentHeight = function(component) {
-	haxe_ui_behaviours_Behaviour.call(this,component);
-};
-$hxClasses["haxe.ui.containers._ScrollView.PercentContentHeight"] = haxe_ui_containers__$ScrollView_PercentContentHeight;
-haxe_ui_containers__$ScrollView_PercentContentHeight.__name__ = "haxe.ui.containers._ScrollView.PercentContentHeight";
-haxe_ui_containers__$ScrollView_PercentContentHeight.__super__ = haxe_ui_behaviours_Behaviour;
-haxe_ui_containers__$ScrollView_PercentContentHeight.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
-	get: function() {
-		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
-		if(contents == null) {
-			return null;
-		}
-		return haxe_ui_util_Variant.fromFloat(contents.get_percentHeight());
-	}
-	,set: function(value) {
-		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
-		if(contents != null) {
-			contents.set_componentHeight(null);
-			contents.set_percentHeight(haxe_ui_util_Variant.toFloat(value));
-		}
-	}
-	,__class__: haxe_ui_containers__$ScrollView_PercentContentHeight
-});
-var haxe_ui_containers__$ScrollView_HScrollPos = function(scrollview) {
-	haxe_ui_behaviours_DataBehaviour.call(this,scrollview);
-	this._scrollview = scrollview;
-};
-$hxClasses["haxe.ui.containers._ScrollView.HScrollPos"] = haxe_ui_containers__$ScrollView_HScrollPos;
-haxe_ui_containers__$ScrollView_HScrollPos.__name__ = "haxe.ui.containers._ScrollView.HScrollPos";
-haxe_ui_containers__$ScrollView_HScrollPos.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers__$ScrollView_HScrollPos.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
-	_scrollview: null
-	,get: function() {
-		var hscroll = this._scrollview.findComponent(null,haxe_ui_components_HorizontalScroll,false);
-		if(hscroll == null) {
-			return haxe_ui_util_Variant.fromInt(0);
-		}
-		return haxe_ui_util_Variant.fromFloat(hscroll.get_pos());
-	}
-	,validateData: function() {
-		var hscroll = this._scrollview.findComponent(null,haxe_ui_components_HorizontalScroll,false);
-		if(this._scrollview.get_virtual() == true) {
-			if(hscroll == null) {
-				hscroll = (js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).createHScroll();
-			}
-			if(hscroll != null) {
-				hscroll.set_pos(haxe_ui_util_Variant.toFloat(this._value));
-			}
-		} else if(hscroll != null) {
-			hscroll.set_pos(haxe_ui_util_Variant.toFloat(this._value));
-		}
-	}
-	,__class__: haxe_ui_containers__$ScrollView_HScrollPos
-});
-var haxe_ui_containers__$ScrollView_VScrollPos = function(scrollview) {
-	haxe_ui_behaviours_DataBehaviour.call(this,scrollview);
-	this._scrollview = scrollview;
-};
-$hxClasses["haxe.ui.containers._ScrollView.VScrollPos"] = haxe_ui_containers__$ScrollView_VScrollPos;
-haxe_ui_containers__$ScrollView_VScrollPos.__name__ = "haxe.ui.containers._ScrollView.VScrollPos";
-haxe_ui_containers__$ScrollView_VScrollPos.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers__$ScrollView_VScrollPos.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
-	_scrollview: null
-	,get: function() {
-		var vscroll = this._scrollview.findComponent(null,haxe_ui_components_VerticalScroll,false);
-		if(vscroll == null) {
-			return haxe_ui_util_Variant.fromInt(0);
-		}
-		return haxe_ui_util_Variant.fromFloat(vscroll.get_pos());
-	}
-	,validateData: function() {
-		var vscroll = this._scrollview.findComponent(null,haxe_ui_components_VerticalScroll,false);
-		if(this._scrollview.get_virtual() == true) {
-			if(vscroll == null) {
-				vscroll = (js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).createVScroll();
-			}
-			if(vscroll != null) {
-				vscroll.set_pos(haxe_ui_util_Variant.toFloat(this._value));
-			}
-		} else if(vscroll != null) {
-			vscroll.set_pos(haxe_ui_util_Variant.toFloat(this._value));
-		}
-	}
-	,__class__: haxe_ui_containers__$ScrollView_VScrollPos
-});
-var haxe_ui_containers__$ScrollView_HScrollMax = function(scrollview) {
-	haxe_ui_behaviours_DataBehaviour.call(this,scrollview);
-	this._scrollview = scrollview;
-};
-$hxClasses["haxe.ui.containers._ScrollView.HScrollMax"] = haxe_ui_containers__$ScrollView_HScrollMax;
-haxe_ui_containers__$ScrollView_HScrollMax.__name__ = "haxe.ui.containers._ScrollView.HScrollMax";
-haxe_ui_containers__$ScrollView_HScrollMax.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers__$ScrollView_HScrollMax.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
-	_scrollview: null
-	,get: function() {
-		var hscroll = this._scrollview.findComponent(null,haxe_ui_components_HorizontalScroll,false);
-		if(hscroll == null) {
-			return haxe_ui_util_Variant.fromInt(0);
-		}
-		return haxe_ui_util_Variant.fromFloat(hscroll.get_max());
-	}
-	,validateData: function() {
-		if(this._scrollview.get_virtual() == true) {
-			var hscroll = this._scrollview.findComponent(null,haxe_ui_components_HorizontalScroll,false);
-			if(haxe_ui_util_Variant.gt(this._value,haxe_ui_util_Variant.fromInt(0))) {
-				if(hscroll == null) {
-					hscroll = (js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).createHScroll();
-				}
-			} else if(hscroll != null) {
-				(js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).destroyHScroll();
-			}
-			if(hscroll != null) {
-				hscroll.set_max(haxe_ui_util_Variant.toFloat(this._value));
+	,set_itemRendererClass: function(value) {
+		if(this._itemRendererClass != value) {
+			this._itemRendererClass = value;
+			if(!(this._layout == null || this._layoutLocked == true)) {
+				this.invalidateComponent("layout",false);
 			}
 		}
+		return value;
 	}
-	,__class__: haxe_ui_containers__$ScrollView_HScrollMax
-});
-var haxe_ui_containers__$ScrollView_VScrollMax = function(scrollview) {
-	haxe_ui_behaviours_DataBehaviour.call(this,scrollview);
-	this._scrollview = scrollview;
-};
-$hxClasses["haxe.ui.containers._ScrollView.VScrollMax"] = haxe_ui_containers__$ScrollView_VScrollMax;
-haxe_ui_containers__$ScrollView_VScrollMax.__name__ = "haxe.ui.containers._ScrollView.VScrollMax";
-haxe_ui_containers__$ScrollView_VScrollMax.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers__$ScrollView_VScrollMax.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
-	_scrollview: null
-	,get: function() {
-		var vscroll = this._scrollview.findComponent(null,haxe_ui_components_VerticalScroll,false);
-		if(vscroll == null) {
-			return haxe_ui_util_Variant.fromInt(0);
-		}
-		return haxe_ui_util_Variant.fromFloat(vscroll.get_max());
+	,_itemRenderer: null
+	,get_itemRenderer: function() {
+		return this._itemRenderer;
 	}
-	,validateData: function() {
-		if(this._scrollview.get_virtual() == true) {
-			var vscroll = this._scrollview.findComponent(null,haxe_ui_components_VerticalScroll,false);
-			if(haxe_ui_util_Variant.gt(this._value,haxe_ui_util_Variant.fromInt(0))) {
-				if(vscroll == null) {
-					vscroll = (js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).createVScroll();
-				}
-			} else if(vscroll != null) {
-				(js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).destroyVScroll();
-			}
-			if(vscroll != null) {
-				vscroll.set_max(haxe_ui_util_Variant.toFloat(this._value));
+	,set_itemRenderer: function(value) {
+		if(this._itemRenderer != value) {
+			this._itemRenderer = value;
+			if(!(this._layout == null || this._layoutLocked == true)) {
+				this.invalidateComponent("layout",false);
 			}
 		}
+		return value;
 	}
-	,__class__: haxe_ui_containers__$ScrollView_VScrollMax
-});
-var haxe_ui_containers__$ScrollView_HScrollPageSize = function(scrollview) {
-	haxe_ui_behaviours_DataBehaviour.call(this,scrollview);
-	this._scrollview = scrollview;
-};
-$hxClasses["haxe.ui.containers._ScrollView.HScrollPageSize"] = haxe_ui_containers__$ScrollView_HScrollPageSize;
-haxe_ui_containers__$ScrollView_HScrollPageSize.__name__ = "haxe.ui.containers._ScrollView.HScrollPageSize";
-haxe_ui_containers__$ScrollView_HScrollPageSize.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers__$ScrollView_HScrollPageSize.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
-	_scrollview: null
-	,validateData: function() {
-		if(this._scrollview.get_virtual() == true) {
-			var hscroll = this._scrollview.findComponent(null,haxe_ui_components_HorizontalScroll,false);
-			if(hscroll == null) {
-				hscroll = (js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).createHScroll();
-			}
-			if(hscroll != null) {
-				hscroll.set_pageSize(haxe_ui_util_Variant.toFloat(this._value));
+	,registerBehaviours: function() {
+		haxe_ui_containers_ScrollView.prototype.registerBehaviours.call(this);
+		this.behaviours.register("dataSource",haxe_ui_containers__$ListView_DataSourceBehaviour);
+		this.behaviours.register("itemWidth",haxe_ui_behaviours_LayoutBehaviour,haxe_ui_util_Variant.fromInt(-1));
+		this.behaviours.register("itemHeight",haxe_ui_behaviours_LayoutBehaviour,haxe_ui_util_Variant.fromInt(-1));
+		this.behaviours.register("itemCount",haxe_ui_behaviours_LayoutBehaviour,haxe_ui_util_Variant.fromInt(-1));
+		this.behaviours.register("variableItemSize",haxe_ui_behaviours_LayoutBehaviour,haxe_ui_util_Variant.fromBool(false));
+		this.behaviours.register("selectedIndex",haxe_ui_containers__$ListView_SelectedIndexBehaviour,haxe_ui_util_Variant.fromInt(-1));
+		this.behaviours.register("selectedItem",haxe_ui_containers__$ListView_SelectedItemBehaviour);
+		this.behaviours.register("selectedIndices",haxe_ui_containers__$ListView_SelectedIndicesBehaviour);
+		this.behaviours.register("selectedItems",haxe_ui_containers__$ListView_SelectedItemsBehaviour);
+		this.behaviours.register("selectionMode",haxe_ui_containers__$ListView_SelectionModeBehaviour,haxe_ui_util_Variant.fromString("one-item"));
+		this.behaviours.register("longPressSelectionTime",haxe_ui_behaviours_DefaultBehaviour,haxe_ui_util_Variant.fromInt(500));
+	}
+	,get_dataSource: function() {
+		return haxe_ui_util_Variant.toDataSource(this.behaviours.get("dataSource"));
+	}
+	,set_dataSource: function(value) {
+		this.behaviours.set("dataSource",haxe_ui_util_Variant.fromDataSource(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"dataSource"));
+		return value;
+	}
+	,get_itemWidth: function() {
+		return haxe_ui_util_Variant.toFloat(this.behaviours.get("itemWidth"));
+	}
+	,set_itemWidth: function(value) {
+		this.behaviours.set("itemWidth",haxe_ui_util_Variant.fromFloat(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"itemWidth"));
+		return value;
+	}
+	,get_itemHeight: function() {
+		return haxe_ui_util_Variant.toFloat(this.behaviours.get("itemHeight"));
+	}
+	,set_itemHeight: function(value) {
+		this.behaviours.set("itemHeight",haxe_ui_util_Variant.fromFloat(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"itemHeight"));
+		return value;
+	}
+	,get_itemCount: function() {
+		return haxe_ui_util_Variant.toInt(this.behaviours.get("itemCount"));
+	}
+	,set_itemCount: function(value) {
+		this.behaviours.set("itemCount",haxe_ui_util_Variant.fromInt(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"itemCount"));
+		return value;
+	}
+	,get_variableItemSize: function() {
+		return haxe_ui_util_Variant.toBool(this.behaviours.get("variableItemSize"));
+	}
+	,set_variableItemSize: function(value) {
+		this.behaviours.set("variableItemSize",haxe_ui_util_Variant.fromBool(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"variableItemSize"));
+		return value;
+	}
+	,get_selectedIndex: function() {
+		return haxe_ui_util_Variant.toInt(this.behaviours.get("selectedIndex"));
+	}
+	,set_selectedIndex: function(value) {
+		this.behaviours.set("selectedIndex",haxe_ui_util_Variant.fromInt(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"selectedIndex"));
+		return value;
+	}
+	,get_selectedItem: function() {
+		return this.behaviours.getDynamic("selectedItem");
+	}
+	,set_selectedItem: function(value) {
+		this.behaviours.setDynamic("selectedItem",value);
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"selectedItem"));
+		return value;
+	}
+	,get_selectedIndices: function() {
+		return haxe_ui_util_Variant.toArray(this.behaviours.get("selectedIndices"));
+	}
+	,set_selectedIndices: function(value) {
+		this.behaviours.set("selectedIndices",haxe_ui_util_Variant.fromArray(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"selectedIndices"));
+		return value;
+	}
+	,get_selectedItems: function() {
+		return haxe_ui_util_Variant.toArray(this.behaviours.get("selectedItems"));
+	}
+	,set_selectedItems: function(value) {
+		this.behaviours.set("selectedItems",haxe_ui_util_Variant.fromArray(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"selectedItems"));
+		return value;
+	}
+	,get_selectionMode: function() {
+		return haxe_ui_util_Variant.toString(this.behaviours.get("selectionMode"));
+	}
+	,set_selectionMode: function(value) {
+		this.behaviours.set("selectionMode",haxe_ui_util_Variant.fromString(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"selectionMode"));
+		return value;
+	}
+	,get_longPressSelectionTime: function() {
+		return haxe_ui_util_Variant.toInt(this.behaviours.get("longPressSelectionTime"));
+	}
+	,set_longPressSelectionTime: function(value) {
+		this.behaviours.set("longPressSelectionTime",haxe_ui_util_Variant.fromInt(value));
+		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"longPressSelectionTime"));
+		return value;
+	}
+	,get_value: function() {
+		return this.get_selectedIndex();
+	}
+	,set_value: function(value) {
+		this.set_selectedIndex(value);
+		return value;
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_ScrollView.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
 			}
 		}
+		return c;
 	}
-	,__class__: haxe_ui_containers__$ScrollView_HScrollPageSize
-});
-var haxe_ui_containers__$ScrollView_VScrollPageSize = function(scrollview) {
-	haxe_ui_behaviours_DataBehaviour.call(this,scrollview);
-	this._scrollview = scrollview;
-};
-$hxClasses["haxe.ui.containers._ScrollView.VScrollPageSize"] = haxe_ui_containers__$ScrollView_VScrollPageSize;
-haxe_ui_containers__$ScrollView_VScrollPageSize.__name__ = "haxe.ui.containers._ScrollView.VScrollPageSize";
-haxe_ui_containers__$ScrollView_VScrollPageSize.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers__$ScrollView_VScrollPageSize.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
-	_scrollview: null
-	,validateData: function() {
-		if(this._scrollview.get_virtual() == true) {
-			var vscroll = this._scrollview.findComponent(null,haxe_ui_components_VerticalScroll,false);
-			if(vscroll == null) {
-				vscroll = (js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).createVScroll();
-			}
-			if(vscroll != null) {
-				vscroll.set_pageSize(haxe_ui_util_Variant.toFloat(this._value));
-			}
+	,self: function() {
+		return new haxe_ui_containers_ListView();
+	}
+	,registerComposite: function() {
+		haxe_ui_containers_ScrollView.prototype.registerComposite.call(this);
+		this._internalEventsClass = haxe_ui_containers_ListViewEvents;
+		this._compositeBuilderClass = haxe_ui_containers__$ListView_ListViewBuilder;
+		this._defaultLayoutClass = haxe_ui_layouts_VerticalVirtualLayout;
+	}
+	,__onComponentEvent: null
+	,onComponentEvent: null
+	,set_onComponentEvent: function(value) {
+		if(this.__onComponentEvent != null) {
+			this.unregisterEvent("itemComponentEvent",this.__onComponentEvent);
+			this.__onComponentEvent = null;
 		}
+		if(value != null) {
+			this.__onComponentEvent = value;
+			this.registerEvent("itemComponentEvent",value);
+		}
+		return value;
 	}
-	,__class__: haxe_ui_containers__$ScrollView_VScrollPageSize
-});
-var haxe_ui_containers__$ScrollView_ScrollModeBehaviour = function(component) {
-	haxe_ui_behaviours_DataBehaviour.call(this,component);
-};
-$hxClasses["haxe.ui.containers._ScrollView.ScrollModeBehaviour"] = haxe_ui_containers__$ScrollView_ScrollModeBehaviour;
-haxe_ui_containers__$ScrollView_ScrollModeBehaviour.__name__ = "haxe.ui.containers._ScrollView.ScrollModeBehaviour";
-haxe_ui_containers__$ScrollView_ScrollModeBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers__$ScrollView_ScrollModeBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
-	validateData: function() {
-		this._component.registerInternalEvents(null,true);
-	}
-	,__class__: haxe_ui_containers__$ScrollView_ScrollModeBehaviour
-});
-var haxe_ui_containers__$ScrollView_GetContents = function(component) {
-	haxe_ui_behaviours_DefaultBehaviour.call(this,component);
-};
-$hxClasses["haxe.ui.containers._ScrollView.GetContents"] = haxe_ui_containers__$ScrollView_GetContents;
-haxe_ui_containers__$ScrollView_GetContents.__name__ = "haxe.ui.containers._ScrollView.GetContents";
-haxe_ui_containers__$ScrollView_GetContents.__super__ = haxe_ui_behaviours_DefaultBehaviour;
-haxe_ui_containers__$ScrollView_GetContents.prototype = $extend(haxe_ui_behaviours_DefaultBehaviour.prototype,{
-	get: function() {
-		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
-		return haxe_ui_util_Variant.fromComponent(contents);
-	}
-	,__class__: haxe_ui_containers__$ScrollView_GetContents
+	,__class__: haxe_ui_containers_ListView
+	,__properties__: $extend(haxe_ui_containers_ScrollView.prototype.__properties__,{set_onComponentEvent:"set_onComponentEvent",set_longPressSelectionTime:"set_longPressSelectionTime",get_longPressSelectionTime:"get_longPressSelectionTime",set_selectionMode:"set_selectionMode",get_selectionMode:"get_selectionMode",set_selectedItems:"set_selectedItems",get_selectedItems:"get_selectedItems",set_selectedIndices:"set_selectedIndices",get_selectedIndices:"get_selectedIndices",set_selectedItem:"set_selectedItem",get_selectedItem:"get_selectedItem",set_selectedIndex:"set_selectedIndex",get_selectedIndex:"get_selectedIndex",set_variableItemSize:"set_variableItemSize",get_variableItemSize:"get_variableItemSize",set_itemCount:"set_itemCount",get_itemCount:"get_itemCount",set_itemHeight:"set_itemHeight",get_itemHeight:"get_itemHeight",set_itemWidth:"set_itemWidth",get_itemWidth:"get_itemWidth",set_dataSource:"set_dataSource",get_dataSource:"get_dataSource",set_itemRenderer:"set_itemRenderer",get_itemRenderer:"get_itemRenderer",set_itemRendererClass:"set_itemRendererClass",get_itemRendererClass:"get_itemRendererClass"})
 });
 var haxe_ui_containers_ScrollViewEvents = function(scrollview) {
 	this._fadeTimer = null;
@@ -13389,6 +16972,197 @@ haxe_ui_containers_ScrollViewEvents.prototype = $extend(haxe_ui_events_Events.pr
 	}
 	,__class__: haxe_ui_containers_ScrollViewEvents
 });
+var haxe_ui_containers_ListViewEvents = function(listview) {
+	haxe_ui_containers_ScrollViewEvents.call(this,listview);
+	this._listview = listview;
+};
+$hxClasses["haxe.ui.containers.ListViewEvents"] = haxe_ui_containers_ListViewEvents;
+haxe_ui_containers_ListViewEvents.__name__ = "haxe.ui.containers.ListViewEvents";
+haxe_ui_containers_ListViewEvents.__super__ = haxe_ui_containers_ScrollViewEvents;
+haxe_ui_containers_ListViewEvents.prototype = $extend(haxe_ui_containers_ScrollViewEvents.prototype,{
+	_listview: null
+	,register: function() {
+		haxe_ui_containers_ScrollViewEvents.prototype.register.call(this);
+		this.registerEvent("scrollchange",$bind(this,this.onScrollChange));
+		this.registerEvent("rendererCreated",$bind(this,this.onRendererCreated));
+		this.registerEvent("rendererDestroyed",$bind(this,this.onRendererDestroyed));
+	}
+	,unregister: function() {
+		haxe_ui_containers_ScrollViewEvents.prototype.unregister.call(this);
+		this.unregisterEvent("scrollchange",$bind(this,this.onScrollChange));
+		this.unregisterEvent("rendererCreated",$bind(this,this.onRendererCreated));
+		this.unregisterEvent("rendererDestroyed",$bind(this,this.onRendererDestroyed));
+	}
+	,onScrollChange: function(e) {
+		if(this._listview.get_virtual() == true) {
+			var _this = this._listview;
+			if(!(_this._layout == null || _this._layoutLocked == true)) {
+				_this.invalidateComponent("layout",false);
+			}
+		}
+	}
+	,onRendererCreated: function(e) {
+		var instance = js_Boot.__cast(e.data , haxe_ui_core_ItemRenderer);
+		instance.registerEvent("mousedown",$bind(this,this.onRendererMouseDown));
+		instance.registerEvent("click",$bind(this,this.onRendererClick));
+		if(this._listview.get_selectedIndices().indexOf(instance.itemIndex) != -1) {
+			var builder = js_Boot.__cast(this._listview._compositeBuilder , haxe_ui_containers__$ListView_ListViewBuilder);
+			builder.addItemRendererClass(instance,":selected");
+		}
+	}
+	,onRendererDestroyed: function(e) {
+		var instance = js_Boot.__cast(e.data , haxe_ui_core_ItemRenderer);
+		instance.unregisterEvent("mousedown",$bind(this,this.onRendererMouseDown));
+		instance.unregisterEvent("click",$bind(this,this.onRendererClick));
+		if(this._listview.get_selectedIndices().indexOf(instance.itemIndex) != -1) {
+			var builder = js_Boot.__cast(this._listview._compositeBuilder , haxe_ui_containers__$ListView_ListViewBuilder);
+			builder.addItemRendererClass(instance,":selected",false);
+		}
+	}
+	,onRendererMouseDown: function(e) {
+		if(this._listview.get_selectionMode() == "multiple-long-press") {
+			if(this._listview.get_selectedIndices().length == 0) {
+				this.startLongPressSelection(e);
+			}
+		} else if(this._listview.classes.indexOf(":mobile") != -1 == false) {
+			e.target.addClass(":hover");
+		}
+	}
+	,startLongPressSelection: function(e) {
+		var _gthis = this;
+		var timerClick = null;
+		var currentMouseX = e.screenX;
+		var currentMouseY = e.screenY;
+		var renderer = js_Boot.__cast(e.target , haxe_ui_core_ItemRenderer);
+		var __onMouseMove = null;
+		var __onMouseUp = null;
+		var __onMouseClick = null;
+		__onMouseMove = function(_e) {
+			currentMouseX = _e.screenX;
+			currentMouseY = _e.screenY;
+		};
+		__onMouseUp = function(_e) {
+			if(timerClick != null) {
+				timerClick.stop();
+				timerClick = null;
+			}
+			renderer.get_screen().unregisterEvent("mousemove",__onMouseMove);
+			renderer.get_screen().unregisterEvent("mouseup",__onMouseUp);
+		};
+		__onMouseClick = function(_e) {
+			_e.cancel();
+			renderer.unregisterEvent("click",__onMouseClick);
+		};
+		renderer.get_screen().registerEvent("mousemove",__onMouseMove);
+		renderer.get_screen().registerEvent("mouseup",__onMouseUp);
+		timerClick = haxe_Timer.delay(function() {
+			if(timerClick != null) {
+				timerClick = null;
+				var timerClick1;
+				if(renderer.hitTest(currentMouseX,currentMouseY)) {
+					var x1 = e.screenX;
+					var y1 = e.screenY;
+					timerClick1 = Math.sqrt((x1 - currentMouseX) * (x1 - currentMouseX) + (y1 - currentMouseY) * (y1 - currentMouseY)) < 2 * haxe_ui_Toolkit.pixelsPerRem;
+				} else {
+					timerClick1 = false;
+				}
+				if(timerClick1) {
+					_gthis.toggleSelection(renderer);
+					renderer.registerEvent("click",__onMouseClick,1);
+				}
+			}
+		},this._listview.get_longPressSelectionTime());
+	}
+	,onContainerEventsStatusChanged: function() {
+		haxe_ui_containers_ScrollViewEvents.prototype.onContainerEventsStatusChanged.call(this);
+		if(this._containerEventsPaused == true) {
+			this._scrollview.findComponent("listview-contents",haxe_ui_core_Component,true,"css").removeClass(":hover",true,true);
+		} else {
+			var tmp = this._lastMousePos != null;
+		}
+	}
+	,onRendererClick: function(e) {
+		if(this._containerEventsPaused == true) {
+			return;
+		}
+		var components = e.target.findComponentsUnderPoint(e.screenX,e.screenY);
+		var _g = 0;
+		while(_g < components.length) {
+			var component = components[_g];
+			++_g;
+			if(((component) instanceof haxe_ui_core_InteractiveComponent) && (js_Boot.__cast(component , haxe_ui_core_InteractiveComponent)).get_allowInteraction() == true) {
+				return;
+			}
+		}
+		var renderer = js_Boot.__cast(e.target , haxe_ui_core_ItemRenderer);
+		switch(this._listview.get_selectionMode()) {
+		case "disabled":
+			break;
+		case "multiple-click-modifier-key":case "multiple-modifier-key":
+			if(e.ctrlKey == true) {
+				this.toggleSelection(renderer);
+			} else if(e.shiftKey == true) {
+				var selectedIndices = this._listview.get_selectedIndices();
+				var fromIndex = selectedIndices.length > 0 ? selectedIndices[selectedIndices.length - 1] : 0;
+				var toIndex = renderer.itemIndex;
+				if(fromIndex < toIndex) {
+					var _g = 0;
+					while(_g < selectedIndices.length) {
+						var i = selectedIndices[_g];
+						++_g;
+						if(i < fromIndex) {
+							fromIndex = i;
+						}
+					}
+				} else {
+					var tmp = fromIndex;
+					fromIndex = toIndex;
+					toIndex = tmp;
+				}
+				this.selectRange(fromIndex,toIndex);
+			} else if(this._listview.get_selectionMode() == "multiple-click-modifier-key") {
+				this._listview.set_selectedIndex(renderer.itemIndex);
+			}
+			break;
+		case "multiple-long-press":
+			var selectedIndices = this._listview.get_selectedIndices();
+			if(selectedIndices.length > 0) {
+				this.toggleSelection(renderer);
+			}
+			break;
+		case "one-item":
+			this._listview.set_selectedIndex(renderer.itemIndex);
+			break;
+		case "one-item-repeated":
+			this._listview.set_selectedIndices([renderer.itemIndex]);
+			break;
+		default:
+		}
+	}
+	,toggleSelection: function(renderer) {
+		var itemIndex = renderer.itemIndex;
+		var selectedIndices = this._listview.get_selectedIndices().slice();
+		var index = selectedIndices.indexOf(itemIndex);
+		if(index == -1) {
+			selectedIndices.push(itemIndex);
+		} else {
+			selectedIndices.splice(index,1);
+		}
+		this._listview.set_selectedIndices(selectedIndices);
+	}
+	,selectRange: function(fromIndex,toIndex) {
+		var tmp = this._listview;
+		var _g = [];
+		var _g1 = fromIndex;
+		var _g2 = toIndex + 1;
+		while(_g1 < _g2) {
+			var i = _g1++;
+			_g.push(i);
+		}
+		tmp.set_selectedIndices(_g);
+	}
+	,__class__: haxe_ui_containers_ListViewEvents
+});
 var haxe_ui_containers_ScrollViewBuilder = function(scrollview) {
 	haxe_ui_core_CompositeBuilder.call(this,scrollview);
 	this._scrollview = scrollview;
@@ -13634,16 +17408,628 @@ haxe_ui_containers_ScrollViewBuilder.prototype = $extend(haxe_ui_core_CompositeB
 	,__class__: haxe_ui_containers_ScrollViewBuilder
 	,__properties__: $extend(haxe_ui_core_CompositeBuilder.prototype.__properties__,{get_virtualVertical:"get_virtualVertical",get_virtualHorizontal:"get_virtualHorizontal"})
 });
-var haxe_ui_core_IDataComponent = function() { };
-$hxClasses["haxe.ui.core.IDataComponent"] = haxe_ui_core_IDataComponent;
-haxe_ui_core_IDataComponent.__name__ = "haxe.ui.core.IDataComponent";
-haxe_ui_core_IDataComponent.__isInterface__ = true;
-haxe_ui_core_IDataComponent.prototype = {
-	get_dataSource: null
-	,set_dataSource: null
-	,__class__: haxe_ui_core_IDataComponent
-	,__properties__: {set_dataSource:"set_dataSource",get_dataSource:"get_dataSource"}
+var haxe_ui_containers__$ListView_ListViewBuilder = function(listview) {
+	haxe_ui_containers_ScrollViewBuilder.call(this,listview);
+	this._listview = listview;
 };
+$hxClasses["haxe.ui.containers._ListView.ListViewBuilder"] = haxe_ui_containers__$ListView_ListViewBuilder;
+haxe_ui_containers__$ListView_ListViewBuilder.__name__ = "haxe.ui.containers._ListView.ListViewBuilder";
+haxe_ui_containers__$ListView_ListViewBuilder.__super__ = haxe_ui_containers_ScrollViewBuilder;
+haxe_ui_containers__$ListView_ListViewBuilder.prototype = $extend(haxe_ui_containers_ScrollViewBuilder.prototype,{
+	_listview: null
+	,create: function() {
+		this.createContentContainer(this._listview.get_virtual() ? "absolute" : "vertical");
+	}
+	,createContentContainer: function(layoutName) {
+		if(this._contents == null) {
+			haxe_ui_containers_ScrollViewBuilder.prototype.createContentContainer.call(this,layoutName);
+			this._contents.addClass("listview-contents");
+		}
+	}
+	,addComponent: function(child) {
+		var r = null;
+		if(((child) instanceof haxe_ui_core_ItemRenderer) && (this._listview.get_itemRenderer() == null && this._listview.get_itemRendererClass() == null)) {
+			this._listview.set_itemRenderer(js_Boot.__cast(child , haxe_ui_core_ItemRenderer));
+			this._listview.get_itemRenderer().ready();
+			this._listview.get_itemRenderer().handleVisibility(false);
+			r = child;
+		} else {
+			r = haxe_ui_containers_ScrollViewBuilder.prototype.addComponent.call(this,child);
+		}
+		return r;
+	}
+	,onVirtualChanged: function() {
+		this._contents.set_layoutName(this._listview.get_virtual() ? "absolute" : "vertical");
+	}
+	,addItemRendererClass: function(child,className,add) {
+		if(add == null) {
+			add = true;
+		}
+		var _gthis = this;
+		child.walkComponents(function(c) {
+			if(((c) instanceof haxe_ui_core_ItemRenderer)) {
+				if(add == true) {
+					c.addClass(className);
+					haxe_ui_Toolkit.callLater(function() {
+						_gthis.ensureVisible(js_Boot.__cast(c , haxe_ui_core_ItemRenderer));
+					});
+				} else {
+					c.removeClass(className);
+				}
+			} else {
+				c.invalidateComponent("style",false);
+			}
+			return true;
+		});
+	}
+	,ensureVisible: function(itemToEnsure) {
+		if(itemToEnsure != null && this._listview.get_virtual() == false) {
+			var vscroll = this._listview.findComponent(null,haxe_ui_components_VerticalScroll);
+			if(vscroll != null) {
+				var vpos = vscroll.get_pos();
+				var contents = this._listview.findComponent("listview-contents",null,null,"css");
+				if(itemToEnsure.get_top() + itemToEnsure.get_height() > vpos + contents.get_componentClipRect().height) {
+					vscroll.set_pos(itemToEnsure.get_top() + itemToEnsure.get_height() - contents.get_componentClipRect().height);
+				} else if(itemToEnsure.get_top() < vpos) {
+					vscroll.set_pos(itemToEnsure.get_top());
+				}
+			}
+		}
+	}
+	,ensureVirtualItemVisible: function(index) {
+		var vscroll = this._listview.findComponent(null,haxe_ui_components_VerticalScroll);
+		if(vscroll != null) {
+			var layout = js_Boot.__cast(this._listview.get_layout() , haxe_ui_layouts_VerticalVirtualLayout);
+			var itemHeight = layout.get_itemHeight();
+			var itemTop = index * itemHeight;
+			var vpos = vscroll.get_pos();
+			var contents = this._listview.findComponent("listview-contents",null,null,"css");
+			if(itemTop + itemHeight > vpos + contents.get_componentClipRect().height) {
+				vscroll.set_pos(itemTop + itemHeight - contents.get_componentClipRect().height);
+			} else if(itemTop < vpos) {
+				vscroll.set_pos(itemTop);
+			}
+		}
+	}
+	,__class__: haxe_ui_containers__$ListView_ListViewBuilder
+});
+var haxe_ui_containers__$ListView_DataSourceBehaviour = function(component) {
+	this._firstPass = true;
+	haxe_ui_behaviours_DataBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ListView.DataSourceBehaviour"] = haxe_ui_containers__$ListView_DataSourceBehaviour;
+haxe_ui_containers__$ListView_DataSourceBehaviour.__name__ = "haxe.ui.containers._ListView.DataSourceBehaviour";
+haxe_ui_containers__$ListView_DataSourceBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_containers__$ListView_DataSourceBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	_firstPass: null
+	,set: function(value) {
+		var _gthis = this;
+		haxe_ui_behaviours_DataBehaviour.prototype.set.call(this,value);
+		var dataSource = haxe_ui_util_Variant.toDataSource(this._value);
+		if(dataSource != null) {
+			dataSource.onChange = function() {
+				var _this = _gthis._component;
+				if(!(_this._layout == null || _this._layoutLocked == true)) {
+					_this.invalidateComponent("layout",false);
+				}
+				if(_gthis._firstPass == true) {
+					_gthis._component.syncComponentValidation();
+					_gthis._firstPass = false;
+					var _this = _gthis._component;
+					if(!(_this._layout == null || _this._layoutLocked == true)) {
+						_this.invalidateComponent("layout",false);
+					}
+				}
+			};
+			var _this = this._component;
+			if(!(_this._layout == null || _this._layoutLocked == true)) {
+				_this.invalidateComponent("layout",false);
+			}
+		} else {
+			var _this = this._component;
+			if(!(_this._layout == null || _this._layoutLocked == true)) {
+				_this.invalidateComponent("layout",false);
+			}
+		}
+	}
+	,get: function() {
+		if(this._value == null || haxe_ui_util_Variant.get_isNull(this._value)) {
+			this._value = haxe_ui_util_Variant.fromDataSource(new haxe_ui_data_ArrayDataSource());
+			this.set(this._value);
+		}
+		return this._value;
+	}
+	,__class__: haxe_ui_containers__$ListView_DataSourceBehaviour
+});
+var haxe_ui_containers__$ListView_SelectedIndexBehaviour = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ListView.SelectedIndexBehaviour"] = haxe_ui_containers__$ListView_SelectedIndexBehaviour;
+haxe_ui_containers__$ListView_SelectedIndexBehaviour.__name__ = "haxe.ui.containers._ListView.SelectedIndexBehaviour";
+haxe_ui_containers__$ListView_SelectedIndexBehaviour.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_containers__$ListView_SelectedIndexBehaviour.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	get: function() {
+		var listView = js_Boot.__cast(this._component , haxe_ui_containers_ListView);
+		var selectedIndices = listView.get_selectedIndices();
+		if(selectedIndices != null && selectedIndices.length > 0) {
+			return haxe_ui_util_Variant.fromInt(selectedIndices[selectedIndices.length - 1]);
+		} else {
+			return haxe_ui_util_Variant.fromInt(-1);
+		}
+	}
+	,set: function(value) {
+		var listView = js_Boot.__cast(this._component , haxe_ui_containers_ListView);
+		listView.set_selectedIndices(haxe_ui_util_Variant.neq(value,haxe_ui_util_Variant.fromInt(-1)) ? [haxe_ui_util_Variant.toInt(value)] : null);
+	}
+	,__class__: haxe_ui_containers__$ListView_SelectedIndexBehaviour
+});
+var haxe_ui_containers__$ListView_SelectedItemBehaviour = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ListView.SelectedItemBehaviour"] = haxe_ui_containers__$ListView_SelectedItemBehaviour;
+haxe_ui_containers__$ListView_SelectedItemBehaviour.__name__ = "haxe.ui.containers._ListView.SelectedItemBehaviour";
+haxe_ui_containers__$ListView_SelectedItemBehaviour.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_containers__$ListView_SelectedItemBehaviour.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	getDynamic: function() {
+		var listView = js_Boot.__cast(this._component , haxe_ui_containers_ListView);
+		var selectedIndices = listView.get_selectedIndices();
+		if(selectedIndices.length > 0) {
+			return listView.get_dataSource().get(selectedIndices[selectedIndices.length - 1]);
+		} else {
+			return null;
+		}
+	}
+	,set: function(value) {
+		var listView = js_Boot.__cast(this._component , haxe_ui_containers_ListView);
+		var index = listView.get_dataSource().indexOf(value);
+		if(index != -1 && listView.get_selectedIndices().indexOf(index) == -1) {
+			listView.set_selectedIndices([index]);
+		}
+	}
+	,__class__: haxe_ui_containers__$ListView_SelectedItemBehaviour
+});
+var haxe_ui_containers__$ListView_SelectedIndicesBehaviour = function(component) {
+	haxe_ui_behaviours_DataBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ListView.SelectedIndicesBehaviour"] = haxe_ui_containers__$ListView_SelectedIndicesBehaviour;
+haxe_ui_containers__$ListView_SelectedIndicesBehaviour.__name__ = "haxe.ui.containers._ListView.SelectedIndicesBehaviour";
+haxe_ui_containers__$ListView_SelectedIndicesBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_containers__$ListView_SelectedIndicesBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	get: function() {
+		if(haxe_ui_util_Variant.get_isNull(this._value)) {
+			return haxe_ui_util_Variant.fromArray([]);
+		} else {
+			return this._value;
+		}
+	}
+	,validateData: function() {
+		var listView = js_Boot.__cast(this._component , haxe_ui_containers_ListView);
+		var selectedIndices = listView.get_selectedIndices();
+		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
+		var builder = js_Boot.__cast(this._component._compositeBuilder , haxe_ui_containers__$ListView_ListViewBuilder);
+		var _g = 0;
+		var _g1 = contents._children == null ? [] : contents._children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(selectedIndices.indexOf((js_Boot.__cast(child , haxe_ui_core_ItemRenderer)).itemIndex) != -1) {
+				builder.addItemRendererClass(child,":selected");
+			} else {
+				builder.addItemRendererClass(child,":selected",false);
+			}
+		}
+		if(listView.get_virtual() == true) {
+			var _g = 0;
+			while(_g < selectedIndices.length) {
+				var i = selectedIndices[_g];
+				++_g;
+				builder.ensureVirtualItemVisible(i);
+			}
+		}
+		if(listView.get_selectedIndex() != -1 && listView.get_selectedIndices().length != 0) {
+			this._component.dispatch(new haxe_ui_events_UIEvent("change"));
+		}
+	}
+	,__class__: haxe_ui_containers__$ListView_SelectedIndicesBehaviour
+});
+var haxe_ui_containers__$ListView_SelectedItemsBehaviour = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ListView.SelectedItemsBehaviour"] = haxe_ui_containers__$ListView_SelectedItemsBehaviour;
+haxe_ui_containers__$ListView_SelectedItemsBehaviour.__name__ = "haxe.ui.containers._ListView.SelectedItemsBehaviour";
+haxe_ui_containers__$ListView_SelectedItemsBehaviour.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_containers__$ListView_SelectedItemsBehaviour.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	get: function() {
+		var listView = js_Boot.__cast(this._component , haxe_ui_containers_ListView);
+		var selectedIndices = listView.get_selectedIndices();
+		if(selectedIndices != null && selectedIndices.length > 0) {
+			var selectedItems = [];
+			var _g = 0;
+			while(_g < selectedIndices.length) {
+				var i = selectedIndices[_g];
+				++_g;
+				if(i < 0 || i >= listView.get_dataSource().get_size()) {
+					continue;
+				}
+				var data = listView.get_dataSource().get(i);
+				selectedItems.push(data);
+			}
+			return haxe_ui_util_Variant.fromArray(selectedItems);
+		} else {
+			return haxe_ui_util_Variant.fromArray([]);
+		}
+	}
+	,set: function(value) {
+		var listView = js_Boot.__cast(this._component , haxe_ui_containers_ListView);
+		var selectedItems = haxe_ui_util_Variant.toArray(value);
+		if(selectedItems != null && selectedItems.length > 0) {
+			var selectedIndices = [];
+			var index;
+			var _g = 0;
+			while(_g < selectedItems.length) {
+				var item = selectedItems[_g];
+				++_g;
+				index = listView.get_dataSource().indexOf(item);
+				if(index != -1) {
+					selectedIndices.push(index);
+				}
+			}
+			listView.set_selectedIndices(selectedIndices);
+		} else {
+			listView.set_selectedIndices([]);
+		}
+	}
+	,__class__: haxe_ui_containers__$ListView_SelectedItemsBehaviour
+});
+var haxe_ui_containers__$ListView_SelectionModeBehaviour = function(component) {
+	haxe_ui_behaviours_DataBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ListView.SelectionModeBehaviour"] = haxe_ui_containers__$ListView_SelectionModeBehaviour;
+haxe_ui_containers__$ListView_SelectionModeBehaviour.__name__ = "haxe.ui.containers._ListView.SelectionModeBehaviour";
+haxe_ui_containers__$ListView_SelectionModeBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_containers__$ListView_SelectionModeBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	validateData: function() {
+		var listView = js_Boot.__cast(this._component , haxe_ui_containers_ListView);
+		var selectedIndices = listView.get_selectedIndices();
+		if(selectedIndices == null || selectedIndices.length == 0) {
+			return;
+		}
+		var selectionMode = haxe_ui_util_Variant.toString(this._value);
+		switch(selectionMode) {
+		case "disabled":
+			listView.set_selectedIndices(null);
+			break;
+		case "one-item":
+			if(selectedIndices.length > 1) {
+				listView.set_selectedIndices([selectedIndices[0]]);
+			}
+			break;
+		default:
+		}
+	}
+	,__class__: haxe_ui_containers__$ListView_SelectionModeBehaviour
+});
+var haxe_ui_containers__$ScrollView_Virtual = function(component) {
+	haxe_ui_behaviours_DefaultBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ScrollView.Virtual"] = haxe_ui_containers__$ScrollView_Virtual;
+haxe_ui_containers__$ScrollView_Virtual.__name__ = "haxe.ui.containers._ScrollView.Virtual";
+haxe_ui_containers__$ScrollView_Virtual.__super__ = haxe_ui_behaviours_DefaultBehaviour;
+haxe_ui_containers__$ScrollView_Virtual.prototype = $extend(haxe_ui_behaviours_DefaultBehaviour.prototype,{
+	set: function(value) {
+		haxe_ui_behaviours_DefaultBehaviour.prototype.set.call(this,value);
+		if(this._component._compositeBuilder != null) {
+			(js_Boot.__cast(this._component._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).onVirtualChanged();
+		}
+	}
+	,__class__: haxe_ui_containers__$ScrollView_Virtual
+});
+var haxe_ui_containers__$ScrollView_ContentLayoutName = function(component) {
+	haxe_ui_behaviours_DefaultBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ScrollView.ContentLayoutName"] = haxe_ui_containers__$ScrollView_ContentLayoutName;
+haxe_ui_containers__$ScrollView_ContentLayoutName.__name__ = "haxe.ui.containers._ScrollView.ContentLayoutName";
+haxe_ui_containers__$ScrollView_ContentLayoutName.__super__ = haxe_ui_behaviours_DefaultBehaviour;
+haxe_ui_containers__$ScrollView_ContentLayoutName.prototype = $extend(haxe_ui_behaviours_DefaultBehaviour.prototype,{
+	set: function(value) {
+		haxe_ui_behaviours_DefaultBehaviour.prototype.set.call(this,value);
+		var builder = js_Boot.__cast(this._component._compositeBuilder , haxe_ui_containers_ScrollViewBuilder);
+		if(builder != null && haxe_ui_util_Variant.fromString(builder._contentsLayoutName) != value) {
+			builder._contentsLayoutName = haxe_ui_util_Variant.toString(value);
+			builder._contents.set_layout(haxe_ui_layouts_LayoutFactory.createFromName(haxe_ui_util_Variant.toString(value)));
+		}
+	}
+	,__class__: haxe_ui_containers__$ScrollView_ContentLayoutName
+});
+var haxe_ui_containers__$ScrollView_ContentWidth = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ScrollView.ContentWidth"] = haxe_ui_containers__$ScrollView_ContentWidth;
+haxe_ui_containers__$ScrollView_ContentWidth.__name__ = "haxe.ui.containers._ScrollView.ContentWidth";
+haxe_ui_containers__$ScrollView_ContentWidth.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_containers__$ScrollView_ContentWidth.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	get: function() {
+		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
+		if(contents == null) {
+			return null;
+		}
+		return haxe_ui_util_Variant.fromFloat(contents.get_width());
+	}
+	,set: function(value) {
+		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
+		if(contents != null) {
+			contents.set_percentWidth(null);
+			contents.set_width(haxe_ui_util_Variant.toFloat(value));
+		}
+	}
+	,__class__: haxe_ui_containers__$ScrollView_ContentWidth
+});
+var haxe_ui_containers__$ScrollView_PercentContentWidth = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ScrollView.PercentContentWidth"] = haxe_ui_containers__$ScrollView_PercentContentWidth;
+haxe_ui_containers__$ScrollView_PercentContentWidth.__name__ = "haxe.ui.containers._ScrollView.PercentContentWidth";
+haxe_ui_containers__$ScrollView_PercentContentWidth.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_containers__$ScrollView_PercentContentWidth.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	get: function() {
+		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
+		if(contents == null) {
+			return null;
+		}
+		return haxe_ui_util_Variant.fromFloat(contents.get_percentWidth());
+	}
+	,set: function(value) {
+		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
+		if(contents != null) {
+			contents.set_componentWidth(null);
+			contents.set_percentWidth(haxe_ui_util_Variant.toFloat(value));
+		}
+	}
+	,__class__: haxe_ui_containers__$ScrollView_PercentContentWidth
+});
+var haxe_ui_containers__$ScrollView_ContentHeight = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ScrollView.ContentHeight"] = haxe_ui_containers__$ScrollView_ContentHeight;
+haxe_ui_containers__$ScrollView_ContentHeight.__name__ = "haxe.ui.containers._ScrollView.ContentHeight";
+haxe_ui_containers__$ScrollView_ContentHeight.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_containers__$ScrollView_ContentHeight.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	get: function() {
+		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
+		if(contents == null) {
+			return null;
+		}
+		return haxe_ui_util_Variant.fromFloat(contents.get_height());
+	}
+	,set: function(value) {
+		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
+		if(contents != null) {
+			contents.set_percentHeight(null);
+			contents.set_height(haxe_ui_util_Variant.toFloat(value));
+		}
+	}
+	,__class__: haxe_ui_containers__$ScrollView_ContentHeight
+});
+var haxe_ui_containers__$ScrollView_PercentContentHeight = function(component) {
+	haxe_ui_behaviours_Behaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ScrollView.PercentContentHeight"] = haxe_ui_containers__$ScrollView_PercentContentHeight;
+haxe_ui_containers__$ScrollView_PercentContentHeight.__name__ = "haxe.ui.containers._ScrollView.PercentContentHeight";
+haxe_ui_containers__$ScrollView_PercentContentHeight.__super__ = haxe_ui_behaviours_Behaviour;
+haxe_ui_containers__$ScrollView_PercentContentHeight.prototype = $extend(haxe_ui_behaviours_Behaviour.prototype,{
+	get: function() {
+		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
+		if(contents == null) {
+			return null;
+		}
+		return haxe_ui_util_Variant.fromFloat(contents.get_percentHeight());
+	}
+	,set: function(value) {
+		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
+		if(contents != null) {
+			contents.set_componentHeight(null);
+			contents.set_percentHeight(haxe_ui_util_Variant.toFloat(value));
+		}
+	}
+	,__class__: haxe_ui_containers__$ScrollView_PercentContentHeight
+});
+var haxe_ui_containers__$ScrollView_HScrollPos = function(scrollview) {
+	haxe_ui_behaviours_DataBehaviour.call(this,scrollview);
+	this._scrollview = scrollview;
+};
+$hxClasses["haxe.ui.containers._ScrollView.HScrollPos"] = haxe_ui_containers__$ScrollView_HScrollPos;
+haxe_ui_containers__$ScrollView_HScrollPos.__name__ = "haxe.ui.containers._ScrollView.HScrollPos";
+haxe_ui_containers__$ScrollView_HScrollPos.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_containers__$ScrollView_HScrollPos.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	_scrollview: null
+	,get: function() {
+		var hscroll = this._scrollview.findComponent(null,haxe_ui_components_HorizontalScroll,false);
+		if(hscroll == null) {
+			return haxe_ui_util_Variant.fromInt(0);
+		}
+		return haxe_ui_util_Variant.fromFloat(hscroll.get_pos());
+	}
+	,validateData: function() {
+		var hscroll = this._scrollview.findComponent(null,haxe_ui_components_HorizontalScroll,false);
+		if(this._scrollview.get_virtual() == true) {
+			if(hscroll == null) {
+				hscroll = (js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).createHScroll();
+			}
+			if(hscroll != null) {
+				hscroll.set_pos(haxe_ui_util_Variant.toFloat(this._value));
+			}
+		} else if(hscroll != null) {
+			hscroll.set_pos(haxe_ui_util_Variant.toFloat(this._value));
+		}
+	}
+	,__class__: haxe_ui_containers__$ScrollView_HScrollPos
+});
+var haxe_ui_containers__$ScrollView_VScrollPos = function(scrollview) {
+	haxe_ui_behaviours_DataBehaviour.call(this,scrollview);
+	this._scrollview = scrollview;
+};
+$hxClasses["haxe.ui.containers._ScrollView.VScrollPos"] = haxe_ui_containers__$ScrollView_VScrollPos;
+haxe_ui_containers__$ScrollView_VScrollPos.__name__ = "haxe.ui.containers._ScrollView.VScrollPos";
+haxe_ui_containers__$ScrollView_VScrollPos.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_containers__$ScrollView_VScrollPos.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	_scrollview: null
+	,get: function() {
+		var vscroll = this._scrollview.findComponent(null,haxe_ui_components_VerticalScroll,false);
+		if(vscroll == null) {
+			return haxe_ui_util_Variant.fromInt(0);
+		}
+		return haxe_ui_util_Variant.fromFloat(vscroll.get_pos());
+	}
+	,validateData: function() {
+		var vscroll = this._scrollview.findComponent(null,haxe_ui_components_VerticalScroll,false);
+		if(this._scrollview.get_virtual() == true) {
+			if(vscroll == null) {
+				vscroll = (js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).createVScroll();
+			}
+			if(vscroll != null) {
+				vscroll.set_pos(haxe_ui_util_Variant.toFloat(this._value));
+			}
+		} else if(vscroll != null) {
+			vscroll.set_pos(haxe_ui_util_Variant.toFloat(this._value));
+		}
+	}
+	,__class__: haxe_ui_containers__$ScrollView_VScrollPos
+});
+var haxe_ui_containers__$ScrollView_HScrollMax = function(scrollview) {
+	haxe_ui_behaviours_DataBehaviour.call(this,scrollview);
+	this._scrollview = scrollview;
+};
+$hxClasses["haxe.ui.containers._ScrollView.HScrollMax"] = haxe_ui_containers__$ScrollView_HScrollMax;
+haxe_ui_containers__$ScrollView_HScrollMax.__name__ = "haxe.ui.containers._ScrollView.HScrollMax";
+haxe_ui_containers__$ScrollView_HScrollMax.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_containers__$ScrollView_HScrollMax.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	_scrollview: null
+	,get: function() {
+		var hscroll = this._scrollview.findComponent(null,haxe_ui_components_HorizontalScroll,false);
+		if(hscroll == null) {
+			return haxe_ui_util_Variant.fromInt(0);
+		}
+		return haxe_ui_util_Variant.fromFloat(hscroll.get_max());
+	}
+	,validateData: function() {
+		if(this._scrollview.get_virtual() == true) {
+			var hscroll = this._scrollview.findComponent(null,haxe_ui_components_HorizontalScroll,false);
+			if(haxe_ui_util_Variant.gt(this._value,haxe_ui_util_Variant.fromInt(0))) {
+				if(hscroll == null) {
+					hscroll = (js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).createHScroll();
+				}
+			} else if(hscroll != null) {
+				(js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).destroyHScroll();
+			}
+			if(hscroll != null) {
+				hscroll.set_max(haxe_ui_util_Variant.toFloat(this._value));
+			}
+		}
+	}
+	,__class__: haxe_ui_containers__$ScrollView_HScrollMax
+});
+var haxe_ui_containers__$ScrollView_VScrollMax = function(scrollview) {
+	haxe_ui_behaviours_DataBehaviour.call(this,scrollview);
+	this._scrollview = scrollview;
+};
+$hxClasses["haxe.ui.containers._ScrollView.VScrollMax"] = haxe_ui_containers__$ScrollView_VScrollMax;
+haxe_ui_containers__$ScrollView_VScrollMax.__name__ = "haxe.ui.containers._ScrollView.VScrollMax";
+haxe_ui_containers__$ScrollView_VScrollMax.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_containers__$ScrollView_VScrollMax.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	_scrollview: null
+	,get: function() {
+		var vscroll = this._scrollview.findComponent(null,haxe_ui_components_VerticalScroll,false);
+		if(vscroll == null) {
+			return haxe_ui_util_Variant.fromInt(0);
+		}
+		return haxe_ui_util_Variant.fromFloat(vscroll.get_max());
+	}
+	,validateData: function() {
+		if(this._scrollview.get_virtual() == true) {
+			var vscroll = this._scrollview.findComponent(null,haxe_ui_components_VerticalScroll,false);
+			if(haxe_ui_util_Variant.gt(this._value,haxe_ui_util_Variant.fromInt(0))) {
+				if(vscroll == null) {
+					vscroll = (js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).createVScroll();
+				}
+			} else if(vscroll != null) {
+				(js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).destroyVScroll();
+			}
+			if(vscroll != null) {
+				vscroll.set_max(haxe_ui_util_Variant.toFloat(this._value));
+			}
+		}
+	}
+	,__class__: haxe_ui_containers__$ScrollView_VScrollMax
+});
+var haxe_ui_containers__$ScrollView_HScrollPageSize = function(scrollview) {
+	haxe_ui_behaviours_DataBehaviour.call(this,scrollview);
+	this._scrollview = scrollview;
+};
+$hxClasses["haxe.ui.containers._ScrollView.HScrollPageSize"] = haxe_ui_containers__$ScrollView_HScrollPageSize;
+haxe_ui_containers__$ScrollView_HScrollPageSize.__name__ = "haxe.ui.containers._ScrollView.HScrollPageSize";
+haxe_ui_containers__$ScrollView_HScrollPageSize.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_containers__$ScrollView_HScrollPageSize.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	_scrollview: null
+	,validateData: function() {
+		if(this._scrollview.get_virtual() == true) {
+			var hscroll = this._scrollview.findComponent(null,haxe_ui_components_HorizontalScroll,false);
+			if(hscroll == null) {
+				hscroll = (js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).createHScroll();
+			}
+			if(hscroll != null) {
+				hscroll.set_pageSize(haxe_ui_util_Variant.toFloat(this._value));
+			}
+		}
+	}
+	,__class__: haxe_ui_containers__$ScrollView_HScrollPageSize
+});
+var haxe_ui_containers__$ScrollView_VScrollPageSize = function(scrollview) {
+	haxe_ui_behaviours_DataBehaviour.call(this,scrollview);
+	this._scrollview = scrollview;
+};
+$hxClasses["haxe.ui.containers._ScrollView.VScrollPageSize"] = haxe_ui_containers__$ScrollView_VScrollPageSize;
+haxe_ui_containers__$ScrollView_VScrollPageSize.__name__ = "haxe.ui.containers._ScrollView.VScrollPageSize";
+haxe_ui_containers__$ScrollView_VScrollPageSize.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_containers__$ScrollView_VScrollPageSize.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	_scrollview: null
+	,validateData: function() {
+		if(this._scrollview.get_virtual() == true) {
+			var vscroll = this._scrollview.findComponent(null,haxe_ui_components_VerticalScroll,false);
+			if(vscroll == null) {
+				vscroll = (js_Boot.__cast(this._scrollview._compositeBuilder , haxe_ui_containers_ScrollViewBuilder)).createVScroll();
+			}
+			if(vscroll != null) {
+				vscroll.set_pageSize(haxe_ui_util_Variant.toFloat(this._value));
+			}
+		}
+	}
+	,__class__: haxe_ui_containers__$ScrollView_VScrollPageSize
+});
+var haxe_ui_containers__$ScrollView_ScrollModeBehaviour = function(component) {
+	haxe_ui_behaviours_DataBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ScrollView.ScrollModeBehaviour"] = haxe_ui_containers__$ScrollView_ScrollModeBehaviour;
+haxe_ui_containers__$ScrollView_ScrollModeBehaviour.__name__ = "haxe.ui.containers._ScrollView.ScrollModeBehaviour";
+haxe_ui_containers__$ScrollView_ScrollModeBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
+haxe_ui_containers__$ScrollView_ScrollModeBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
+	validateData: function() {
+		this._component.registerInternalEvents(null,true);
+	}
+	,__class__: haxe_ui_containers__$ScrollView_ScrollModeBehaviour
+});
+var haxe_ui_containers__$ScrollView_GetContents = function(component) {
+	haxe_ui_behaviours_DefaultBehaviour.call(this,component);
+};
+$hxClasses["haxe.ui.containers._ScrollView.GetContents"] = haxe_ui_containers__$ScrollView_GetContents;
+haxe_ui_containers__$ScrollView_GetContents.__name__ = "haxe.ui.containers._ScrollView.GetContents";
+haxe_ui_containers__$ScrollView_GetContents.__super__ = haxe_ui_behaviours_DefaultBehaviour;
+haxe_ui_containers__$ScrollView_GetContents.prototype = $extend(haxe_ui_behaviours_DefaultBehaviour.prototype,{
+	get: function() {
+		var contents = this._component.findComponent("scrollview-contents",null,false,"css");
+		return haxe_ui_util_Variant.fromComponent(contents);
+	}
+	,__class__: haxe_ui_containers__$ScrollView_GetContents
+});
 var haxe_ui_containers_TableView = function() {
 	haxe_ui_containers_ScrollView.call(this);
 };
@@ -14404,6 +18790,7 @@ haxe_ui_containers__$TableView_Builder.prototype = $extend(haxe_ui_containers_Sc
 		}
 		if((itemRenderer._children == null ? [] : itemRenderer._children).length == 0) {
 			var label = new haxe_ui_components_Label();
+			label.getTextDisplay().forceStaticSize = this._tableview.get_virtual();
 			label.set_id(id);
 			label.set_percentWidth(100);
 			label.set_verticalAlign("center");
@@ -15446,7 +19833,7 @@ haxe_ui_containers__$TableView_AddColumn.prototype = $extend(haxe_ui_behaviours_
 		}
 		var column = new haxe_ui_components_Column();
 		column.set_text(param);
-		column.set_id(StringTools.replace(haxe_ui_util_StringUtil.uncapitalizeFirstLetter(haxe_ui_util_StringUtil.capitalizeHyphens(param))," ",""));
+		column.set_id(StringTools.replace(param," ","_"));
 		header.addComponent(column);
 		return haxe_ui_util_Variant.fromComponent(column);
 	}
@@ -15478,1147 +19865,22 @@ haxe_ui_containers__$TableView_RemoveColumn.prototype = $extend(haxe_ui_behaviou
 	}
 	,__class__: haxe_ui_containers__$TableView_RemoveColumn
 });
-var haxe_ui_containers_dialogs_DialogButton = {};
-haxe_ui_containers_dialogs_DialogButton.bitOr = function(lhs,rhs) {
-	var larr = haxe_ui_containers_dialogs_DialogButton.toString(lhs).split("|");
-	var rarr = haxe_ui_containers_dialogs_DialogButton.toString(rhs).split("|");
-	var _g = 0;
-	while(_g < rarr.length) {
-		var r = rarr[_g];
-		++_g;
-		if(larr.indexOf(r) == -1) {
-			larr.push(r);
-		}
-	}
-	return larr.join("|");
+var haxe_ui_containers_VerticalButtonBar = function() {
+	haxe_ui_containers_ButtonBar.call(this);
 };
-haxe_ui_containers_dialogs_DialogButton.eq = function(lhs,rhs) {
-	var larr = haxe_ui_containers_dialogs_DialogButton.toString(lhs).split("|");
-	return larr.indexOf(haxe_ui_containers_dialogs_DialogButton.toString(rhs)) != -1;
-};
-haxe_ui_containers_dialogs_DialogButton.toArray = function(this1) {
-	var a = [];
-	var _g = 0;
-	var _g1 = (this1 == null ? "null" : "" + this1).split("|");
-	while(_g < _g1.length) {
-		var i = _g1[_g];
-		++_g;
-		i = StringTools.trim(i);
-		if(i.length == 0 || i == "null") {
-			continue;
-		}
-		a.push(i);
-	}
-	return a;
-};
-haxe_ui_containers_dialogs_DialogButton.toString = function(this1) {
-	if(this1 == null) {
-		return "null";
-	} else {
-		return "" + this1;
-	}
-};
-var haxe_ui_events_UIEvent = function(type,bubble,data) {
-	if(bubble == null) {
-		bubble = false;
-	}
-	this.type = type;
-	this.bubble = bubble;
-	this.data = data;
-	this.canceled = false;
-};
-$hxClasses["haxe.ui.events.UIEvent"] = haxe_ui_events_UIEvent;
-haxe_ui_events_UIEvent.__name__ = "haxe.ui.events.UIEvent";
-haxe_ui_events_UIEvent.__super__ = haxe_ui_backend_EventImpl;
-haxe_ui_events_UIEvent.prototype = $extend(haxe_ui_backend_EventImpl.prototype,{
-	bubble: null
-	,type: null
-	,target: null
-	,data: null
-	,canceled: null
-	,cancel: function() {
-		haxe_ui_backend_EventImpl.prototype.cancel.call(this);
-		this.canceled = true;
-	}
-	,clone: function() {
-		var c = new haxe_ui_events_UIEvent(this.type);
-		c.type = this.type;
-		c.bubble = this.bubble;
-		c.target = this.target;
-		c.data = this.data;
-		c.canceled = this.canceled;
-		this.postClone(c);
-		return c;
-	}
-	,__class__: haxe_ui_events_UIEvent
-});
-var haxe_ui_containers_dialogs_DialogEvent = function(type,bubble,data) {
-	haxe_ui_events_UIEvent.call(this,type,bubble,data);
-};
-$hxClasses["haxe.ui.containers.dialogs.DialogEvent"] = haxe_ui_containers_dialogs_DialogEvent;
-haxe_ui_containers_dialogs_DialogEvent.__name__ = "haxe.ui.containers.dialogs.DialogEvent";
-haxe_ui_containers_dialogs_DialogEvent.__super__ = haxe_ui_events_UIEvent;
-haxe_ui_containers_dialogs_DialogEvent.prototype = $extend(haxe_ui_events_UIEvent.prototype,{
-	button: null
-	,clone: function() {
-		var c = new haxe_ui_containers_dialogs_DialogEvent(this.type);
-		c.type = this.type;
-		c.bubble = this.bubble;
-		c.target = this.target;
-		c.data = this.data;
-		c.canceled = this.canceled;
-		c.button = this.button;
-		this.postClone(c);
-		return c;
-	}
-	,__class__: haxe_ui_containers_dialogs_DialogEvent
-});
-var haxe_ui_containers_dialogs_Dialogs = function() { };
-$hxClasses["haxe.ui.containers.dialogs.Dialogs"] = haxe_ui_containers_dialogs_Dialogs;
-haxe_ui_containers_dialogs_Dialogs.__name__ = "haxe.ui.containers.dialogs.Dialogs";
-haxe_ui_containers_dialogs_Dialogs.messageBox = function(message,title,type,modal,callback) {
-	if(modal == null) {
-		modal = true;
-	}
-	if(type == null) {
-		type = "info";
-	} else if(type == "info") {
-		type = "info";
-	} else if(type == "question") {
-		type = "question";
-	} else if(type == "warning") {
-		type = "warning";
-	} else if(type == "error") {
-		type = "error";
-	} else if(type == "yesno") {
-		type = "yesno";
-	}
-	var messageBox = new haxe_ui_containers_dialogs_MessageBox();
-	messageBox.set_type(type);
-	messageBox.set_message(message);
-	messageBox.modal = modal;
-	if(title != null) {
-		messageBox.set_title(title);
-	}
-	messageBox.show();
-	if(callback != null) {
-		messageBox.registerEvent("dialogClosed",function(e) {
-			callback(e.button);
-		});
-	}
-	return messageBox;
-};
-haxe_ui_containers_dialogs_Dialogs.dialog = function(contents,title,buttons,modal,callback) {
-	if(modal == null) {
-		modal = true;
-	}
-	var dialog = new haxe_ui_containers_dialogs_Dialog();
-	dialog.modal = modal;
-	if(title != null) {
-		dialog.set_title(title);
-	}
-	if(buttons != null) {
-		dialog.buttons = buttons;
-	}
-	dialog.addComponent(contents);
-	dialog.show();
-	if(callback != null) {
-		dialog.registerEvent("dialogClosed",function(e) {
-			callback(e.button);
-		});
-	}
-	return dialog;
-};
-var haxe_ui_containers_dialogs_MessageBoxType = {};
-haxe_ui_containers_dialogs_MessageBoxType.toString = function(this1) {
-	if(this1 == null) {
-		return "null";
-	} else {
-		return "" + this1;
-	}
-};
-var haxe_ui_containers_dialogs_MessageBox = function() {
-	haxe_ui_backend_MessageBoxBase.call(this);
-	this.set_title("Message");
-};
-$hxClasses["haxe.ui.containers.dialogs.MessageBox"] = haxe_ui_containers_dialogs_MessageBox;
-haxe_ui_containers_dialogs_MessageBox.__name__ = "haxe.ui.containers.dialogs.MessageBox";
-haxe_ui_containers_dialogs_MessageBox.__super__ = haxe_ui_backend_MessageBoxBase;
-haxe_ui_containers_dialogs_MessageBox.prototype = $extend(haxe_ui_backend_MessageBoxBase.prototype,{
-	onInitialize: function() {
-		haxe_ui_backend_MessageBoxBase.prototype.onInitialize.call(this);
-		if(haxe_ui_containers_dialogs_DialogButton.toArray(this.buttons).length == 0) {
-			switch(this.get_type()) {
-			case "error":
-				this.buttons = "{{dialog.close}}";
-				break;
-			case "info":
-				this.buttons = "{{dialog.ok}}";
-				break;
-			case "question":
-				var larr = "{{dialog.yes}}".split("|");
-				var rarr = "{{dialog.no}}".split("|");
-				var _g = 0;
-				while(_g < rarr.length) {
-					var r = rarr[_g];
-					++_g;
-					if(larr.indexOf(r) == -1) {
-						larr.push(r);
-					}
-				}
-				var larr1 = haxe_ui_containers_dialogs_DialogButton.toString(larr.join("|")).split("|");
-				var rarr = haxe_ui_containers_dialogs_DialogButton.toString("{{dialog.cancel}}").split("|");
-				var _g = 0;
-				while(_g < rarr.length) {
-					var r = rarr[_g];
-					++_g;
-					if(larr1.indexOf(r) == -1) {
-						larr1.push(r);
-					}
-				}
-				this.buttons = larr1.join("|");
-				break;
-			case "warning":
-				this.buttons = "{{dialog.close}}";
-				break;
-			case "yesno":
-				var larr = haxe_ui_containers_dialogs_DialogButton.toString("{{dialog.yes}}").split("|");
-				var rarr = haxe_ui_containers_dialogs_DialogButton.toString("{{dialog.no}}").split("|");
-				var _g = 0;
-				while(_g < rarr.length) {
-					var r = rarr[_g];
-					++_g;
-					if(larr.indexOf(r) == -1) {
-						larr.push(r);
-					}
-				}
-				this.buttons = larr.join("|");
-				break;
-			}
-			this.createButtons();
-		}
-		if(this.get_title() == "Message") {
-			switch(this.get_type()) {
-			case "error":
-				this.set_title("Error");
-				break;
-			case "info":
-				this.set_title("Info");
-				break;
-			case "question":
-				this.set_title("Question");
-				break;
-			case "warning":
-				this.set_title("Warning");
-				break;
-			case "yesno":
-				this.set_title("Question");
-				break;
-			}
-		}
-	}
-	,registerBehaviours: function() {
-		haxe_ui_backend_MessageBoxBase.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_backend_MessageBoxBase.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new haxe_ui_containers_dialogs_MessageBox();
-	}
-	,__class__: haxe_ui_containers_dialogs_MessageBox
-});
-var haxe_ui_containers_menus_MenuEvent = function(type,bubble,data) {
-	if(bubble == null) {
-		bubble = false;
-	}
-	this.menuItem = null;
-	this.menu = null;
-	haxe_ui_events_UIEvent.call(this,type,true,data);
-};
-$hxClasses["haxe.ui.containers.menus.MenuEvent"] = haxe_ui_containers_menus_MenuEvent;
-haxe_ui_containers_menus_MenuEvent.__name__ = "haxe.ui.containers.menus.MenuEvent";
-haxe_ui_containers_menus_MenuEvent.__super__ = haxe_ui_events_UIEvent;
-haxe_ui_containers_menus_MenuEvent.prototype = $extend(haxe_ui_events_UIEvent.prototype,{
-	menu: null
-	,menuItem: null
-	,clone: function() {
-		var c = new haxe_ui_containers_menus_MenuEvent(this.type);
-		c.menu = this.menu;
-		c.menuItem = this.menuItem;
-		c.type = this.type;
-		c.bubble = this.bubble;
-		c.target = this.target;
-		c.data = this.data;
-		c.canceled = this.canceled;
-		this.postClone(c);
-		return c;
-	}
-	,__class__: haxe_ui_containers_menus_MenuEvent
-});
-var haxe_ui_containers_menus_Menu = function() {
-	haxe_ui_containers_VBox.call(this);
-};
-$hxClasses["haxe.ui.containers.menus.Menu"] = haxe_ui_containers_menus_Menu;
-haxe_ui_containers_menus_Menu.__name__ = "haxe.ui.containers.menus.Menu";
-haxe_ui_containers_menus_Menu.__super__ = haxe_ui_containers_VBox;
-haxe_ui_containers_menus_Menu.prototype = $extend(haxe_ui_containers_VBox.prototype,{
-	onThemeChanged: function() {
-		haxe_ui_containers_VBox.prototype.onThemeChanged.call(this);
-		var builder = js_Boot.__cast(this._compositeBuilder , haxe_ui_containers_menus__$Menu_Builder);
-		builder.onThemeChanged();
-	}
-	,registerComposite: function() {
-		haxe_ui_containers_VBox.prototype.registerComposite.call(this);
-		this._internalEventsClass = haxe_ui_containers_menus_MenuEvents;
-		this._compositeBuilderClass = haxe_ui_containers_menus__$Menu_Builder;
-	}
-	,__onMenuSelected: null
-	,onMenuSelected: null
-	,set_onMenuSelected: function(value) {
-		if(this.__onMenuSelected != null) {
-			this.unregisterEvent("menuselected",this.__onMenuSelected);
-			this.__onMenuSelected = null;
-		}
-		if(value != null) {
-			this.__onMenuSelected = value;
-			this.registerEvent("menuselected",value);
-		}
-		return value;
-	}
-	,registerBehaviours: function() {
-		haxe_ui_containers_VBox.prototype.registerBehaviours.call(this);
-		this.behaviours.register("menuStyleNames",haxe_ui_behaviours_DefaultBehaviour);
-	}
-	,get_menuStyleNames: function() {
-		return haxe_ui_util_Variant.toString(this.behaviours.get("menuStyleNames"));
-	}
-	,set_menuStyleNames: function(value) {
-		var _g = Type.typeof(value);
-		if(_g._hx_index == 6) {
-			if(_g.c == String) {
-				if(value != null && value.indexOf("{{") != -1 && value.indexOf("}}") != -1) {
-					haxe_ui_locale_LocaleManager.get_instance().registerComponent(this,"menuStyleNames",null,value);
-					return value;
-				}
-			}
-		}
-		this.behaviours.set("menuStyleNames",haxe_ui_util_Variant.fromString(value));
-		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"menuStyleNames"));
-		return value;
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_containers_VBox.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new haxe_ui_containers_menus_Menu();
-	}
-	,__class__: haxe_ui_containers_menus_Menu
-	,__properties__: $extend(haxe_ui_containers_VBox.prototype.__properties__,{set_menuStyleNames:"set_menuStyleNames",get_menuStyleNames:"get_menuStyleNames",set_onMenuSelected:"set_onMenuSelected"})
-});
-var haxe_ui_containers_menus_MenuEvents = function(menu) {
-	this.hasScreenMouseDown = false;
-	this._over = false;
-	this.button = null;
-	this.parentMenu = null;
-	this.currentSubMenu = null;
-	this._currentItem = null;
-	haxe_ui_events_Events.call(this,menu);
-	this._menu = menu;
-};
-$hxClasses["haxe.ui.containers.menus.MenuEvents"] = haxe_ui_containers_menus_MenuEvents;
-haxe_ui_containers_menus_MenuEvents.__name__ = "haxe.ui.containers.menus.MenuEvents";
-haxe_ui_containers_menus_MenuEvents.__super__ = haxe_ui_events_Events;
-haxe_ui_containers_menus_MenuEvents.prototype = $extend(haxe_ui_events_Events.prototype,{
-	_menu: null
-	,_currentItem: null
-	,currentSubMenu: null
-	,parentMenu: null
-	,button: null
-	,register: function() {
-		if(!this.hasEvent("mouseover",$bind(this,this.onMouseOver))) {
-			this.registerEvent("mouseover",$bind(this,this.onMouseOver));
-		}
-		if(!this.hasEvent("mouseout",$bind(this,this.onMouseOut))) {
-			this.registerEvent("mouseout",$bind(this,this.onMouseOut));
-		}
-		var _g = 0;
-		var _this = this._menu;
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			if(((child) instanceof haxe_ui_containers_menus_MenuItem)) {
-				var item = js_Boot.__cast(child , haxe_ui_containers_menus_MenuItem);
-				if(!item.hasEvent("click",$bind(this,this.onItemClick))) {
-					item.registerEvent("click",$bind(this,this.onItemClick));
-				}
-				if(!item.hasEvent("mouseover",$bind(this,this.onItemMouseOver))) {
-					item.registerEvent("mouseover",$bind(this,this.onItemMouseOver));
-				}
-				if(!item.hasEvent("mouseout",$bind(this,this.onItemMouseOut))) {
-					item.registerEvent("mouseout",$bind(this,this.onItemMouseOut));
-				}
-			}
-		}
-		if(!this.hasEvent("hidden",$bind(this,this.onHidden))) {
-			this.registerEvent("hidden",$bind(this,this.onHidden));
-		}
-		if(!this.hasEvent("shown",$bind(this,this.onShown))) {
-			this.registerEvent("shown",$bind(this,this.onShown));
-		}
-	}
-	,unregister: function() {
-		this.unregisterEvent("mouseover",$bind(this,this.onMouseOver));
-		this.unregisterEvent("mouseout",$bind(this,this.onMouseOut));
-		var _g = 0;
-		var _this = this._menu;
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			child.unregisterEvent("click",$bind(this,this.onItemClick));
-			child.unregisterEvent("mouseover",$bind(this,this.onItemMouseOver));
-			child.unregisterEvent("mouseout",$bind(this,this.onItemMouseOut));
-		}
-		this.unregisterEvent("hidden",$bind(this,this.onHidden));
-		this.unregisterEvent("shown",$bind(this,this.onShown));
-	}
-	,_over: null
-	,onMouseOver: function(event) {
-		this._over = true;
-	}
-	,onMouseOut: function(event) {
-		this._over = false;
-	}
-	,onItemClick: function(event) {
-		var item = js_Boot.__cast(event.target , haxe_ui_containers_menus_MenuItem);
-		if(!item.get_expandable()) {
-			var event = new haxe_ui_containers_menus_MenuEvent("menuselected");
-			event.menu = this._menu;
-			event.menuItem = item;
-			this.findRootMenu().dispatch(event);
-			this.hideMenu();
-			this.removeScreenMouseDown();
-			this._menu.dispatch(new haxe_ui_events_UIEvent("close"));
-		}
-	}
-	,onItemMouseOver: function(event) {
-		var builder = js_Boot.__cast(this._menu._compositeBuilder , haxe_ui_containers_menus__$Menu_Builder);
-		var subMenus = builder._subMenus;
-		var item = js_Boot.__cast(event.target , haxe_ui_containers_menus_MenuItem);
-		var _g = 0;
-		var _this = this._menu;
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			if(child != item) {
-				child.removeClass(":hover",true,true);
-			}
-		}
-		if(subMenus.h[item.__id__] != null) {
-			this._currentItem = item;
-			this.showSubMenu(js_Boot.__cast(subMenus.h[item.__id__] , haxe_ui_containers_menus_Menu),item);
-		} else {
-			this.hideCurrentSubMenu();
-		}
-	}
-	,onItemMouseOut: function(event) {
-		if(this.currentSubMenu != null) {
-			this._currentItem.addClass(":hover",true,true);
-			return;
-		} else {
-			this._currentItem = null;
-		}
-	}
-	,showSubMenu: function(subMenu,source) {
-		this.hideCurrentSubMenu();
-		subMenu.set_menuStyleNames(this._menu.get_menuStyleNames());
-		subMenu.addClass(this._menu.get_menuStyleNames());
-		var componentOffset = source.getComponentOffset();
-		var left = source.get_screenLeft() + source.get_actualComponentWidth() + componentOffset.x;
-		var top = source.get_screenTop();
-		haxe_ui_core_Screen.get_instance().addComponent(subMenu);
-		subMenu.syncComponentValidation();
-		if(left + subMenu.get_actualComponentWidth() > haxe_ui_core_Screen.get_instance().get_width()) {
-			left = source.get_screenLeft() - subMenu.get_actualComponentWidth();
-		}
-		subMenu.set_left(left);
-		subMenu.set_top(top);
-		this.currentSubMenu = subMenu;
-	}
-	,hideMenu: function() {
-		var root = this.findRootMenu();
-		if(root == null) {
-			return;
-		}
-		var events = js_Boot.__cast(root._internalEvents , haxe_ui_containers_menus_MenuEvents);
-		if(events.button == null) {
-			var _g = 0;
-			var _g1 = root._children == null ? [] : root._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				child.removeClass(":hover",true,true);
-			}
-			events.hideCurrentSubMenu();
-			haxe_ui_core_Screen.get_instance().removeComponent(root,false);
-		}
-	}
-	,hideCurrentSubMenu: function() {
-		if(this.currentSubMenu == null) {
-			return;
-		}
-		var _g = 0;
-		var _this = this.currentSubMenu;
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			child.removeClass(":hover",true,true);
-		}
-		var subMenuEvents = js_Boot.__cast(this.currentSubMenu._internalEvents , haxe_ui_containers_menus_MenuEvents);
-		subMenuEvents.hideCurrentSubMenu();
-		haxe_ui_core_Screen.get_instance().removeComponent(this.currentSubMenu,false);
-		this.currentSubMenu = null;
-	}
-	,onHidden: function(event) {
-		var _g = 0;
-		var _this = this._menu;
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			child.removeClass(":hover",true,true);
-		}
-		this.hideCurrentSubMenu();
-	}
-	,onShown: function(event) {
-		this.addScreenMouseDown();
-	}
-	,findRootMenu: function() {
-		var root = null;
-		var ref = this._menu;
-		while(ref != null) {
-			var events = js_Boot.__cast(ref._internalEvents , haxe_ui_containers_menus_MenuEvents);
-			if(events.parentMenu == null) {
-				root = events._menu;
-				break;
-			}
-			ref = events.parentMenu;
-		}
-		return root;
-	}
-	,hasScreenMouseDown: null
-	,addScreenMouseDown: function() {
-		var root = this.findRootMenu();
-		var events = js_Boot.__cast(root._internalEvents , haxe_ui_containers_menus_MenuEvents);
-		if(events.hasScreenMouseDown == false) {
-			events.hasScreenMouseDown = true;
-			haxe_ui_core_Screen.get_instance().registerEvent("mousedown",$bind(this,this.onScreenMouseDown));
-			haxe_ui_core_Screen.get_instance().registerEvent("rightmousedown",$bind(this,this.onScreenMouseDown));
-		}
-	}
-	,removeScreenMouseDown: function() {
-		var root = this.findRootMenu();
-		var events = js_Boot.__cast(root._internalEvents , haxe_ui_containers_menus_MenuEvents);
-		events.hasScreenMouseDown = false;
-		haxe_ui_core_Screen.get_instance().unregisterEvent("mousedown",$bind(this,this.onScreenMouseDown));
-		haxe_ui_core_Screen.get_instance().unregisterEvent("rightmousedown",$bind(this,this.onScreenMouseDown));
-	}
-	,onScreenMouseDown: function(event) {
-		var close = true;
-		if(this._menu.hitTest(event.screenX,event.screenY)) {
-			close = false;
-		} else if(this.button != null && this.button.hitTest(event.screenX,event.screenY)) {
-			close = false;
-		} else {
-			var ref = this._menu;
-			var refEvents = js_Boot.__cast(ref._internalEvents , haxe_ui_containers_menus_MenuEvents);
-			var refSubMenu = refEvents.currentSubMenu;
-			while(refSubMenu != null) {
-				if(refSubMenu.hitTest(event.screenX,event.screenY)) {
-					close = false;
-					break;
-				}
-				ref = refSubMenu;
-				refEvents = js_Boot.__cast(ref._internalEvents , haxe_ui_containers_menus_MenuEvents);
-				refSubMenu = refEvents.currentSubMenu;
-			}
-		}
-		if(close) {
-			this.hideMenu();
-			this.removeScreenMouseDown();
-			this._menu.dispatch(new haxe_ui_events_UIEvent("close"));
-		}
-	}
-	,__class__: haxe_ui_containers_menus_MenuEvents
-});
-var haxe_ui_containers_menus__$Menu_Builder = function(menu) {
-	this._subMenus = new haxe_ds_ObjectMap();
-	haxe_ui_core_CompositeBuilder.call(this,menu);
-	this._menu = menu;
-};
-$hxClasses["haxe.ui.containers.menus._Menu.Builder"] = haxe_ui_containers_menus__$Menu_Builder;
-haxe_ui_containers_menus__$Menu_Builder.__name__ = "haxe.ui.containers.menus._Menu.Builder";
-haxe_ui_containers_menus__$Menu_Builder.__super__ = haxe_ui_core_CompositeBuilder;
-haxe_ui_containers_menus__$Menu_Builder.prototype = $extend(haxe_ui_core_CompositeBuilder.prototype,{
-	_menu: null
-	,_subMenus: null
-	,onThemeChanged: function() {
-		var menuItem = this._subMenus.keys();
-		while(menuItem.hasNext()) {
-			var menuItem1 = menuItem.next();
-			var menu = this._subMenus.h[menuItem1.__id__];
-			haxe_ui_core_Screen.get_instance().invalidateChildren(menu);
-			haxe_ui_core_Screen.get_instance().onThemeChangedChildren(menu);
-		}
-	}
-	,addComponent: function(child) {
-		if(((child) instanceof haxe_ui_containers_menus_Menu)) {
-			var menu = js_Boot.__cast(child , haxe_ui_containers_menus_Menu);
-			var item = new haxe_ui_containers_menus_MenuItem();
-			item.set_id(child.get_id() + "Item");
-			item.set_text(child.get_text());
-			item.set_icon(menu.get_icon());
-			item.set_tooltip(child.get_tooltip());
-			item.set_expandable(true);
-			this._menu.addComponent(item);
-			(js_Boot.__cast(menu._internalEvents , haxe_ui_containers_menus_MenuEvents)).parentMenu = this._menu;
-			this._subMenus.set(item,menu);
-			return child;
-		}
-		return null;
-	}
-	,onComponentAdded: function(child) {
-		if(((child) instanceof haxe_ui_containers_menus_Menu) || ((child) instanceof haxe_ui_containers_menus_MenuItem)) {
-			this._menu.registerInternalEvents(null,true);
-		}
-	}
-	,findComponent: function(criteria,type,recursive,searchType) {
-		var match = haxe_ui_core_CompositeBuilder.prototype.findComponent.call(this,criteria,type,recursive,searchType);
-		if(match == null) {
-			var menu = this._subMenus.iterator();
-			while(menu.hasNext()) {
-				var menu1 = menu.next();
-				match = menu1.findComponent(criteria,type,recursive,searchType);
-				if(menu1.matchesSearch(criteria,type,searchType)) {
-					return menu1;
-				} else {
-					match = menu1.findComponent(criteria,type,recursive,searchType);
-				}
-				if(match != null) {
-					break;
-				}
-			}
-		}
-		return match;
-	}
-	,findComponents: function(styleName,type,maxDepth) {
-		if(maxDepth == null) {
-			maxDepth = 5;
-		}
-		var r = [];
-		var menu = this._subMenus.iterator();
-		while(menu.hasNext()) {
-			var menu1 = menu.next();
-			var match = true;
-			if(styleName != null && menu1.classes.indexOf(styleName) != -1 == false) {
-				match = false;
-			}
-			if(type != null && js_Boot.__instanceof(menu1,type) == false) {
-				match = false;
-			}
-			if(match == true) {
-				r.push(menu1);
-			} else {
-				var childArray = menu1.findComponents(styleName,type,maxDepth);
-				var _g = 0;
-				while(_g < childArray.length) {
-					var c = childArray[_g];
-					++_g;
-					r.push(c);
-				}
-			}
-		}
-		return r;
-	}
-	,destroy: function() {
-		haxe_ui_core_CompositeBuilder.prototype.destroy.call(this);
-		if(this._menu != null && this._menu._isDisposed == false) {
-			haxe_ui_core_Screen.get_instance().removeComponent(this._menu);
-		}
-		var subMenu = this._subMenus.iterator();
-		while(subMenu.hasNext()) {
-			var subMenu1 = subMenu.next();
-			haxe_ui_core_Screen.get_instance().removeComponent(subMenu1);
-		}
-	}
-	,__class__: haxe_ui_containers_menus__$Menu_Builder
-});
-var haxe_ui_containers_menus_MenuBar = function() {
-	haxe_ui_containers_HBox.call(this);
-};
-$hxClasses["haxe.ui.containers.menus.MenuBar"] = haxe_ui_containers_menus_MenuBar;
-haxe_ui_containers_menus_MenuBar.__name__ = "haxe.ui.containers.menus.MenuBar";
-haxe_ui_containers_menus_MenuBar.__super__ = haxe_ui_containers_HBox;
-haxe_ui_containers_menus_MenuBar.prototype = $extend(haxe_ui_containers_HBox.prototype,{
-	onThemeChanged: function() {
-		haxe_ui_containers_HBox.prototype.onThemeChanged.call(this);
-		var builder = js_Boot.__cast(this._compositeBuilder , haxe_ui_containers_menus__$MenuBar_Builder);
-		builder.onThemeChanged();
-	}
-	,registerComposite: function() {
-		haxe_ui_containers_HBox.prototype.registerComposite.call(this);
-		this._internalEventsClass = haxe_ui_containers_menus__$MenuBar_Events;
-		this._compositeBuilderClass = haxe_ui_containers_menus__$MenuBar_Builder;
-	}
-	,__onMenuSelected: null
-	,onMenuSelected: null
-	,set_onMenuSelected: function(value) {
-		if(this.__onMenuSelected != null) {
-			this.unregisterEvent("menuselected",this.__onMenuSelected);
-			this.__onMenuSelected = null;
-		}
-		if(value != null) {
-			this.__onMenuSelected = value;
-			this.registerEvent("menuselected",value);
-		}
-		return value;
-	}
-	,registerBehaviours: function() {
-		haxe_ui_containers_HBox.prototype.registerBehaviours.call(this);
-		this.behaviours.register("menuStyleNames",haxe_ui_behaviours_DefaultBehaviour);
-	}
-	,get_menuStyleNames: function() {
-		return haxe_ui_util_Variant.toString(this.behaviours.get("menuStyleNames"));
-	}
-	,set_menuStyleNames: function(value) {
-		var _g = Type.typeof(value);
-		if(_g._hx_index == 6) {
-			if(_g.c == String) {
-				if(value != null && value.indexOf("{{") != -1 && value.indexOf("}}") != -1) {
-					haxe_ui_locale_LocaleManager.get_instance().registerComponent(this,"menuStyleNames",null,value);
-					return value;
-				}
-			}
-		}
-		this.behaviours.set("menuStyleNames",haxe_ui_util_Variant.fromString(value));
-		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"menuStyleNames"));
-		return value;
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_containers_HBox.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new haxe_ui_containers_menus_MenuBar();
-	}
-	,__class__: haxe_ui_containers_menus_MenuBar
-	,__properties__: $extend(haxe_ui_containers_HBox.prototype.__properties__,{set_menuStyleNames:"set_menuStyleNames",get_menuStyleNames:"get_menuStyleNames",set_onMenuSelected:"set_onMenuSelected"})
-});
-var haxe_ui_containers_menus__$MenuBar_Events = function(menubar) {
-	haxe_ui_events_Events.call(this,menubar);
-	this._menubar = menubar;
-};
-$hxClasses["haxe.ui.containers.menus._MenuBar.Events"] = haxe_ui_containers_menus__$MenuBar_Events;
-haxe_ui_containers_menus__$MenuBar_Events.__name__ = "haxe.ui.containers.menus._MenuBar.Events";
-haxe_ui_containers_menus__$MenuBar_Events.__super__ = haxe_ui_events_Events;
-haxe_ui_containers_menus__$MenuBar_Events.prototype = $extend(haxe_ui_events_Events.prototype,{
-	_menubar: null
-	,_currentMenu: null
-	,_currentButton: null
-	,register: function() {
-		var builder = js_Boot.__cast(this._menubar._compositeBuilder , haxe_ui_containers_menus__$MenuBar_Builder);
-		var _g = 0;
-		var _g1 = builder._buttons;
-		while(_g < _g1.length) {
-			var button = _g1[_g];
-			++_g;
-			if(!button.hasEvent("click",$bind(this,this.onButtonClick))) {
-				button.registerEvent("click",$bind(this,this.onButtonClick));
-			}
-			if(!button.hasEvent("mouseover",$bind(this,this.onButtonOver))) {
-				button.registerEvent("mouseover",$bind(this,this.onButtonOver));
-			}
-		}
-	}
-	,unregister: function() {
-		var builder = js_Boot.__cast(this._menubar._compositeBuilder , haxe_ui_containers_menus__$MenuBar_Builder);
-		var _g = 0;
-		var _g1 = builder._buttons;
-		while(_g < _g1.length) {
-			var button = _g1[_g];
-			++_g;
-			button.unregisterEvent("click",$bind(this,this.onButtonClick));
-			button.unregisterEvent("mouseover",$bind(this,this.onButtonOver));
-		}
-	}
-	,onCompleteButton: function(event) {
-		var target = js_Boot.__cast(event.target , haxe_ui_components_Button);
-		target.unregisterEvent("mouseout",$bind(this,this.onCompleteButton));
-		this.hideCurrentMenu();
-	}
-	,onButtonClick: function(event) {
-		var builder = js_Boot.__cast(this._menubar._compositeBuilder , haxe_ui_containers_menus__$MenuBar_Builder);
-		var target = js_Boot.__cast(event.target , haxe_ui_components_Button);
-		var index = builder._buttons.indexOf(target);
-		if(target.get_toggle() == false) {
-			var menu = builder._menus[index];
-			var newEvent = new haxe_ui_containers_menus_MenuEvent("menuselected");
-			newEvent.menu = menu;
-			this._menubar.dispatch(newEvent);
-			target.registerEvent("mouseout",$bind(this,this.onCompleteButton));
-			return;
-		}
-		if(target.get_selected() == true) {
-			this.showMenu(index);
-		} else if(this._currentButton != null) {
-			(js_Boot.__cast(this._currentButton._internalEvents , haxe_ui_components_ButtonEvents)).lastMouseEvent = event;
-			this.hideCurrentMenu();
-		}
-	}
-	,onButtonOver: function(event) {
-		if(this._currentMenu == null) {
-			return;
-		}
-		var builder = js_Boot.__cast(this._menubar._compositeBuilder , haxe_ui_containers_menus__$MenuBar_Builder);
-		var target = js_Boot.__cast(event.target , haxe_ui_components_Button);
-		var index = builder._buttons.indexOf(target);
-		var menu = builder._menus[index];
-		if(menu != this._currentMenu) {
-			this.showMenu(index);
-		}
-	}
-	,showMenu: function(index) {
-		var builder = js_Boot.__cast(this._menubar._compositeBuilder , haxe_ui_containers_menus__$MenuBar_Builder);
-		var menu = builder._menus[index];
-		var hasChildren = (menu._children == null ? [] : menu._children).length > 0;
-		var target = builder._buttons[index];
-		if(this._currentMenu == menu) {
-			return;
-		}
-		var _g = 0;
-		var _g1 = builder._buttons;
-		while(_g < _g1.length) {
-			var button = _g1[_g];
-			++_g;
-			if(button != target) {
-				button.set_selected(false);
-			}
-		}
-		target.set_selected(true);
-		this.hideCurrentMenu();
-		var _g = 0;
-		var _g1 = builder._buttons;
-		while(_g < _g1.length) {
-			var button = _g1[_g];
-			++_g;
-			if(button.classes.indexOf("menubar-button-no-children") != -1) {
-				button.swapClass("menubar-button-no-children-active","menubar-button-no-children");
-			}
-		}
-		(js_Boot.__cast(menu._internalEvents , haxe_ui_containers_menus_MenuEvents)).button = target;
-		if(menu.hasEvent("close",$bind(this,this.onMenuClose)) == false) {
-			menu.registerEvent("close",$bind(this,this.onMenuClose));
-		}
-		var rtl = false;
-		if(hasChildren == true) {
-			var componentOffset = target.getComponentOffset();
-			var left = target.get_screenLeft() + componentOffset.x;
-			var marginTop = 0;
-			if(menu.get_style() != null && menu.get_style().marginTop != null) {
-				marginTop = menu.get_style().marginTop;
-			}
-			var top = target.get_screenTop() + (target.get_actualComponentHeight() - haxe_ui_Toolkit.get_scaleY()) + componentOffset.y + marginTop;
-			menu.set_menuStyleNames(this._menubar.get_menuStyleNames());
-			menu.addClasses([this._menubar.get_menuStyleNames(),"expanded"]);
-			if(menu.findComponent("menu-filler",null,false) == null) {
-				var filler = new haxe_ui_core_Component();
-				filler.set_horizontalAlign("right");
-				filler.set_includeInLayout(false);
-				filler.addClass("menu-filler");
-				filler.set_id("menu-filler");
-				menu.addComponent(filler);
-			}
-			menu.show();
-			haxe_ui_core_Screen.get_instance().addComponent(menu);
-			menu.syncComponentValidation();
-			if(left + menu.get_actualComponentWidth() > haxe_ui_core_Screen.get_instance().get_actualWidth()) {
-				left = target.get_screenLeft() - menu.get_actualComponentWidth() + target.get_actualComponentWidth();
-				rtl = true;
-			}
-			menu.set_left(left);
-			menu.set_top(top - haxe_ui_Toolkit.get_scaleY());
-		}
-		this._currentButton = target;
-		this._currentMenu = menu;
-		if(hasChildren == true) {
-			var cx = menu.get_width() - this._currentButton.get_width();
-			var filler = menu.findComponent("menu-filler",null,false);
-			if(cx > 0 && filler != null) {
-				++cx;
-				filler.set_width(cx);
-				if(rtl == false) {
-					filler.set_left(menu.get_width() - cx);
-				}
-				filler.set_hidden(false);
-			} else if(filler != null) {
-				filler.set_hidden(true);
-			}
-			if(!this._currentMenu.hasEvent("menuselected",$bind(this,this.onMenuSelected))) {
-				this._currentMenu.registerEvent("menuselected",$bind(this,this.onMenuSelected));
-			}
-		}
-	}
-	,hideCurrentMenu: function() {
-		if(this._currentMenu != null) {
-			var builder = js_Boot.__cast(this._menubar._compositeBuilder , haxe_ui_containers_menus__$MenuBar_Builder);
-			var _g = 0;
-			var _g1 = builder._buttons;
-			while(_g < _g1.length) {
-				var button = _g1[_g];
-				++_g;
-				if(button.classes.indexOf("menubar-button-no-children-active") != -1) {
-					button.swapClass("menubar-button-no-children","menubar-button-no-children-active");
-				}
-			}
-			this._currentMenu.unregisterEvent("menuselected",$bind(this,this.onMenuSelected));
-			this._currentMenu.hide();
-			this._currentButton.set_selected(false);
-			haxe_ui_core_Screen.get_instance().removeComponent(this._currentMenu,false);
-			this._currentButton = null;
-			this._currentMenu = null;
-		}
-	}
-	,onMenuClose: function(event) {
-		var menu = js_Boot.__cast(event.target , haxe_ui_containers_menus_Menu);
-		if(this._currentMenu == menu) {
-			this.hideCurrentMenu();
-		}
-	}
-	,onMenuSelected: function(event) {
-		var newEvent = new haxe_ui_containers_menus_MenuEvent("menuselected");
-		newEvent.menu = event.menu;
-		newEvent.menuItem = event.menuItem;
-		this._menubar.dispatch(newEvent);
-		this.hideCurrentMenu();
-	}
-	,__class__: haxe_ui_containers_menus__$MenuBar_Events
-});
-var haxe_ui_containers_menus__$MenuBar_Builder = function(menubar) {
-	this._menus = [];
-	this._buttons = [];
-	haxe_ui_core_CompositeBuilder.call(this,menubar);
-	this._menubar = menubar;
-};
-$hxClasses["haxe.ui.containers.menus._MenuBar.Builder"] = haxe_ui_containers_menus__$MenuBar_Builder;
-haxe_ui_containers_menus__$MenuBar_Builder.__name__ = "haxe.ui.containers.menus._MenuBar.Builder";
-haxe_ui_containers_menus__$MenuBar_Builder.__super__ = haxe_ui_core_CompositeBuilder;
-haxe_ui_containers_menus__$MenuBar_Builder.prototype = $extend(haxe_ui_core_CompositeBuilder.prototype,{
-	_menubar: null
-	,_buttons: null
-	,_menus: null
-	,onThemeChanged: function() {
-		var _g = 0;
-		var _g1 = this._menus;
-		while(_g < _g1.length) {
-			var menu = _g1[_g];
-			++_g;
-			haxe_ui_core_Screen.get_instance().invalidateChildren(menu);
-			haxe_ui_core_Screen.get_instance().onThemeChangedChildren(menu);
-		}
-	}
-	,create: function() {
-	}
-	,destroy: function() {
-		haxe_ui_core_CompositeBuilder.prototype.destroy.call(this);
-		var _g = 0;
-		var _g1 = this._menus;
-		while(_g < _g1.length) {
-			var menu = _g1[_g];
-			++_g;
-			haxe_ui_core_Screen.get_instance().removeComponent(menu);
-		}
-		this._menus = null;
-	}
-	,addComponent: function(child) {
-		if(((child) instanceof haxe_ui_containers_menus_Menu)) {
-			var menu = js_Boot.__cast(child , haxe_ui_containers_menus_Menu);
-			var button = new haxe_ui_components_Button();
-			var hasChildren = (menu._children == null ? [] : menu._children).length > 0;
-			if(hasChildren == true) {
-				button.set_styleNames("menubar-button");
-			} else {
-				button.set_styleNames("menubar-button-no-children");
-			}
-			button.set_text(menu.get_text());
-			button.set_icon(haxe_ui_util_Variant.fromString(menu.get_icon()));
-			button.set_tooltip(menu.get_tooltip());
-			button.set_toggle(hasChildren);
-			haxe_ui_locale_LocaleManager.get_instance().cloneForComponent(child,button);
-			this._buttons.push(button);
-			this._menubar.addComponent(button);
-			this._menubar.registerInternalEvents(null,true);
-			this._menus.push(menu);
-			return menu;
-		}
-		return null;
-	}
-	,addComponentAt: function(child,index) {
-		return null;
-	}
-	,removeComponent: function(child,dispose,invalidate) {
-		if(invalidate == null) {
-			invalidate = true;
-		}
-		if(dispose == null) {
-			dispose = true;
-		}
-		return null;
-	}
-	,getComponentIndex: function(child) {
-		return -1;
-	}
-	,setComponentIndex: function(child,index) {
-		return null;
-	}
-	,getComponentAt: function(index) {
-		return null;
-	}
-	,findComponent: function(criteria,type,recursive,searchType) {
-		var match = haxe_ui_core_CompositeBuilder.prototype.findComponent.call(this,criteria,type,recursive,searchType);
-		if(match == null) {
-			var _g = 0;
-			var _g1 = this._menus;
-			while(_g < _g1.length) {
-				var menu = _g1[_g];
-				++_g;
-				match = menu.findComponent(criteria,type,recursive,searchType);
-				if(menu.matchesSearch(criteria,type,searchType)) {
-					return menu;
-				} else {
-					match = menu.findComponent(criteria,type,recursive,searchType);
-				}
-				if(match != null) {
-					break;
-				}
-			}
-		}
-		return match;
-	}
-	,findComponents: function(styleName,type,maxDepth) {
-		if(maxDepth == null) {
-			maxDepth = 5;
-		}
-		var r = [];
-		var _g = 0;
-		var _g1 = this._menus;
-		while(_g < _g1.length) {
-			var menu = _g1[_g];
-			++_g;
-			var match = true;
-			if(styleName != null && menu.classes.indexOf(styleName) != -1 == false) {
-				match = false;
-			}
-			if(type != null && js_Boot.__instanceof(menu,type) == false) {
-				match = false;
-			}
-			if(match == true) {
-				r.push(menu);
-			}
-			var childArray = menu.findComponents(styleName,type,maxDepth);
-			var _g2 = 0;
-			while(_g2 < childArray.length) {
-				var c = childArray[_g2];
-				++_g2;
-				r.push(c);
-			}
-		}
-		return r;
-	}
-	,__class__: haxe_ui_containers_menus__$MenuBar_Builder
-});
-var haxe_ui_containers_menus_MenuItem = function() {
-	haxe_ui_containers_HBox.call(this);
-};
-$hxClasses["haxe.ui.containers.menus.MenuItem"] = haxe_ui_containers_menus_MenuItem;
-haxe_ui_containers_menus_MenuItem.__name__ = "haxe.ui.containers.menus.MenuItem";
-haxe_ui_containers_menus_MenuItem.__super__ = haxe_ui_containers_HBox;
-haxe_ui_containers_menus_MenuItem.prototype = $extend(haxe_ui_containers_HBox.prototype,{
+$hxClasses["haxe.ui.containers.VerticalButtonBar"] = haxe_ui_containers_VerticalButtonBar;
+haxe_ui_containers_VerticalButtonBar.__name__ = "haxe.ui.containers.VerticalButtonBar";
+haxe_ui_containers_VerticalButtonBar.__super__ = haxe_ui_containers_ButtonBar;
+haxe_ui_containers_VerticalButtonBar.prototype = $extend(haxe_ui_containers_ButtonBar.prototype,{
 	registerComposite: function() {
-		haxe_ui_containers_HBox.prototype.registerComposite.call(this);
-		this._internalEventsClass = haxe_ui_containers_menus__$MenuItem_Events;
-		this._compositeBuilderClass = haxe_ui_containers_menus__$MenuItem_Builder;
+		haxe_ui_containers_ButtonBar.prototype.registerComposite.call(this);
+		this._defaultLayoutClass = haxe_ui_layouts_VerticalLayout;
 	}
 	,registerBehaviours: function() {
-		haxe_ui_containers_HBox.prototype.registerBehaviours.call(this);
-		this.behaviours.register("text",haxe_ui_containers_menus__$MenuItem_TextBehaviour);
-		this.behaviours.register("shortcutText",haxe_ui_containers_menus__$MenuItem_ShortcutTextBehaviour);
-		this.behaviours.register("icon",haxe_ui_containers_menus__$MenuItem_IconBehaviour);
-		this.behaviours.register("expandable",haxe_ui_containers_menus__$MenuItem_ExpandableBehaviour);
-	}
-	,get_shortcutText: function() {
-		return haxe_ui_util_Variant.toString(this.behaviours.get("shortcutText"));
-	}
-	,set_shortcutText: function(value) {
-		var _g = Type.typeof(value);
-		if(_g._hx_index == 6) {
-			if(_g.c == String) {
-				if(value != null && value.indexOf("{{") != -1 && value.indexOf("}}") != -1) {
-					haxe_ui_locale_LocaleManager.get_instance().registerComponent(this,"shortcutText",null,value);
-					return value;
-				}
-			}
-		}
-		this.behaviours.set("shortcutText",haxe_ui_util_Variant.fromString(value));
-		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"shortcutText"));
-		return value;
-	}
-	,get_expandable: function() {
-		return haxe_ui_util_Variant.toBool(this.behaviours.get("expandable"));
-	}
-	,set_expandable: function(value) {
-		this.behaviours.set("expandable",haxe_ui_util_Variant.fromBool(value));
-		this.dispatch(new haxe_ui_events_UIEvent("propertyChange",null,"expandable"));
-		return value;
+		haxe_ui_containers_ButtonBar.prototype.registerBehaviours.call(this);
 	}
 	,cloneComponent: function() {
-		var c = haxe_ui_containers_HBox.prototype.cloneComponent.call(this);
-		if(this.get_shortcutText() != null) {
-			c.set_shortcutText(this.get_shortcutText());
-		}
-		c.set_expandable(this.get_expandable());
+		var c = haxe_ui_containers_ButtonBar.prototype.cloneComponent.call(this);
 		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
 			var _g = 0;
 			var _g1 = this._children == null ? [] : this._children;
@@ -16631,146 +19893,9 @@ haxe_ui_containers_menus_MenuItem.prototype = $extend(haxe_ui_containers_HBox.pr
 		return c;
 	}
 	,self: function() {
-		return new haxe_ui_containers_menus_MenuItem();
+		return new haxe_ui_containers_VerticalButtonBar();
 	}
-	,__class__: haxe_ui_containers_menus_MenuItem
-	,__properties__: $extend(haxe_ui_containers_HBox.prototype.__properties__,{set_expandable:"set_expandable",get_expandable:"get_expandable",set_shortcutText:"set_shortcutText",get_shortcutText:"get_shortcutText"})
-});
-var haxe_ui_containers_menus__$MenuItem_TextBehaviour = function(component) {
-	haxe_ui_behaviours_DataBehaviour.call(this,component);
-};
-$hxClasses["haxe.ui.containers.menus._MenuItem.TextBehaviour"] = haxe_ui_containers_menus__$MenuItem_TextBehaviour;
-haxe_ui_containers_menus__$MenuItem_TextBehaviour.__name__ = "haxe.ui.containers.menus._MenuItem.TextBehaviour";
-haxe_ui_containers_menus__$MenuItem_TextBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers_menus__$MenuItem_TextBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
-	validateData: function() {
-		var label = this._component.findComponent("menuitem-label",null,true);
-		label.set_text(haxe_ui_util_Variant.toString(this._value));
-	}
-	,__class__: haxe_ui_containers_menus__$MenuItem_TextBehaviour
-});
-var haxe_ui_containers_menus__$MenuItem_ShortcutTextBehaviour = function(component) {
-	haxe_ui_behaviours_DataBehaviour.call(this,component);
-};
-$hxClasses["haxe.ui.containers.menus._MenuItem.ShortcutTextBehaviour"] = haxe_ui_containers_menus__$MenuItem_ShortcutTextBehaviour;
-haxe_ui_containers_menus__$MenuItem_ShortcutTextBehaviour.__name__ = "haxe.ui.containers.menus._MenuItem.ShortcutTextBehaviour";
-haxe_ui_containers_menus__$MenuItem_ShortcutTextBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers_menus__$MenuItem_ShortcutTextBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
-	validateData: function() {
-		var label = this._component.findComponent("menuitem-shortcut-label",null,true);
-		if(label != null) {
-			label.set_text(haxe_ui_util_Variant.toString(this._value));
-		}
-	}
-	,__class__: haxe_ui_containers_menus__$MenuItem_ShortcutTextBehaviour
-});
-var haxe_ui_containers_menus__$MenuItem_IconBehaviour = function(component) {
-	haxe_ui_behaviours_DataBehaviour.call(this,component);
-};
-$hxClasses["haxe.ui.containers.menus._MenuItem.IconBehaviour"] = haxe_ui_containers_menus__$MenuItem_IconBehaviour;
-haxe_ui_containers_menus__$MenuItem_IconBehaviour.__name__ = "haxe.ui.containers.menus._MenuItem.IconBehaviour";
-haxe_ui_containers_menus__$MenuItem_IconBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers_menus__$MenuItem_IconBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
-	validateData: function() {
-		if(this._value == null || haxe_ui_util_Variant.get_isNull(this._value)) {
-			return;
-		}
-		var icon = this._component.findComponent("menuitem-icon",null,true);
-		if(icon == null) {
-			icon = new haxe_ui_components_Image();
-			icon.set_scriptAccess(false);
-			icon.set_id("menuitem-icon");
-			icon.addClass("menuitem-icon");
-			icon.addClass("icon");
-			this._component.addComponentAt(icon,0);
-		}
-		icon.set_resource(this._value);
-	}
-	,__class__: haxe_ui_containers_menus__$MenuItem_IconBehaviour
-});
-var haxe_ui_containers_menus__$MenuItem_ExpandableBehaviour = function(component) {
-	haxe_ui_behaviours_DataBehaviour.call(this,component);
-};
-$hxClasses["haxe.ui.containers.menus._MenuItem.ExpandableBehaviour"] = haxe_ui_containers_menus__$MenuItem_ExpandableBehaviour;
-haxe_ui_containers_menus__$MenuItem_ExpandableBehaviour.__name__ = "haxe.ui.containers.menus._MenuItem.ExpandableBehaviour";
-haxe_ui_containers_menus__$MenuItem_ExpandableBehaviour.__super__ = haxe_ui_behaviours_DataBehaviour;
-haxe_ui_containers_menus__$MenuItem_ExpandableBehaviour.prototype = $extend(haxe_ui_behaviours_DataBehaviour.prototype,{
-	validateData: function() {
-		var image = this._component.findComponent("menuitem-expandable");
-		if(image == null && haxe_ui_util_Variant.eq(this._value,haxe_ui_util_Variant.fromBool(true))) {
-			image = new haxe_ui_components_Image();
-			image.set_id("menuitem-expandable");
-			image.set_styleNames("menuitem-expandable");
-			image.set_scriptAccess(false);
-			this._component.addComponent(image);
-			var _this = this._component;
-			var force = true;
-			if(force == null) {
-				force = false;
-			}
-			_this.invalidateComponent("style",false);
-			if(force == true) {
-				_this._style = null;
-			}
-		} else if(haxe_ui_util_Variant.eq(this._value,haxe_ui_util_Variant.fromBool(false))) {
-			this._component.removeComponent(image);
-		}
-	}
-	,__class__: haxe_ui_containers_menus__$MenuItem_ExpandableBehaviour
-});
-var haxe_ui_containers_menus__$MenuItem_Events = function(target) {
-	haxe_ui_events_Events.call(this,target);
-};
-$hxClasses["haxe.ui.containers.menus._MenuItem.Events"] = haxe_ui_containers_menus__$MenuItem_Events;
-haxe_ui_containers_menus__$MenuItem_Events.__name__ = "haxe.ui.containers.menus._MenuItem.Events";
-haxe_ui_containers_menus__$MenuItem_Events.__super__ = haxe_ui_events_Events;
-haxe_ui_containers_menus__$MenuItem_Events.prototype = $extend(haxe_ui_events_Events.prototype,{
-	register: function() {
-		if(!this.hasEvent("mouseover",$bind(this,this.onMouseOver))) {
-			this.registerEvent("mouseover",$bind(this,this.onMouseOver));
-		}
-		if(!this.hasEvent("mouseout",$bind(this,this.onMouseOut))) {
-			this.registerEvent("mouseout",$bind(this,this.onMouseOut));
-		}
-	}
-	,unregister: function() {
-		this.unregisterEvent("mouseover",$bind(this,this.onMouseOver));
-		this.unregisterEvent("mouseout",$bind(this,this.onMouseOut));
-	}
-	,onMouseOver: function(event) {
-		this._target.addClass(":hover",true,true);
-	}
-	,onMouseOut: function(event) {
-		this._target.removeClass(":hover",true,true);
-	}
-	,__class__: haxe_ui_containers_menus__$MenuItem_Events
-});
-var haxe_ui_containers_menus__$MenuItem_Builder = function(component) {
-	haxe_ui_core_CompositeBuilder.call(this,component);
-};
-$hxClasses["haxe.ui.containers.menus._MenuItem.Builder"] = haxe_ui_containers_menus__$MenuItem_Builder;
-haxe_ui_containers_menus__$MenuItem_Builder.__name__ = "haxe.ui.containers.menus._MenuItem.Builder";
-haxe_ui_containers_menus__$MenuItem_Builder.__super__ = haxe_ui_core_CompositeBuilder;
-haxe_ui_containers_menus__$MenuItem_Builder.prototype = $extend(haxe_ui_core_CompositeBuilder.prototype,{
-	create: function() {
-		haxe_ui_core_CompositeBuilder.prototype.create.call(this);
-		var box = new haxe_ui_containers_HBox();
-		box.set_percentWidth(100);
-		box.set_verticalAlign("center");
-		var label = new haxe_ui_components_Label();
-		label.set_id("menuitem-label");
-		label.set_percentWidth(100);
-		label.set_styleNames("menuitem-label");
-		label.set_scriptAccess(false);
-		box.addComponent(label);
-		var label = new haxe_ui_components_Label();
-		label.set_id("menuitem-shortcut-label");
-		label.set_styleNames("menuitem-shortcut-label");
-		label.set_scriptAccess(false);
-		box.addComponent(label);
-		this._component.addComponent(box);
-	}
-	,__class__: haxe_ui_containers_menus__$MenuItem_Builder
+	,__class__: haxe_ui_containers_VerticalButtonBar
 });
 var haxe_ui_core_BasicItemRenderer = function() {
 	haxe_ui_core_ItemRenderer.call(this);
@@ -16815,6 +19940,58 @@ haxe_ui_core_BasicItemRenderer.prototype = $extend(haxe_ui_core_ItemRenderer.pro
 	}
 	,__class__: haxe_ui_core_BasicItemRenderer
 });
+var haxe_ui_core_ComponentClassMap = function() {
+	this._map = new haxe_ds_StringMap();
+};
+$hxClasses["haxe.ui.core.ComponentClassMap"] = haxe_ui_core_ComponentClassMap;
+haxe_ui_core_ComponentClassMap.__name__ = "haxe.ui.core.ComponentClassMap";
+haxe_ui_core_ComponentClassMap.__properties__ = {get_instance:"get_instance"};
+haxe_ui_core_ComponentClassMap.get_instance = function() {
+	if(haxe_ui_core_ComponentClassMap._instance == null) {
+		haxe_ui_core_ComponentClassMap._instance = new haxe_ui_core_ComponentClassMap();
+	}
+	return haxe_ui_core_ComponentClassMap._instance;
+};
+haxe_ui_core_ComponentClassMap.get = function(alias) {
+	alias = StringTools.replace(alias,"-","").toLowerCase();
+	return haxe_ui_core_ComponentClassMap.get_instance().getClassName(alias);
+};
+haxe_ui_core_ComponentClassMap.register = function(alias,className) {
+	haxe_ui_core_ComponentClassMap.get_instance().registerClassName(alias.toLowerCase(),className);
+};
+haxe_ui_core_ComponentClassMap.list = function() {
+	return new haxe_ds__$StringMap_StringMapKeyIterator(haxe_ui_core_ComponentClassMap.get_instance()._map.h);
+};
+haxe_ui_core_ComponentClassMap.clear = function() {
+	haxe_ui_core_ComponentClassMap.get_instance()._map = new haxe_ds_StringMap();
+};
+haxe_ui_core_ComponentClassMap.hasClass = function(className) {
+	return haxe_ui_core_ComponentClassMap.get_instance().hasClassName(className);
+};
+haxe_ui_core_ComponentClassMap.prototype = {
+	_map: null
+	,getClassName: function(alias) {
+		return this._map.h[alias];
+	}
+	,registerClassName: function(alias,className) {
+		this._map.h[alias] = className;
+	}
+	,hasClassName: function(className) {
+		var h = this._map.h;
+		var k_h = h;
+		var k_keys = Object.keys(h);
+		var k_length = k_keys.length;
+		var k_current = 0;
+		while(k_current < k_length) {
+			var k = k_keys[k_current++];
+			if(this._map.h[k] == className) {
+				return true;
+			}
+		}
+		return false;
+	}
+	,__class__: haxe_ui_core_ComponentClassMap
+};
 var haxe_ui_core_ComponentTextBehaviour = function(component) {
 	haxe_ui_behaviours_DefaultBehaviour.call(this,component);
 };
@@ -16914,6 +20091,15 @@ haxe_ui_core_ComponentToolTipRendererBehaviour.prototype = $extend(haxe_ui_behav
 	}
 	,__class__: haxe_ui_core_ComponentToolTipRendererBehaviour
 });
+var haxe_ui_core_ComponentFieldMap = function() { };
+$hxClasses["haxe.ui.core.ComponentFieldMap"] = haxe_ui_core_ComponentFieldMap;
+haxe_ui_core_ComponentFieldMap.__name__ = "haxe.ui.core.ComponentFieldMap";
+haxe_ui_core_ComponentFieldMap.mapField = function(name) {
+	if(Object.prototype.hasOwnProperty.call(haxe_ui_core_ComponentFieldMap.MAP.h,name)) {
+		return haxe_ui_core_ComponentFieldMap.MAP.h[name];
+	}
+	return name;
+};
 var haxe_ui_core_ImageDisplay = function() {
 	this._isValidating = false;
 	this._isAllInvalid = false;
@@ -17064,6 +20250,38 @@ haxe_ui_core_ImageDisplay.prototype = $extend(haxe_ui_backend_ImageDisplayImpl.p
 	,__class__: haxe_ui_core_ImageDisplay
 	,__properties__: {set_imageClipRect:"set_imageClipRect",get_imageClipRect:"get_imageClipRect",set_imageInfo:"set_imageInfo",get_imageInfo:"get_imageInfo",set_imageHeight:"set_imageHeight",get_imageHeight:"get_imageHeight",set_imageWidth:"set_imageWidth",get_imageWidth:"get_imageWidth",set_top:"set_top",get_top:"get_top",set_left:"set_left",get_left:"get_left"}
 });
+var haxe_ui_core_LayoutClassMap = function() {
+	this._map = new haxe_ds_StringMap();
+};
+$hxClasses["haxe.ui.core.LayoutClassMap"] = haxe_ui_core_LayoutClassMap;
+haxe_ui_core_LayoutClassMap.__name__ = "haxe.ui.core.LayoutClassMap";
+haxe_ui_core_LayoutClassMap.__properties__ = {get_instance:"get_instance"};
+haxe_ui_core_LayoutClassMap.get_instance = function() {
+	if(haxe_ui_core_LayoutClassMap._instance == null) {
+		haxe_ui_core_LayoutClassMap._instance = new haxe_ui_core_LayoutClassMap();
+	}
+	return haxe_ui_core_LayoutClassMap._instance;
+};
+haxe_ui_core_LayoutClassMap.get = function(alias) {
+	return haxe_ui_core_LayoutClassMap.get_instance().getClassName(alias);
+};
+haxe_ui_core_LayoutClassMap.register = function(alias,className) {
+	haxe_ui_core_LayoutClassMap.get_instance().registerClassName(StringTools.replace(alias,"layout",""),className);
+	haxe_ui_core_LayoutClassMap.get_instance().registerClassName(alias,className);
+};
+haxe_ui_core_LayoutClassMap.list = function() {
+	return new haxe_ds__$StringMap_StringMapKeyIterator(haxe_ui_core_LayoutClassMap.get_instance()._map.h);
+};
+haxe_ui_core_LayoutClassMap.prototype = {
+	_map: null
+	,getClassName: function(alias) {
+		return this._map.h[alias];
+	}
+	,registerClassName: function(alias,className) {
+		this._map.h[alias] = className;
+	}
+	,__class__: haxe_ui_core_LayoutClassMap
+};
 var haxe_ui_core_Platform = function() {
 	haxe_ui_backend_PlatformImpl.call(this);
 };
@@ -17224,6 +20442,19 @@ haxe_ui_core_TextDisplay.prototype = $extend(haxe_ui_backend_TextDisplayImpl.pro
 	_invalidationFlags: null
 	,_isAllInvalid: null
 	,_isValidating: null
+	,get_id: function() {
+		if(this.parentComponent == null) {
+			return null;
+		}
+		return this.parentComponent.get_id() + "_textdisplay";
+	}
+	,set_id: function(value) {
+		return value;
+	}
+	,isComponentOffscreen: null
+	,get_isComponentOffscreen: function() {
+		return false;
+	}
 	,get_textStyle: function() {
 		return this._textStyle;
 	}
@@ -17455,7 +20686,7 @@ haxe_ui_core_TextDisplay.prototype = $extend(haxe_ui_backend_TextDisplayImpl.pro
 		}
 	}
 	,__class__: haxe_ui_core_TextDisplay
-	,__properties__: $extend(haxe_ui_backend_TextDisplayImpl.prototype.__properties__,{set_depth:"set_depth",get_depth:"get_depth",set_wordWrap:"set_wordWrap",get_wordWrap:"get_wordWrap",set_multiline:"set_multiline",get_multiline:"get_multiline",get_textHeight:"get_textHeight",get_textWidth:"get_textWidth",set_height:"set_height",get_height:"get_height",set_width:"set_width",get_width:"get_width",set_top:"set_top",get_top:"get_top",set_left:"set_left",get_left:"get_left",set_htmlText:"set_htmlText",get_htmlText:"get_htmlText",set_text:"set_text",get_text:"get_text",set_textStyle:"set_textStyle",get_textStyle:"get_textStyle"})
+	,__properties__: $extend(haxe_ui_backend_TextDisplayImpl.prototype.__properties__,{set_depth:"set_depth",get_depth:"get_depth",set_wordWrap:"set_wordWrap",get_wordWrap:"get_wordWrap",set_multiline:"set_multiline",get_multiline:"get_multiline",get_textHeight:"get_textHeight",get_textWidth:"get_textWidth",set_height:"set_height",get_height:"get_height",set_width:"set_width",get_width:"get_width",set_top:"set_top",get_top:"get_top",set_left:"set_left",get_left:"get_left",set_htmlText:"set_htmlText",get_htmlText:"get_htmlText",set_text:"set_text",get_text:"get_text",set_textStyle:"set_textStyle",get_textStyle:"get_textStyle",get_isComponentOffscreen:"get_isComponentOffscreen",set_id:"set_id",get_id:"get_id"})
 });
 var haxe_ui_core_TextInputData = function() {
 	this.onChangedCallback = null;
@@ -17502,6 +20733,19 @@ haxe_ui_core_TextInput.prototype = $extend(haxe_ui_backend_TextInputImpl.prototy
 	_invalidationFlags: null
 	,_isAllInvalid: null
 	,_isValidating: null
+	,get_id: function() {
+		if(this.parentComponent == null) {
+			return null;
+		}
+		return this.parentComponent.get_id() + "_textinput";
+	}
+	,set_id: function(value) {
+		return value;
+	}
+	,isComponentOffscreen: null
+	,get_isComponentOffscreen: function() {
+		return false;
+	}
 	,focus: function() {
 		haxe_ui_backend_TextInputImpl.prototype.focus.call(this);
 	}
@@ -17782,7 +21026,7 @@ haxe_ui_core_TextInput.prototype = $extend(haxe_ui_backend_TextInputImpl.prototy
 		}
 	}
 	,__class__: haxe_ui_core_TextInput
-	,__properties__: $extend(haxe_ui_backend_TextInputImpl.prototype.__properties__,{set_depth:"set_depth",get_depth:"get_depth",get_vscrollPageSize:"get_vscrollPageSize",get_vscrollMax:"get_vscrollMax",set_vscrollPos:"set_vscrollPos",get_vscrollPos:"get_vscrollPos",get_hscrollPageSize:"get_hscrollPageSize",get_hscrollMax:"get_hscrollMax",set_hscrollPos:"set_hscrollPos",get_hscrollPos:"get_hscrollPos",set_wordWrap:"set_wordWrap",get_wordWrap:"get_wordWrap",set_multiline:"set_multiline",get_multiline:"get_multiline",get_textHeight:"get_textHeight",get_textWidth:"get_textWidth",set_height:"set_height",get_height:"get_height",set_width:"set_width",get_width:"get_width",set_top:"set_top",get_top:"get_top",set_left:"set_left",get_left:"get_left",set_password:"set_password",get_password:"get_password",set_htmlText:"set_htmlText",get_htmlText:"get_htmlText",set_text:"set_text",get_text:"get_text",get_data:"get_data",set_textStyle:"set_textStyle",get_textStyle:"get_textStyle"})
+	,__properties__: $extend(haxe_ui_backend_TextInputImpl.prototype.__properties__,{set_depth:"set_depth",get_depth:"get_depth",get_vscrollPageSize:"get_vscrollPageSize",get_vscrollMax:"get_vscrollMax",set_vscrollPos:"set_vscrollPos",get_vscrollPos:"get_vscrollPos",get_hscrollPageSize:"get_hscrollPageSize",get_hscrollMax:"get_hscrollMax",set_hscrollPos:"set_hscrollPos",get_hscrollPos:"get_hscrollPos",set_wordWrap:"set_wordWrap",get_wordWrap:"get_wordWrap",set_multiline:"set_multiline",get_multiline:"get_multiline",get_textHeight:"get_textHeight",get_textWidth:"get_textWidth",set_height:"set_height",get_height:"get_height",set_width:"set_width",get_width:"get_width",set_top:"set_top",get_top:"get_top",set_left:"set_left",get_left:"get_left",set_password:"set_password",get_password:"get_password",set_htmlText:"set_htmlText",get_htmlText:"get_htmlText",set_text:"set_text",get_text:"get_text",get_data:"get_data",set_textStyle:"set_textStyle",get_textStyle:"get_textStyle",get_isComponentOffscreen:"get_isComponentOffscreen",set_id:"set_id",get_id:"get_id"})
 });
 var haxe_ui_core_TypeMap = function() { };
 $hxClasses["haxe.ui.core.TypeMap"] = haxe_ui_core_TypeMap;
@@ -18143,6 +21387,65 @@ haxe_ui_data_ArrayDataSource.prototype = $extend(haxe_ui_data_DataSource.prototy
 	}
 	,__class__: haxe_ui_data_ArrayDataSource
 });
+var haxe_ui_data_DataSourceFactory = function() {
+};
+$hxClasses["haxe.ui.data.DataSourceFactory"] = haxe_ui_data_DataSourceFactory;
+haxe_ui_data_DataSourceFactory.__name__ = "haxe.ui.data.DataSourceFactory";
+haxe_ui_data_DataSourceFactory.prototype = {
+	create: function(type) {
+		var ds = Type.createInstance(type,[]);
+		return ds;
+	}
+	,fromString: function(data,type) {
+		var ds = this.create(type);
+		if(StringTools.startsWith(data,"<")) {
+			var xml = Xml.parse(data).firstElement();
+			var el = xml.elements();
+			while(el.hasNext()) {
+				var el1 = el.next();
+				var o = this.xml2Object(el1);
+				ds.add(o);
+			}
+		} else if(StringTools.startsWith(data,"[")) {
+			var json = JSON.parse(StringTools.replace(data,"'","\""));
+			var _g = 0;
+			while(_g < json.length) {
+				var o = json[_g];
+				++_g;
+				ds.add(o);
+			}
+		}
+		return ds;
+	}
+	,xml2Object: function(el,addId) {
+		if(addId == null) {
+			addId = true;
+		}
+		var o = { };
+		if(addId == true) {
+			if(el.nodeType != Xml.Element) {
+				throw haxe_Exception.thrown("Bad node type, expected Element but found " + (el.nodeType == null ? "null" : XmlType.toString(el.nodeType)));
+			}
+			o["id"] = el.nodeName;
+		}
+		var attr = el.attributes();
+		while(attr.hasNext()) {
+			var attr1 = attr.next();
+			o[attr1] = el.get(attr1);
+		}
+		var childEl = el.elements();
+		while(childEl.hasNext()) {
+			var childEl1 = childEl.next();
+			var childObject = this.xml2Object(childEl1,false);
+			if(childEl1.nodeType != Xml.Element) {
+				throw haxe_Exception.thrown("Bad node type, expected Element but found " + (childEl1.nodeType == null ? "null" : XmlType.toString(childEl1.nodeType)));
+			}
+			o[childEl1.nodeName] = childObject;
+		}
+		return o;
+	}
+	,__class__: haxe_ui_data_DataSourceFactory
+};
 var haxe_ui_data_IDataItem = function() { };
 $hxClasses["haxe.ui.data.IDataItem"] = haxe_ui_data_IDataItem;
 haxe_ui_data_IDataItem.__name__ = "haxe.ui.data.IDataItem";
@@ -19696,431 +22999,6 @@ haxe_ui_layouts_LayoutFactory.createFromName = function(name) {
 	}
 	return new haxe_ui_layouts_DefaultLayout();
 };
-var haxe_ui_layouts_VerticalGridLayout = function() {
-	this._columns = 1;
-	haxe_ui_layouts_Layout.call(this);
-};
-$hxClasses["haxe.ui.layouts.VerticalGridLayout"] = haxe_ui_layouts_VerticalGridLayout;
-haxe_ui_layouts_VerticalGridLayout.__name__ = "haxe.ui.layouts.VerticalGridLayout";
-haxe_ui_layouts_VerticalGridLayout.__super__ = haxe_ui_layouts_Layout;
-haxe_ui_layouts_VerticalGridLayout.prototype = $extend(haxe_ui_layouts_Layout.prototype,{
-	_columns: null
-	,get_columns: function() {
-		return this._columns;
-	}
-	,set_columns: function(value) {
-		if(this._columns == value) {
-			return value;
-		}
-		this._columns = value;
-		if(this._component != null) {
-			var _this = this._component;
-			if(!(_this._layout == null || _this._layoutLocked == true)) {
-				_this.invalidateComponent("layout",false);
-			}
-		}
-		return value;
-	}
-	,get_usableSize: function() {
-		var size = haxe_ui_layouts_Layout.prototype.get_usableSize.call(this);
-		var columnWidths = this.calcColumnWidths(size,false);
-		var rowHeights = this.calcRowHeights(size,false);
-		var _g = 0;
-		while(_g < columnWidths.length) {
-			var columnWidth = columnWidths[_g];
-			++_g;
-			size.width -= columnWidth;
-		}
-		var _g = 0;
-		while(_g < rowHeights.length) {
-			var rowHeight = rowHeights[_g];
-			++_g;
-			size.height -= rowHeight;
-		}
-		var _this = this.get_component();
-		if((_this._children == null ? [] : _this._children).length > 1) {
-			var _this = this.get_component();
-			var rows = Math.ceil((_this._children == null ? [] : _this._children).length / this.get_columns());
-			var c = this.get_columns();
-			var _this = this.get_component();
-			var c1 = Math.min(c,(_this._children == null ? [] : _this._children).length);
-			size.width -= this.get_horizontalSpacing() * (c1 - 1);
-			size.height -= this.get_verticalSpacing() * (rows - 1);
-		}
-		if(size.width < 0) {
-			size.width = 0;
-		}
-		if(size.height < 0) {
-			size.height = 0;
-		}
-		return size;
-	}
-	,resizeChildren: function() {
-		var size = this.get_usableSize();
-		var columnWidths = this.calcColumnWidths(size,true);
-		var rowHeights = this.calcRowHeights(size,true);
-		var explicitWidths = this.calcExplicitWidths();
-		var explicitHeights = this.calcExplicitHeights();
-		var rowIndex = 0;
-		var columnIndex = 0;
-		var _g = 0;
-		var _this = this.get_component();
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			if(child.get_includeInLayout() == false) {
-				continue;
-			}
-			var cx = null;
-			var cy = null;
-			if(child.get_percentWidth() != null) {
-				var ucx = columnWidths[columnIndex];
-				if(explicitWidths[columnIndex] == false) {
-					cx = ucx;
-				} else {
-					cx = ucx * child.get_percentWidth() / 100;
-				}
-			}
-			if(child.get_percentHeight() != null) {
-				var ucy = rowHeights[rowIndex];
-				if(explicitHeights[rowIndex] == false) {
-					cy = ucy;
-				} else {
-					cy = ucy * child.get_percentHeight() / 100;
-				}
-			}
-			child.resizeComponent(cx,cy);
-			++columnIndex;
-			if(columnIndex >= this._columns) {
-				columnIndex = 0;
-				++rowIndex;
-			}
-		}
-	}
-	,repositionChildren: function() {
-		var size = this.get_usableSize();
-		var columnWidths = this.calcColumnWidths(size,true);
-		var rowHeights = this.calcRowHeights(size,true);
-		var rowIndex = 0;
-		var columnIndex = 0;
-		var xpos = this.get_paddingLeft();
-		var ypos = this.get_paddingTop();
-		var _g = 0;
-		var _this = this.get_component();
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			if(child.get_includeInLayout() == false) {
-				continue;
-			}
-			var halign = this.horizontalAlign(child);
-			var valign = this.verticalAlign(child);
-			var xposChild = 0;
-			var yposChild = 0;
-			switch(halign) {
-			case "center":
-				xposChild = xpos + (columnWidths[columnIndex] - child.get_componentWidth()) * 0.5 + this.marginLeft(child) - this.marginRight(child);
-				break;
-			case "right":
-				xposChild = xpos + (columnWidths[columnIndex] - child.get_componentWidth()) + this.marginLeft(child) - this.marginRight(child);
-				break;
-			default:
-				xposChild = xpos + this.marginLeft(child) - this.marginRight(child);
-			}
-			switch(valign) {
-			case "bottom":
-				yposChild = ypos + (rowHeights[rowIndex] - child.get_componentHeight()) + this.marginTop(child) - this.marginBottom(child);
-				break;
-			case "center":
-				yposChild = ypos + (rowHeights[rowIndex] - child.get_componentHeight()) * 0.5 + this.marginTop(child) - this.marginBottom(child);
-				break;
-			default:
-				yposChild = ypos + this.marginTop(child) - this.marginBottom(child);
-			}
-			child.moveComponent(xposChild,yposChild);
-			xpos += columnWidths[columnIndex] + this.get_horizontalSpacing();
-			++columnIndex;
-			if(columnIndex >= this.get_columns()) {
-				xpos = this.get_paddingLeft();
-				ypos += rowHeights[rowIndex] + this.get_verticalSpacing();
-				columnIndex = 0;
-				++rowIndex;
-			}
-		}
-	}
-	,calcColumnWidths: function(usableSize,includePercentage) {
-		var columnWidths = [];
-		var _g = 0;
-		var _g1 = this._columns;
-		while(_g < _g1) {
-			var _ = _g++;
-			columnWidths.push(0);
-		}
-		var rowIndex = 0;
-		var columnIndex = 0;
-		var _g = 0;
-		var _this = this.get_component();
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			if(child.get_includeInLayout() == false) {
-				continue;
-			}
-			if(child.get_percentWidth() == null) {
-				if(child.get_componentWidth() > columnWidths[columnIndex]) {
-					columnWidths[columnIndex] = child.get_componentWidth();
-				}
-			}
-			++columnIndex;
-			if(columnIndex >= this._columns) {
-				columnIndex = 0;
-				++rowIndex;
-			}
-		}
-		if(includePercentage) {
-			rowIndex = 0;
-			columnIndex = 0;
-			var fullWidthsCounts = [0];
-			var _g = 0;
-			var _this = this.get_component();
-			var _g1 = _this._children == null ? [] : _this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				if(child.get_includeInLayout() == false) {
-					continue;
-				}
-				if(child.get_percentWidth() != null && child.get_percentWidth() == 100) {
-					fullWidthsCounts[rowIndex]++;
-				}
-				++columnIndex;
-				if(columnIndex >= this._columns) {
-					columnIndex = 0;
-					++rowIndex;
-					fullWidthsCounts.push(0);
-				}
-			}
-			rowIndex = 0;
-			columnIndex = 0;
-			var _g = 0;
-			var _this = this.get_component();
-			var _g1 = _this._children == null ? [] : _this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				if(child.get_includeInLayout() == false) {
-					continue;
-				}
-				if(child.get_percentWidth() != null) {
-					var childPercentWidth = child.get_percentWidth();
-					if(childPercentWidth == 100 && fullWidthsCounts[rowIndex] != 0) {
-						var f = fullWidthsCounts[rowIndex];
-						if(rowIndex > 0 && fullWidthsCounts[rowIndex - 1] != 0) {
-							f = fullWidthsCounts[rowIndex - 1];
-						}
-						childPercentWidth = 100 / f;
-					}
-					var cx = usableSize.width * childPercentWidth / 100;
-					if(cx > columnWidths[columnIndex]) {
-						columnWidths[columnIndex] = cx;
-					}
-				}
-				++columnIndex;
-				if(columnIndex >= this._columns) {
-					columnIndex = 0;
-					++rowIndex;
-				}
-			}
-		}
-		return columnWidths;
-	}
-	,calcRowHeights: function(usableSize,includePercentage) {
-		var _this = this.get_component();
-		var visibleChildren = (_this._children == null ? [] : _this._children).length;
-		var _g = 0;
-		var _this = this.get_component();
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			if(child.get_includeInLayout() == false) {
-				--visibleChildren;
-			}
-		}
-		var rowCount = visibleChildren / this._columns | 0;
-		if(visibleChildren % this._columns != 0) {
-			++rowCount;
-		}
-		var rowHeights = [];
-		var _g = 0;
-		var _g1 = rowCount;
-		while(_g < _g1) {
-			var _ = _g++;
-			rowHeights.push(0);
-		}
-		var rowIndex = 0;
-		var columnIndex = 0;
-		var _g = 0;
-		var _this = this.get_component();
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			if(child.get_includeInLayout() == false) {
-				continue;
-			}
-			if(child.get_percentHeight() == null) {
-				if(child.get_height() > rowHeights[rowIndex]) {
-					rowHeights[rowIndex] = child.get_height();
-				}
-			}
-			++columnIndex;
-			if(columnIndex >= this._columns) {
-				columnIndex = 0;
-				++rowIndex;
-			}
-		}
-		if(includePercentage) {
-			rowIndex = 0;
-			columnIndex = 0;
-			var newRow = true;
-			var fullHeightRowCount = 0;
-			var _g = 0;
-			var _this = this.get_component();
-			var _g1 = _this._children == null ? [] : _this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				if(child.get_includeInLayout() == false) {
-					continue;
-				}
-				if(child.get_percentHeight() != null && child.get_percentHeight() == 100) {
-					if(newRow == true) {
-						newRow = false;
-						++fullHeightRowCount;
-					}
-				}
-				++columnIndex;
-				if(columnIndex >= this._columns) {
-					columnIndex = 0;
-					++rowIndex;
-					newRow = true;
-				}
-			}
-			rowIndex = 0;
-			columnIndex = 0;
-			var _g = 0;
-			var _this = this.get_component();
-			var _g1 = _this._children == null ? [] : _this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				if(child.get_includeInLayout() == false) {
-					continue;
-				}
-				if(child.get_percentHeight() != null) {
-					var childPercentHeight = child.get_percentHeight();
-					if(childPercentHeight == 100 && fullHeightRowCount > 1) {
-						childPercentHeight = 100 / fullHeightRowCount;
-					}
-					var cy = usableSize.height * childPercentHeight / 100;
-					if(cy > rowHeights[rowIndex]) {
-						rowHeights[rowIndex] = cy;
-					} else {
-						var tmp = usableSize.height > rowHeights[rowIndex];
-					}
-				}
-				++columnIndex;
-				if(columnIndex >= this._columns) {
-					columnIndex = 0;
-					++rowIndex;
-				}
-			}
-		}
-		return rowHeights;
-	}
-	,calcExplicitWidths: function() {
-		var explicitWidths = [];
-		var _g = 0;
-		var _g1 = this._columns;
-		while(_g < _g1) {
-			var _ = _g++;
-			explicitWidths.push(false);
-		}
-		var rowIndex = 0;
-		var columnIndex = 0;
-		var _g = 0;
-		var _this = this.get_component();
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			if(child.get_includeInLayout() == false) {
-				continue;
-			}
-			if(child.get_percentWidth() == null && child.get_componentWidth() > 0) {
-				explicitWidths[columnIndex] = true;
-			}
-			++columnIndex;
-			if(columnIndex >= this._columns) {
-				columnIndex = 0;
-				++rowIndex;
-			}
-		}
-		return explicitWidths;
-	}
-	,calcExplicitHeights: function() {
-		var _this = this.get_component();
-		var visibleChildren = (_this._children == null ? [] : _this._children).length;
-		var _g = 0;
-		var _this = this.get_component();
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			if(child.get_includeInLayout() == false) {
-				--visibleChildren;
-			}
-		}
-		var rowCount = visibleChildren / this.get_columns() | 0;
-		if(visibleChildren % this._columns != 0) {
-			++rowCount;
-		}
-		var explicitHeights = [];
-		var _g = 0;
-		var _g1 = rowCount;
-		while(_g < _g1) {
-			var _ = _g++;
-			explicitHeights.push(false);
-		}
-		var rowIndex = 0;
-		var columnIndex = 0;
-		var _g = 0;
-		var _this = this.get_component();
-		var _g1 = _this._children == null ? [] : _this._children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			if(child.get_includeInLayout() == false) {
-				continue;
-			}
-			if(child.get_percentHeight() == null && child.get_componentHeight() > 0) {
-				explicitHeights[columnIndex % this._columns] = true;
-			}
-			++columnIndex;
-			if(columnIndex >= this._columns) {
-				columnIndex = 0;
-				++rowIndex;
-			}
-		}
-		return explicitHeights;
-	}
-	,__class__: haxe_ui_layouts_VerticalGridLayout
-	,__properties__: $extend(haxe_ui_layouts_Layout.prototype.__properties__,{set_columns:"set_columns",get_columns:"get_columns"})
-});
 var haxe_ui_layouts_VerticalLayout = function() {
 	haxe_ui_layouts_DefaultLayout.call(this);
 	this._calcFullHeights = true;
@@ -20576,6 +23454,547 @@ haxe_ui_parsers_locale_PropertiesParser.prototype = $extend(haxe_ui_parsers_loca
 		return result;
 	}
 	,__class__: haxe_ui_parsers_locale_PropertiesParser
+});
+var haxe_ui_parsers_ui_ComponentInfo = function() {
+	this.properties = new haxe_ds_StringMap();
+	this.children = [];
+	this.scriptlets = [];
+	this.styles = [];
+};
+$hxClasses["haxe.ui.parsers.ui.ComponentInfo"] = haxe_ui_parsers_ui_ComponentInfo;
+haxe_ui_parsers_ui_ComponentInfo.__name__ = "haxe.ui.parsers.ui.ComponentInfo";
+haxe_ui_parsers_ui_ComponentInfo.prototype = {
+	type: null
+	,id: null
+	,left: null
+	,top: null
+	,width: null
+	,height: null
+	,percentWidth: null
+	,percentHeight: null
+	,contentWidth: null
+	,contentHeight: null
+	,percentContentWidth: null
+	,percentContentHeight: null
+	,text: null
+	,style: null
+	,styleNames: null
+	,composite: null
+	,layoutName: null
+	,direction: null
+	,properties: null
+	,parent: null
+	,children: null
+	,layout: null
+	,scriptlets: null
+	,styles: null
+	,data: null
+	,condition: null
+	,resolvedClassName: null
+	,get_styleString: function() {
+		if(this.style == null) {
+			return null;
+		}
+		return StringTools.replace(this.style,"\"","'");
+	}
+	,get_dataString: function() {
+		if(this.data == null) {
+			return null;
+		}
+		return StringTools.replace(this.data,"\"","'");
+	}
+	,findRootComponent: function() {
+		var r = this;
+		while(r.parent != null) r = r.parent;
+		return r;
+	}
+	,validate: function() {
+		var propsToRemove = [];
+		if(this.layoutName != null && this.layout == null) {
+			this.layout = new haxe_ui_parsers_ui_LayoutInfo();
+			this.layout.type = this.layoutName;
+			var h = this.properties.h;
+			var propName_h = h;
+			var propName_keys = Object.keys(h);
+			var propName_length = propName_keys.length;
+			var propName_current = 0;
+			while(propName_current < propName_length) {
+				var propName = propName_keys[propName_current++];
+				if(StringTools.startsWith(propName,"layout")) {
+					var propValue = this.properties.h[propName];
+					propsToRemove.push(propName);
+					propName = StringTools.replace(propName,"layout","");
+					propName = haxe_ui_util_StringUtil.uncapitalizeFirstLetter(propName);
+					this.layout.properties.h[propName] = propValue;
+				}
+			}
+		}
+		var _g = 0;
+		while(_g < propsToRemove.length) {
+			var propName = propsToRemove[_g];
+			++_g;
+			var _this = this.properties;
+			if(Object.prototype.hasOwnProperty.call(_this.h,propName)) {
+				delete(_this.h[propName]);
+			}
+		}
+	}
+	,__class__: haxe_ui_parsers_ui_ComponentInfo
+	,__properties__: {get_dataString:"get_dataString",get_styleString:"get_styleString"}
+};
+var haxe_ui_parsers_ui_ComponentParserException = function(message,fileName,original,previous,native) {
+	haxe_Exception.call(this,message,previous,native);
+	this.fileName = fileName;
+	this.original = original;
+};
+$hxClasses["haxe.ui.parsers.ui.ComponentParserException"] = haxe_ui_parsers_ui_ComponentParserException;
+haxe_ui_parsers_ui_ComponentParserException.__name__ = "haxe.ui.parsers.ui.ComponentParserException";
+haxe_ui_parsers_ui_ComponentParserException.__super__ = haxe_Exception;
+haxe_ui_parsers_ui_ComponentParserException.prototype = $extend(haxe_Exception.prototype,{
+	fileName: null
+	,original: null
+	,__class__: haxe_ui_parsers_ui_ComponentParserException
+});
+var haxe_ui_parsers_ui_ComponentParser = function() {
+};
+$hxClasses["haxe.ui.parsers.ui.ComponentParser"] = haxe_ui_parsers_ui_ComponentParser;
+haxe_ui_parsers_ui_ComponentParser.__name__ = "haxe.ui.parsers.ui.ComponentParser";
+haxe_ui_parsers_ui_ComponentParser.get = function(extension) {
+	haxe_ui_parsers_ui_ComponentParser.defaultParsers();
+	var cls = haxe_ui_parsers_ui_ComponentParser._parsers.h[extension];
+	if(cls == null) {
+		throw haxe_Exception.thrown("No component parser found for \"" + extension + "\"");
+	}
+	var instance = Type.createInstance(cls,[]);
+	if(instance == null) {
+		throw haxe_Exception.thrown("Could not create component parser instance \"" + Std.string(cls) + "\"");
+	}
+	return instance;
+};
+haxe_ui_parsers_ui_ComponentParser.defaultParsers = function() {
+	if(haxe_ui_parsers_ui_ComponentParser._parsers == null) {
+		haxe_ui_parsers_ui_ComponentParser.register("xml",haxe_ui_parsers_ui_XMLParser);
+	}
+};
+haxe_ui_parsers_ui_ComponentParser.register = function(extension,cls) {
+	if(haxe_ui_parsers_ui_ComponentParser._parsers == null) {
+		haxe_ui_parsers_ui_ComponentParser._parsers = new haxe_ds_StringMap();
+	}
+	haxe_ui_parsers_ui_ComponentParser._parsers.h[extension] = cls;
+};
+haxe_ui_parsers_ui_ComponentParser.nextId = function(prefix) {
+	if(prefix == null) {
+		prefix = "component";
+	}
+	var s = prefix + haxe_ui_parsers_ui_ComponentParser._nextId;
+	haxe_ui_parsers_ui_ComponentParser._nextId++;
+	return s;
+};
+haxe_ui_parsers_ui_ComponentParser.float = function(value) {
+	return parseFloat(value);
+};
+haxe_ui_parsers_ui_ComponentParser.isPercentage = function(value) {
+	if(value.indexOf("%") == value.length - 1) {
+		return true;
+	}
+	return false;
+};
+haxe_ui_parsers_ui_ComponentParser.prototype = {
+	_resourceResolver: null
+	,parse: function(data,resourceResolver,fileName) {
+		throw haxe_Exception.thrown("Component parser not implemented!");
+	}
+	,__class__: haxe_ui_parsers_ui_ComponentParser
+};
+var haxe_ui_parsers_ui_ComponentStyleInfo = function(style,scope) {
+	if(scope == null) {
+		scope = "global";
+	}
+	this.style = null;
+	this.scope = "global";
+	this.style = style;
+	this.scope = scope;
+};
+$hxClasses["haxe.ui.parsers.ui.ComponentStyleInfo"] = haxe_ui_parsers_ui_ComponentStyleInfo;
+haxe_ui_parsers_ui_ComponentStyleInfo.__name__ = "haxe.ui.parsers.ui.ComponentStyleInfo";
+haxe_ui_parsers_ui_ComponentStyleInfo.prototype = {
+	scope: null
+	,style: null
+	,__class__: haxe_ui_parsers_ui_ComponentStyleInfo
+};
+var haxe_ui_parsers_ui_LayoutInfo = function() {
+	this.properties = new haxe_ds_StringMap();
+};
+$hxClasses["haxe.ui.parsers.ui.LayoutInfo"] = haxe_ui_parsers_ui_LayoutInfo;
+haxe_ui_parsers_ui_LayoutInfo.__name__ = "haxe.ui.parsers.ui.LayoutInfo";
+haxe_ui_parsers_ui_LayoutInfo.prototype = {
+	type: null
+	,properties: null
+	,__class__: haxe_ui_parsers_ui_LayoutInfo
+};
+var haxe_ui_parsers_ui_XMLParser = function() {
+	haxe_ui_parsers_ui_ComponentParser.call(this);
+};
+$hxClasses["haxe.ui.parsers.ui.XMLParser"] = haxe_ui_parsers_ui_XMLParser;
+haxe_ui_parsers_ui_XMLParser.__name__ = "haxe.ui.parsers.ui.XMLParser";
+haxe_ui_parsers_ui_XMLParser.parseComponent = function(component,xml,resourceResolver) {
+	var isComponent = false;
+	if(xml.nodeType != Xml.Element) {
+		throw haxe_Exception.thrown("Bad node type, expected Element but found " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+	}
+	var nodeName = xml.nodeName;
+	if(nodeName == "import") {
+		haxe_ui_parsers_ui_XMLParser.parseImportNode(component.parent,xml,resourceResolver);
+	} else if(nodeName == "script") {
+		haxe_ui_parsers_ui_XMLParser.parseScriptNode(component,xml,resourceResolver);
+	} else if(nodeName == "style") {
+		haxe_ui_parsers_ui_XMLParser.parseStyleNode(component,xml,resourceResolver);
+	} else if(nodeName == "data") {
+		if(xml.firstElement() != null) {
+			var tmp = haxe_xml_Printer.print(xml);
+			component.parent.data = StringTools.trim(tmp);
+		} else {
+			if(xml.nodeType != Xml.Document && xml.nodeType != Xml.Element) {
+				throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+			}
+			var _this = xml.children[0];
+			if(_this.nodeType == Xml.Document || _this.nodeType == Xml.Element) {
+				throw haxe_Exception.thrown("Bad node type, unexpected " + (_this.nodeType == null ? "null" : XmlType.toString(_this.nodeType)));
+			}
+			if(StringTools.startsWith(StringTools.trim(_this.nodeValue),"[")) {
+				if(xml.nodeType != Xml.Document && xml.nodeType != Xml.Element) {
+					throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+				}
+				var _this = xml.children[0];
+				if(_this.nodeType == Xml.Document || _this.nodeType == Xml.Element) {
+					throw haxe_Exception.thrown("Bad node type, unexpected " + (_this.nodeType == null ? "null" : XmlType.toString(_this.nodeType)));
+				}
+				component.parent.data = StringTools.trim(_this.nodeValue);
+			}
+		}
+	} else if(nodeName == "layout") {
+		haxe_ui_parsers_ui_XMLParser.parseLayoutNode(component.parent,xml);
+	} else {
+		haxe_ui_parsers_ui_XMLParser.parseDetails(component,xml);
+		haxe_ui_parsers_ui_XMLParser.parseAttributes(component,xml);
+		var childXml = xml.elements();
+		while(childXml.hasNext()) {
+			var childXml1 = childXml.next();
+			var child = new haxe_ui_parsers_ui_ComponentInfo();
+			child.parent = component;
+			if(haxe_ui_parsers_ui_XMLParser.parseComponent(child,childXml1,resourceResolver) == true) {
+				component.children.push(child);
+			}
+		}
+		if(component.type == "itemrenderer" && component.parent != null && component.parent.type.toLowerCase() == "listview") {
+			component.parent.properties.h["native"] = "false";
+		}
+		component.validate();
+		isComponent = true;
+	}
+	return isComponent;
+};
+haxe_ui_parsers_ui_XMLParser.parseImportNode = function(component,xml,resourceResolver) {
+	if(xml.get("source") != null || xml.get("resource") != null) {
+		var source = xml.get("source");
+		if(source == null) {
+			source = xml.get("resource");
+		}
+		var omitRoot = xml.get("omitRoot") == "true";
+		var sourceData = resourceResolver.getResourceData(source);
+		if(sourceData != null) {
+			var extension = resourceResolver.extension(source);
+			var c = haxe_ui_parsers_ui_ComponentParser.get(extension).parse(sourceData,resourceResolver,source);
+			component.findRootComponent().styles = component.findRootComponent().styles.concat(c.styles);
+			c.styles = [];
+			component.findRootComponent().scriptlets = component.findRootComponent().scriptlets.concat(c.scriptlets);
+			c.scriptlets = [];
+			if(omitRoot == false) {
+				c.parent = component;
+				component.children.push(c);
+			} else {
+				var _g = 0;
+				var _g1 = c.children;
+				while(_g < _g1.length) {
+					var child = _g1[_g];
+					++_g;
+					child.parent = component;
+					component.children.push(child);
+				}
+			}
+		}
+	}
+};
+haxe_ui_parsers_ui_XMLParser.parseScriptNode = function(component,xml,resourceResolver) {
+	var scriptText = null;
+	if(xml.nodeType != Xml.Document && xml.nodeType != Xml.Element) {
+		throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+	}
+	if(xml.children[0] != null) {
+		if(xml.nodeType != Xml.Document && xml.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+		}
+		var _this = xml.children[0];
+		if(_this.nodeType == Xml.Document || _this.nodeType == Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, unexpected " + (_this.nodeType == null ? "null" : XmlType.toString(_this.nodeType)));
+		}
+		scriptText = _this.nodeValue;
+	}
+	if(xml.get("source") != null) {
+		var source = xml.get("source");
+		var sourceData = resourceResolver.getResourceData(source);
+		if(sourceData != null) {
+			if(scriptText == null) {
+				scriptText = "";
+			}
+			scriptText += "\n" + sourceData;
+		}
+	}
+	if(scriptText != null) {
+		var scope = "global";
+		if(scope == "global") {
+			component.findRootComponent().scriptlets.push(scriptText);
+		}
+	}
+};
+haxe_ui_parsers_ui_XMLParser.parseStyleNode = function(component,xml,resourceResolver) {
+	var styleText = null;
+	if(xml.nodeType != Xml.Document && xml.nodeType != Xml.Element) {
+		throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+	}
+	if(xml.children[0] != null) {
+		if(xml.nodeType != Xml.Document && xml.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+		}
+		var _this = xml.children[0];
+		if(_this.nodeType == Xml.Document || _this.nodeType == Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, unexpected " + (_this.nodeType == null ? "null" : XmlType.toString(_this.nodeType)));
+		}
+		styleText = _this.nodeValue;
+	}
+	if(xml.get("source") != null) {
+		var source = xml.get("source");
+		var sourceData = resourceResolver.getResourceData(source);
+		if(sourceData != null) {
+			if(styleText == null) {
+				styleText = "";
+			}
+			styleText += "\n" + sourceData;
+		}
+	}
+	if(styleText != null) {
+		var scope = xml.get("scope");
+		if(scope == null) {
+			scope = "global";
+		}
+		if(scope == "global") {
+			component.findRootComponent().styles.push(new haxe_ui_parsers_ui_ComponentStyleInfo(styleText,scope));
+		} else if(scope == "local" && component.parent != null) {
+			component.parent.styles.push(new haxe_ui_parsers_ui_ComponentStyleInfo(styleText,scope));
+		}
+	}
+};
+haxe_ui_parsers_ui_XMLParser.parseLayoutNode = function(component,xml) {
+	var layoutXml = xml.firstElement();
+	var layout = new haxe_ui_parsers_ui_LayoutInfo();
+	component.layout = layout;
+	if(layoutXml.nodeType != Xml.Element) {
+		throw haxe_Exception.thrown("Bad node type, expected Element but found " + (layoutXml.nodeType == null ? "null" : XmlType.toString(layoutXml.nodeType)));
+	}
+	layout.type = layoutXml.nodeName;
+	var attrName = layoutXml.attributes();
+	while(attrName.hasNext()) {
+		var attrName1 = attrName.next();
+		var attrValue = layoutXml.get(attrName1);
+		layout.properties.h[attrName1] = attrValue;
+	}
+};
+haxe_ui_parsers_ui_XMLParser.parseDetails = function(component,xml) {
+	var tmp;
+	if(xml.nodeType != Xml.Document && xml.nodeType != Xml.Element) {
+		throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+	}
+	if(xml.children[0] != null) {
+		if(xml.nodeType != Xml.Document && xml.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+		}
+		var tmp1 = xml.children[0].nodeType;
+		tmp = "" + (tmp1 == null ? "null" : XmlType.toString(tmp1)) == "1";
+	} else {
+		tmp = false;
+	}
+	if(tmp) {
+		if(xml.nodeType != Xml.Document && xml.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+		}
+		var _this = xml.children[0];
+		if(_this.nodeType == Xml.Document || _this.nodeType == Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, unexpected " + (_this.nodeType == null ? "null" : XmlType.toString(_this.nodeType)));
+		}
+		var value = StringTools.trim(_this.nodeValue);
+		if(value != null && value.length > 0) {
+			component.text = value;
+		}
+	}
+	if(xml.nodeType != Xml.Element) {
+		throw haxe_Exception.thrown("Bad node type, expected Element but found " + (xml.nodeType == null ? "null" : XmlType.toString(xml.nodeType)));
+	}
+	component.type = StringTools.replace(xml.nodeName.toLowerCase(),"-","");
+};
+haxe_ui_parsers_ui_XMLParser.parseAttributes = function(component,xml) {
+	var attrName = xml.attributes();
+	while(attrName.hasNext()) {
+		var attrName1 = attrName.next();
+		var attrValue = xml.get(attrName1);
+		switch(attrName1) {
+		case "composite":
+			component.composite = attrValue == "true";
+			break;
+		case "condition":
+			component.condition = attrValue;
+			break;
+		case "contentHeight":
+			if(haxe_ui_parsers_ui_ComponentParser.isPercentage(attrValue) == true) {
+				component.percentContentHeight = haxe_ui_parsers_ui_ComponentParser.float(attrValue);
+			} else {
+				component.contentHeight = haxe_ui_parsers_ui_ComponentParser.float(attrValue);
+			}
+			break;
+		case "contentWidth":
+			if(haxe_ui_parsers_ui_ComponentParser.isPercentage(attrValue) == true) {
+				component.percentContentWidth = haxe_ui_parsers_ui_ComponentParser.float(attrValue);
+			} else {
+				component.contentWidth = haxe_ui_parsers_ui_ComponentParser.float(attrValue);
+			}
+			break;
+		case "direction":
+			component.direction = attrValue;
+			break;
+		case "height":
+			if(haxe_ui_parsers_ui_ComponentParser.isPercentage(attrValue) == true) {
+				component.percentHeight = haxe_ui_parsers_ui_ComponentParser.float(attrValue);
+			} else {
+				component.height = haxe_ui_parsers_ui_ComponentParser.float(attrValue);
+			}
+			break;
+		case "id":
+			component.id = attrValue;
+			break;
+		case "if":
+			var condition = [];
+			var _g = 0;
+			var _g1 = attrValue.split(",");
+			while(_g < _g1.length) {
+				var t = _g1[_g];
+				++_g;
+				condition.push("backend == \"" + StringTools.trim(t) + "\"");
+			}
+			component.condition = condition.join(" || ");
+			break;
+		case "layout":
+			component.layoutName = attrValue;
+			break;
+		case "left":
+			component.left = haxe_ui_parsers_ui_ComponentParser.float(attrValue);
+			break;
+		case "style":
+			component.style = attrValue;
+			break;
+		case "styleName":case "styleNames":
+			component.styleNames = attrValue;
+			break;
+		case "text":
+			component.text = attrValue;
+			break;
+		case "top":
+			component.top = haxe_ui_parsers_ui_ComponentParser.float(attrValue);
+			break;
+		case "unless":
+			var condition1 = [];
+			var _g2 = 0;
+			var _g3 = attrValue.split(",");
+			while(_g2 < _g3.length) {
+				var t1 = _g3[_g2];
+				++_g2;
+				condition1.push("backend != \"" + StringTools.trim(t1) + "\"");
+			}
+			component.condition = condition1.join(" && ");
+			break;
+		case "width":
+			if(haxe_ui_parsers_ui_ComponentParser.isPercentage(attrValue) == true) {
+				component.percentWidth = haxe_ui_parsers_ui_ComponentParser.float(attrValue);
+			} else {
+				component.width = haxe_ui_parsers_ui_ComponentParser.float(attrValue);
+			}
+			break;
+		default:
+			component.properties.h[attrName1] = attrValue;
+		}
+	}
+};
+haxe_ui_parsers_ui_XMLParser.__super__ = haxe_ui_parsers_ui_ComponentParser;
+haxe_ui_parsers_ui_XMLParser.prototype = $extend(haxe_ui_parsers_ui_ComponentParser.prototype,{
+	parse: function(data,resourceResolver,fileName) {
+		this._resourceResolver = resourceResolver;
+		var component = new haxe_ui_parsers_ui_ComponentInfo();
+		try {
+			var xml = Xml.parse(data).firstElement();
+			haxe_ui_parsers_ui_XMLParser.parseComponent(component,xml,resourceResolver);
+		} catch( _g ) {
+			var _g1 = haxe_Exception.caught(_g);
+			if(((_g1) instanceof haxe_ui_parsers_ui_ComponentParserException)) {
+				var e = _g1;
+				throw new haxe_ui_parsers_ui_ComponentParserException("while parsing \"" + e.fileName + "\": " + e.original.get_message(),e.fileName,e.original,e);
+			} else {
+				var e = _g1;
+				throw new haxe_ui_parsers_ui_ComponentParserException("while parsing \"" + fileName + "\": " + e.get_message(),fileName,e,e);
+			}
+		}
+		return component;
+	}
+	,__class__: haxe_ui_parsers_ui_XMLParser
+});
+var haxe_ui_parsers_ui_resolvers_ResourceResolver = function(params) {
+	this._params = params;
+};
+$hxClasses["haxe.ui.parsers.ui.resolvers.ResourceResolver"] = haxe_ui_parsers_ui_resolvers_ResourceResolver;
+haxe_ui_parsers_ui_resolvers_ResourceResolver.__name__ = "haxe.ui.parsers.ui.resolvers.ResourceResolver";
+haxe_ui_parsers_ui_resolvers_ResourceResolver.prototype = {
+	_params: null
+	,getResourceData: function(r) {
+		return null;
+	}
+	,extension: function(path) {
+		if(path.indexOf(".") == -1) {
+			return null;
+		}
+		var arr = path.split(".");
+		var extension = arr[arr.length - 1];
+		return extension;
+	}
+	,__class__: haxe_ui_parsers_ui_resolvers_ResourceResolver
+};
+var haxe_ui_parsers_ui_resolvers_AssetResourceResolver = function(rootFile,params) {
+	haxe_ui_parsers_ui_resolvers_ResourceResolver.call(this,params);
+	this._rootFile = rootFile;
+	var arr = this._rootFile.split("/");
+	arr.pop();
+	this._rootDir = arr.join("/");
+	if(arr.length > 1) {
+		this._rootDir += "/";
+	}
+};
+$hxClasses["haxe.ui.parsers.ui.resolvers.AssetResourceResolver"] = haxe_ui_parsers_ui_resolvers_AssetResourceResolver;
+haxe_ui_parsers_ui_resolvers_AssetResourceResolver.__name__ = "haxe.ui.parsers.ui.resolvers.AssetResourceResolver";
+haxe_ui_parsers_ui_resolvers_AssetResourceResolver.__super__ = haxe_ui_parsers_ui_resolvers_ResourceResolver;
+haxe_ui_parsers_ui_resolvers_AssetResourceResolver.prototype = $extend(haxe_ui_parsers_ui_resolvers_ResourceResolver.prototype,{
+	_rootFile: null
+	,_rootDir: null
+	,getResourceData: function(r) {
+		var f = haxe_io_Path.normalize(this._rootDir + r);
+		return haxe_ui_ToolkitAssets.get_instance().getText(f);
+	}
+	,__class__: haxe_ui_parsers_ui_resolvers_AssetResourceResolver
 });
 var haxe_ui_styles_Dimension = $hxEnums["haxe.ui.styles.Dimension"] = { __ename__:true,__constructs__:null
 	,PERCENT: ($_=function(value) { return {_hx_index:0,value:value,__enum__:"haxe.ui.styles.Dimension",toString:$estr}; },$_._hx_name="PERCENT",$_.__params__ = ["value"],$_)
@@ -26080,6 +29499,545 @@ haxe_ui_util_Variant.toDynamic = function(v) {
 	}
 	return d;
 };
+var haxe_xml_XmlParserException = function(message,xml,position) {
+	this.xml = xml;
+	this.message = message;
+	this.position = position;
+	this.lineNumber = 1;
+	this.positionAtLine = 0;
+	var _g = 0;
+	var _g1 = position;
+	while(_g < _g1) {
+		var i = _g++;
+		var c = xml.charCodeAt(i);
+		if(c == 10) {
+			this.lineNumber++;
+			this.positionAtLine = 0;
+		} else if(c != 13) {
+			this.positionAtLine++;
+		}
+	}
+};
+$hxClasses["haxe.xml.XmlParserException"] = haxe_xml_XmlParserException;
+haxe_xml_XmlParserException.__name__ = "haxe.xml.XmlParserException";
+haxe_xml_XmlParserException.prototype = {
+	message: null
+	,lineNumber: null
+	,positionAtLine: null
+	,position: null
+	,xml: null
+	,toString: function() {
+		var c = js_Boot.getClass(this);
+		return c.__name__ + ": " + this.message + " at line " + this.lineNumber + " char " + this.positionAtLine;
+	}
+	,__class__: haxe_xml_XmlParserException
+};
+var haxe_xml_Parser = function() { };
+$hxClasses["haxe.xml.Parser"] = haxe_xml_Parser;
+haxe_xml_Parser.__name__ = "haxe.xml.Parser";
+haxe_xml_Parser.parse = function(str,strict) {
+	if(strict == null) {
+		strict = false;
+	}
+	var doc = Xml.createDocument();
+	haxe_xml_Parser.doParse(str,strict,0,doc);
+	return doc;
+};
+haxe_xml_Parser.doParse = function(str,strict,p,parent) {
+	if(p == null) {
+		p = 0;
+	}
+	var xml = null;
+	var state = 1;
+	var next = 1;
+	var aname = null;
+	var start = 0;
+	var nsubs = 0;
+	var nbrackets = 0;
+	var buf = new StringBuf();
+	var escapeNext = 1;
+	var attrValQuote = -1;
+	while(p < str.length) {
+		var c = str.charCodeAt(p);
+		switch(state) {
+		case 0:
+			switch(c) {
+			case 9:case 10:case 13:case 32:
+				break;
+			default:
+				state = next;
+				continue;
+			}
+			break;
+		case 1:
+			if(c == 60) {
+				state = 0;
+				next = 2;
+			} else {
+				start = p;
+				state = 13;
+				continue;
+			}
+			break;
+		case 2:
+			switch(c) {
+			case 33:
+				if(str.charCodeAt(p + 1) == 91) {
+					p += 2;
+					if(HxOverrides.substr(str,p,6).toUpperCase() != "CDATA[") {
+						throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Expected <![CDATA[",str,p));
+					}
+					p += 5;
+					state = 17;
+					start = p + 1;
+				} else if(str.charCodeAt(p + 1) == 68 || str.charCodeAt(p + 1) == 100) {
+					if(HxOverrides.substr(str,p + 2,6).toUpperCase() != "OCTYPE") {
+						throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Expected <!DOCTYPE",str,p));
+					}
+					p += 8;
+					state = 16;
+					start = p + 1;
+				} else if(str.charCodeAt(p + 1) != 45 || str.charCodeAt(p + 2) != 45) {
+					throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Expected <!--",str,p));
+				} else {
+					p += 2;
+					state = 15;
+					start = p + 1;
+				}
+				break;
+			case 47:
+				if(parent == null) {
+					throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Expected node name",str,p));
+				}
+				start = p + 1;
+				state = 0;
+				next = 10;
+				break;
+			case 63:
+				state = 14;
+				start = p;
+				break;
+			default:
+				state = 3;
+				start = p;
+				continue;
+			}
+			break;
+		case 3:
+			if(!(c >= 97 && c <= 122 || c >= 65 && c <= 90 || c >= 48 && c <= 57 || c == 58 || c == 46 || c == 95 || c == 45)) {
+				if(p == start) {
+					throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Expected node name",str,p));
+				}
+				xml = Xml.createElement(HxOverrides.substr(str,start,p - start));
+				parent.addChild(xml);
+				++nsubs;
+				state = 0;
+				next = 4;
+				continue;
+			}
+			break;
+		case 4:
+			switch(c) {
+			case 47:
+				state = 11;
+				break;
+			case 62:
+				state = 9;
+				break;
+			default:
+				state = 5;
+				start = p;
+				continue;
+			}
+			break;
+		case 5:
+			if(!(c >= 97 && c <= 122 || c >= 65 && c <= 90 || c >= 48 && c <= 57 || c == 58 || c == 46 || c == 95 || c == 45)) {
+				if(start == p) {
+					throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Expected attribute name",str,p));
+				}
+				var tmp = HxOverrides.substr(str,start,p - start);
+				aname = tmp;
+				if(xml.exists(aname)) {
+					throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Duplicate attribute [" + aname + "]",str,p));
+				}
+				state = 0;
+				next = 6;
+				continue;
+			}
+			break;
+		case 6:
+			if(c == 61) {
+				state = 0;
+				next = 7;
+			} else {
+				throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Expected =",str,p));
+			}
+			break;
+		case 7:
+			switch(c) {
+			case 34:case 39:
+				buf = new StringBuf();
+				state = 8;
+				start = p + 1;
+				attrValQuote = c;
+				break;
+			default:
+				throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Expected \"",str,p));
+			}
+			break;
+		case 8:
+			switch(c) {
+			case 38:
+				var len = p - start;
+				buf.b += len == null ? HxOverrides.substr(str,start,null) : HxOverrides.substr(str,start,len);
+				state = 18;
+				escapeNext = 8;
+				start = p + 1;
+				break;
+			case 60:case 62:
+				if(strict) {
+					throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Invalid unescaped " + String.fromCodePoint(c) + " in attribute value",str,p));
+				} else if(c == attrValQuote) {
+					var len1 = p - start;
+					buf.b += len1 == null ? HxOverrides.substr(str,start,null) : HxOverrides.substr(str,start,len1);
+					var val = buf.b;
+					buf = new StringBuf();
+					xml.set(aname,val);
+					state = 0;
+					next = 4;
+				}
+				break;
+			default:
+				if(c == attrValQuote) {
+					var len2 = p - start;
+					buf.b += len2 == null ? HxOverrides.substr(str,start,null) : HxOverrides.substr(str,start,len2);
+					var val1 = buf.b;
+					buf = new StringBuf();
+					xml.set(aname,val1);
+					state = 0;
+					next = 4;
+				}
+			}
+			break;
+		case 9:
+			p = haxe_xml_Parser.doParse(str,strict,p,xml);
+			start = p;
+			state = 1;
+			break;
+		case 10:
+			if(!(c >= 97 && c <= 122 || c >= 65 && c <= 90 || c >= 48 && c <= 57 || c == 58 || c == 46 || c == 95 || c == 45)) {
+				if(start == p) {
+					throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Expected node name",str,p));
+				}
+				var v = HxOverrides.substr(str,start,p - start);
+				if(parent == null || parent.nodeType != 0) {
+					throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Unexpected </" + v + ">, tag is not open",str,p));
+				}
+				if(parent.nodeType != Xml.Element) {
+					throw haxe_Exception.thrown("Bad node type, expected Element but found " + (parent.nodeType == null ? "null" : XmlType.toString(parent.nodeType)));
+				}
+				if(v != parent.nodeName) {
+					if(parent.nodeType != Xml.Element) {
+						throw haxe_Exception.thrown("Bad node type, expected Element but found " + (parent.nodeType == null ? "null" : XmlType.toString(parent.nodeType)));
+					}
+					throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Expected </" + parent.nodeName + ">",str,p));
+				}
+				state = 0;
+				next = 12;
+				continue;
+			}
+			break;
+		case 11:
+			if(c == 62) {
+				state = 1;
+			} else {
+				throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Expected >",str,p));
+			}
+			break;
+		case 12:
+			if(c == 62) {
+				if(nsubs == 0) {
+					parent.addChild(Xml.createPCData(""));
+				}
+				return p;
+			} else {
+				throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Expected >",str,p));
+			}
+			break;
+		case 13:
+			if(c == 60) {
+				var len3 = p - start;
+				buf.b += len3 == null ? HxOverrides.substr(str,start,null) : HxOverrides.substr(str,start,len3);
+				var child = Xml.createPCData(buf.b);
+				buf = new StringBuf();
+				parent.addChild(child);
+				++nsubs;
+				state = 0;
+				next = 2;
+			} else if(c == 38) {
+				var len4 = p - start;
+				buf.b += len4 == null ? HxOverrides.substr(str,start,null) : HxOverrides.substr(str,start,len4);
+				state = 18;
+				escapeNext = 13;
+				start = p + 1;
+			}
+			break;
+		case 14:
+			if(c == 63 && str.charCodeAt(p + 1) == 62) {
+				++p;
+				var str1 = HxOverrides.substr(str,start + 1,p - start - 2);
+				parent.addChild(Xml.createProcessingInstruction(str1));
+				++nsubs;
+				state = 1;
+			}
+			break;
+		case 15:
+			if(c == 45 && str.charCodeAt(p + 1) == 45 && str.charCodeAt(p + 2) == 62) {
+				parent.addChild(Xml.createComment(HxOverrides.substr(str,start,p - start)));
+				++nsubs;
+				p += 2;
+				state = 1;
+			}
+			break;
+		case 16:
+			if(c == 91) {
+				++nbrackets;
+			} else if(c == 93) {
+				--nbrackets;
+			} else if(c == 62 && nbrackets == 0) {
+				parent.addChild(Xml.createDocType(HxOverrides.substr(str,start,p - start)));
+				++nsubs;
+				state = 1;
+			}
+			break;
+		case 17:
+			if(c == 93 && str.charCodeAt(p + 1) == 93 && str.charCodeAt(p + 2) == 62) {
+				var child1 = Xml.createCData(HxOverrides.substr(str,start,p - start));
+				parent.addChild(child1);
+				++nsubs;
+				p += 2;
+				state = 1;
+			}
+			break;
+		case 18:
+			if(c == 59) {
+				var s = HxOverrides.substr(str,start,p - start);
+				if(s.charCodeAt(0) == 35) {
+					var c1 = s.charCodeAt(1) == 120 ? Std.parseInt("0" + HxOverrides.substr(s,1,s.length - 1)) : Std.parseInt(HxOverrides.substr(s,1,s.length - 1));
+					buf.b += String.fromCodePoint(c1);
+				} else if(!Object.prototype.hasOwnProperty.call(haxe_xml_Parser.escapes.h,s)) {
+					if(strict) {
+						throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Undefined entity: " + s,str,p));
+					}
+					buf.b += Std.string("&" + s + ";");
+				} else {
+					buf.b += Std.string(haxe_xml_Parser.escapes.h[s]);
+				}
+				start = p + 1;
+				state = escapeNext;
+			} else if(!(c >= 97 && c <= 122 || c >= 65 && c <= 90 || c >= 48 && c <= 57 || c == 58 || c == 46 || c == 95 || c == 45) && c != 35) {
+				if(strict) {
+					throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Invalid character in entity: " + String.fromCodePoint(c),str,p));
+				}
+				buf.b += String.fromCodePoint(38);
+				var len5 = p - start;
+				buf.b += len5 == null ? HxOverrides.substr(str,start,null) : HxOverrides.substr(str,start,len5);
+				--p;
+				start = p + 1;
+				state = escapeNext;
+			}
+			break;
+		}
+		++p;
+	}
+	if(state == 1) {
+		start = p;
+		state = 13;
+	}
+	if(state == 13) {
+		if(parent.nodeType == 0) {
+			if(parent.nodeType != Xml.Element) {
+				throw haxe_Exception.thrown("Bad node type, expected Element but found " + (parent.nodeType == null ? "null" : XmlType.toString(parent.nodeType)));
+			}
+			throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Unclosed node <" + parent.nodeName + ">",str,p));
+		}
+		if(p != start || nsubs == 0) {
+			var len = p - start;
+			buf.b += len == null ? HxOverrides.substr(str,start,null) : HxOverrides.substr(str,start,len);
+			parent.addChild(Xml.createPCData(buf.b));
+			++nsubs;
+		}
+		return p;
+	}
+	if(!strict && state == 18 && escapeNext == 13) {
+		buf.b += String.fromCodePoint(38);
+		var len = p - start;
+		buf.b += len == null ? HxOverrides.substr(str,start,null) : HxOverrides.substr(str,start,len);
+		parent.addChild(Xml.createPCData(buf.b));
+		++nsubs;
+		return p;
+	}
+	throw haxe_Exception.thrown(new haxe_xml_XmlParserException("Unexpected end",str,p));
+};
+var haxe_xml_Printer = function(pretty) {
+	this.output = new StringBuf();
+	this.pretty = pretty;
+};
+$hxClasses["haxe.xml.Printer"] = haxe_xml_Printer;
+haxe_xml_Printer.__name__ = "haxe.xml.Printer";
+haxe_xml_Printer.print = function(xml,pretty) {
+	if(pretty == null) {
+		pretty = false;
+	}
+	var printer = new haxe_xml_Printer(pretty);
+	printer.writeNode(xml,"");
+	return printer.output.b;
+};
+haxe_xml_Printer.prototype = {
+	output: null
+	,pretty: null
+	,writeNode: function(value,tabs) {
+		switch(value.nodeType) {
+		case 0:
+			this.output.b += Std.string(tabs + "<");
+			if(value.nodeType != Xml.Element) {
+				throw haxe_Exception.thrown("Bad node type, expected Element but found " + (value.nodeType == null ? "null" : XmlType.toString(value.nodeType)));
+			}
+			this.output.b += Std.string(value.nodeName);
+			var attribute = value.attributes();
+			while(attribute.hasNext()) {
+				var attribute1 = attribute.next();
+				this.output.b += Std.string(" " + attribute1 + "=\"");
+				var input = StringTools.htmlEscape(value.get(attribute1),true);
+				this.output.b += Std.string(input);
+				this.output.b += "\"";
+			}
+			if(this.hasChildren(value)) {
+				this.output.b += ">";
+				if(this.pretty) {
+					this.output.b += "\n";
+				}
+				if(value.nodeType != Xml.Document && value.nodeType != Xml.Element) {
+					throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (value.nodeType == null ? "null" : XmlType.toString(value.nodeType)));
+				}
+				var _g_current = 0;
+				var _g_array = value.children;
+				while(_g_current < _g_array.length) {
+					var child = _g_array[_g_current++];
+					this.writeNode(child,this.pretty ? tabs + "\t" : tabs);
+				}
+				this.output.b += Std.string(tabs + "</");
+				if(value.nodeType != Xml.Element) {
+					throw haxe_Exception.thrown("Bad node type, expected Element but found " + (value.nodeType == null ? "null" : XmlType.toString(value.nodeType)));
+				}
+				this.output.b += Std.string(value.nodeName);
+				this.output.b += ">";
+				if(this.pretty) {
+					this.output.b += "\n";
+				}
+			} else {
+				this.output.b += "/>";
+				if(this.pretty) {
+					this.output.b += "\n";
+				}
+			}
+			break;
+		case 1:
+			if(value.nodeType == Xml.Document || value.nodeType == Xml.Element) {
+				throw haxe_Exception.thrown("Bad node type, unexpected " + (value.nodeType == null ? "null" : XmlType.toString(value.nodeType)));
+			}
+			var nodeValue = value.nodeValue;
+			if(nodeValue.length != 0) {
+				var input = tabs + StringTools.htmlEscape(nodeValue);
+				this.output.b += Std.string(input);
+				if(this.pretty) {
+					this.output.b += "\n";
+				}
+			}
+			break;
+		case 2:
+			this.output.b += Std.string(tabs + "<![CDATA[");
+			if(value.nodeType == Xml.Document || value.nodeType == Xml.Element) {
+				throw haxe_Exception.thrown("Bad node type, unexpected " + (value.nodeType == null ? "null" : XmlType.toString(value.nodeType)));
+			}
+			this.output.b += Std.string(value.nodeValue);
+			this.output.b += "]]>";
+			if(this.pretty) {
+				this.output.b += "\n";
+			}
+			break;
+		case 3:
+			if(value.nodeType == Xml.Document || value.nodeType == Xml.Element) {
+				throw haxe_Exception.thrown("Bad node type, unexpected " + (value.nodeType == null ? "null" : XmlType.toString(value.nodeType)));
+			}
+			var commentContent = value.nodeValue;
+			var _this_r = new RegExp("[\n\r\t]+","g".split("u").join(""));
+			commentContent = commentContent.replace(_this_r,"");
+			commentContent = "<!--" + commentContent + "-->";
+			this.output.b += tabs == null ? "null" : "" + tabs;
+			var input = StringTools.trim(commentContent);
+			this.output.b += Std.string(input);
+			if(this.pretty) {
+				this.output.b += "\n";
+			}
+			break;
+		case 4:
+			if(value.nodeType == Xml.Document || value.nodeType == Xml.Element) {
+				throw haxe_Exception.thrown("Bad node type, unexpected " + (value.nodeType == null ? "null" : XmlType.toString(value.nodeType)));
+			}
+			this.output.b += Std.string("<!DOCTYPE " + value.nodeValue + ">");
+			if(this.pretty) {
+				this.output.b += "\n";
+			}
+			break;
+		case 5:
+			if(value.nodeType == Xml.Document || value.nodeType == Xml.Element) {
+				throw haxe_Exception.thrown("Bad node type, unexpected " + (value.nodeType == null ? "null" : XmlType.toString(value.nodeType)));
+			}
+			this.output.b += Std.string("<?" + value.nodeValue + "?>");
+			if(this.pretty) {
+				this.output.b += "\n";
+			}
+			break;
+		case 6:
+			if(value.nodeType != Xml.Document && value.nodeType != Xml.Element) {
+				throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (value.nodeType == null ? "null" : XmlType.toString(value.nodeType)));
+			}
+			var _g_current = 0;
+			var _g_array = value.children;
+			while(_g_current < _g_array.length) {
+				var child = _g_array[_g_current++];
+				this.writeNode(child,tabs);
+			}
+			break;
+		}
+	}
+	,hasChildren: function(value) {
+		if(value.nodeType != Xml.Document && value.nodeType != Xml.Element) {
+			throw haxe_Exception.thrown("Bad node type, expected Element or Document but found " + (value.nodeType == null ? "null" : XmlType.toString(value.nodeType)));
+		}
+		var _g_current = 0;
+		var _g_array = value.children;
+		while(_g_current < _g_array.length) {
+			var child = _g_array[_g_current++];
+			switch(child.nodeType) {
+			case 0:case 1:
+				return true;
+			case 2:case 3:
+				if(child.nodeType == Xml.Document || child.nodeType == Xml.Element) {
+					throw haxe_Exception.thrown("Bad node type, unexpected " + (child.nodeType == null ? "null" : XmlType.toString(child.nodeType)));
+				}
+				if(StringTools.ltrim(child.nodeValue).length != 0) {
+					return true;
+				}
+				break;
+			default:
+			}
+		}
+		return false;
+	}
+	,__class__: haxe_xml_Printer
+};
 var js_Boot = function() { };
 $hxClasses["js.Boot"] = js_Boot;
 js_Boot.__name__ = "js.Boot";
@@ -26311,15 +30269,53 @@ var Float = Number;
 var Bool = Boolean;
 var Class = { };
 var Enum = { };
-haxe_Resource.content = [{ name : "haxeui-core/styles/default/sortable_asc.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAJCAIAAABxOqH0AAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA0UlEQVQIHQHGADn/Ae0cJAAAAAAAANannypZYQAAAAAAAAIAAAAAAADWp58AAADWp58AAAAAAAACAAAA1qefAAAAAAAAAAAA1qefAAAAAe0cJAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAI1eVgAAAAAAAAAAAAMDA3CfpwIAAABzoqoAAAADAwMDAwNwn6cAAAACAAAAAAAAc6KqAAAAcJ+nAAAAAAAAAnQX2cErsvcAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/right_arrow_square.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAIAAABLMMCEAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAMUlEQVQImWN8K6PCwMCQbKIz98wVBhhggrOSTXSwiCJLoIjCJdBFIaYzYQqhiCK7AQAMqA07hk2gSAAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/default/dialogs/question-small.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAABLFBMVEUAAAB7e4AzMzNLS0tUVFQ/Pz8lJSVRUVGenp6mprLIyMg6Oj0LCwtqamoLCws+Pj5CQkJVVVU6OjpFRUUmJiZVVVULCwsXFxdRUVENDQ1UVFSqqqyfn6K/v76zs7KZmZlRUVNQUFFzc3NycnIsWdUqVMn////o6Oju7u7a2uvc3NvPz9FJas4nTr0mTLrh4eFfgeFbfd9XedvMzMwrVcs5Wr4xVb5cc7pzlvRtj+4wYuXW1uSjsNeRotVPctVLbdJ1jNBeectBY8qVoshadciJlsYtVMPAwMGJlsBlfMA3V7kfRrZEX7MkSLNOZK08V6wSM5S2wuZ/mOIyYeEwX+GcreDR0dvPz9rY2NgzX9jJydA+ZM+lrsfDw8M+YMN1h8IqUL93iLwmSrQkRq3qyJ1kAAAAJHRSTlMArkdAPRgJB6Hc0pKHfHRubGNhXFxVVE9NHRXX19TUooaGeHiocz46AAAA7ElEQVQY0yXI1XbCUBRF0ROD4K719gbSuAd397oL8P//wA3Mhz3GXuAp0plEIkMX4cRP3wbLWPCO9h9/ni03OpLUaahs3isUq3aNaqVSNbrCFQXARNSBZpSwR33wHmGAuui3tHaz+VB60dv9SwpSwlSTpJ79Z273v1MzBXHR1nvOzhW/l0vH/olDzJy1/mVFEBRZHs3GMUiK7hfHcYqCZ+SOk0CeTZwPZPG8hZA8OSeBuRYX1hPiefTMLT5vGACSeF3PUa2G5us3ggQAX5qoD1ebzWpYJ9I+8EouFLjHAqEc/keFbDQcjmYLgB0Ay8YloSiVm/0AAAAASUVORK5CYII"},{ name : "haxeui-core/styles/dark/scrollview.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTQ1JPTExWSUVXCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5zY3JvbGx2aWV3IHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7CiAgICBwYWRkaW5nOiAxcHg7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7Cn0K"},{ name : "haxeui-core/styles/dark/dropdowns.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBEUk9QRE9XTlMKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmRyb3Bkb3duLXBvcHVwIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjMTgxYTFiOwp9Cg"},{ name : "styles/default/main.css", data : "LmJ1dHRvbiwgLmxhYmVsLCAudGV4dGFyZWEsIC50ZXh0ZmllbGQgewogICAgZm9udC1uYW1lOiAiQXJpYWwiOwogICAgZm9udC1zaXplOiAxM3B4Owp9CgouY29tcG9uZW50OmRpc2FibGVkIHsKICAgIGN1cnNvcjogbm90LWFsbG93ZWQ7Cn0"},{ name : "haxeui-core/styles/default/up_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAKklEQVQImWN8K6PCwMDAwMCQbKIz98wVCJsJLgQnoaJwDpzNGBAQwIABAOGNCDDIObJsAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/right_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAM0lEQVQImWP8////O1lVBgYGBgYGJgYGBqHHtxEcOJ/x////DDDABGe9k1VlgrOgMnDTADWiDmfiE8U7AAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/global.css", data : ""},{ name : "haxeui-core/styles/default/ranges.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBSQU5HRQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoucmFuZ2UgewogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKICAgIHBhZGRpbmc6IDFweDsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICM4ODg4ODgsIDAuMiwgMiwgMiwgMSwgMywgdHJ1ZSk7Cn0KCi5yYW5nZS12YWx1ZSB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7Cn0KCi5ob3Jpem9udGFsLXJhbmdlIHsKICAgIGJhY2tncm91bmQ6ICNGMUYxRjEgI0ZGRkZGRiB2ZXJ0aWNhbDsKICAgIGluaXRpYWwtd2lkdGg6IDE1MHB4OwogICAgaW5pdGlhbC1oZWlnaHQ6IDhweDsKfSAgICAKCi5ob3Jpem9udGFsLXJhbmdlIC5yYW5nZS12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjOThjNGU2ICM1NDliZGUgdmVydGljYWw7CiAgICBoZWlnaHQ6IDEwMCU7Cn0KCi52ZXJ0aWNhbC1yYW5nZSB7CiAgICBiYWNrZ3JvdW5kOiAjRjFGMUYxICNGRkZGRkYgaG9yaXpvbnRhbDsKICAgIGluaXRpYWwtd2lkdGg6IDhweDsKICAgIGluaXRpYWwtaGVpZ2h0OiAxNTBweDsKfQoKLnZlcnRpY2FsLXJhbmdlIC5yYW5nZS12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjOThjNGU2ICM1NDliZGUgaG9yaXpvbnRhbDsKICAgIHdpZHRoOiAxMDAlOwp9Cg"},{ name : "haxeui-core/styles/default/sortable_arrows.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAJCAIAAABxOqH0AAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA0UlEQVQIHQHGADn/Ae0cJAAAAAAAAIdYUHmosAAAAAAAAAIAAAAAAACHWFAAAACJWlIAAAAAAAACAAAAh1hQAgICAgICAAAAjV5WAAAAAe0cJAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAI1eVgAAAAAAAAAAAAMDA3CfpwIAAABzoqoAAAADAwMDAwNwn6cAAAACAAAAAAAAc6KqAAAAcJ+nAAAAAAAA2WwUSXgyq8MAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/folder.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABhWlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV9TS1UqDnYQcchQXbQiKuIoVSyChdJWaNXB5NIPoUlDkuLiKLgWHPxYrDq4OOvq4CoIgh8gbm5Oii5S4v+SQosYD4778e7e4+4dINTLTDU7xgFVs4xUPCZmcyti8BVdCCCIMYxIzNQT6YUMPMfXPXx8vYvyLO9zf44eJW8ywCcSzzLdsIjXiac3LZ3zPnGYlSSF+Jx41KALEj9yXXb5jXPRYYFnho1Mao44TCwW21huY1YyVOIp4oiiapQvZF1WOG9xVstV1rwnf2Eory2nuU5zEHEsIoEkRMioYgNlWIjSqpFiIkX7MQ//gONPkksm1wYYOeZRgQrJ8YP/we9uzcLkhJsUigGBF9v+GAKCu0CjZtvfx7bdOAH8z8CV1vJX6sDMJ+m1lhY5Anq3gYvrlibvAZc7QP+TLhmSI/lpCoUC8H5G35QD+m6B7lW3t+Y+Th+ADHW1dAMcHALDRcpe83h3Z3tv/55p9vcDn0tyubRiDR8AAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAADdcAAA3XAUIom3gAAAAHdElNRQflCQUPOBy4URVbAAAARklEQVQ4y2NgoBAwMjAwMMxaseEMmvBzhv//56VFBqwnZAATduH/kgyMDNWzlm9MJdMFxIG0iAATJkrDYNSAYWHAKGBgAABfoBAAMkevhAAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/default/dialogs/cross-circle.png", data : "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"},{ name : "haxeui-core/styles/default/left_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVQImWN8K6PCwMDAwMCQbKLDBGcxMDAwwVkMDAzMt5zsGGCAae6ZKwgOAwMDnA81AMIHAN2yC5bbbdIbAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/down_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAJElEQVQImWMMCAhgwABMc89cQROae+YKE4RCFmJgYGBC5sClAQxaDmYcnISCAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/buttons.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBCVVRUT05TCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5idXR0b24gewogICAgYmFja2dyb3VuZDogI0VERURFRCAjRTZFNkU2IHZlcnRpY2FsOwogICAgY29sb3I6ICMyMjIyMjI7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjQUJBQkFCOwogICAgYm9yZGVyLXJhZGl1czogMnB4OwogICAgcGFkZGluZzogNXB4IDhweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwogICAgc3BhY2luZzogNXB4IDVweDsKICAgIHRleHQtYWxpZ246IGNlbnRlcjsKfQoKLmJ1dHRvbjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kOiAjRjVGNUY1ICNGMUYxRjEgdmVydGljYWw7CiAgICBjb2xvcjogIzAwMDAwMDsKfQoKLmJ1dHRvbjpkb3duIHsKICAgIGJhY2tncm91bmQ6ICNEMkQyRDIgI0MyQzJDMiB2ZXJ0aWNhbDsKICAgIGNvbG9yOiAjMDAwMDAwOwogICAgYm9yZGVyLWNvbG9yOiAjN0Y3RjdGOwp9CgouYnV0dG9uOmFjdGl2ZSB7CiAgICBib3JkZXI6IDJweCBzb2xpZCAjNzdDNkZGOwp9CgouYnV0dG9uLmVtcGhhc2l6ZWQgewogICAgYmFja2dyb3VuZDogI0RBRTRFRSAjRDRERUU4IHZlcnRpY2FsOwogICAgYm9yZGVyLWNvbG9yOiAjNkNBMUQ3Owp9CgouYnV0dG9uLmVtcGhhc2l6ZWQ6aG92ZXIgewogICAgYmFja2dyb3VuZDogI0UyRUNGNiAjREVFOEYyIHZlcnRpY2FsOwogICAgYm9yZGVyLWNvbG9yOiAjNkNBMUQ3Owp9CgouYnV0dG9uLmVtcGhhc2l6ZWQ6ZG93biB7CiAgICBiYWNrZ3JvdW5kOiAjQzJDQ0Q2ICNCNEJFQzggdmVydGljYWw7CiAgICBib3JkZXItY29sb3I6ICM1NjhDQzE7Cn0KCi5idXR0b246ZGlzYWJsZWQgewogICAgYmFja2dyb3VuZDogI0Q0RDRENCAjQ0NDQ0NDIHZlcnRpY2FsOwogICAgY29sb3I6ICM5MDkwOTA7CiAgICBjdXJzb3I6IGRlZmF1bHQ7Cn0KCi5idXR0b24gLmxhYmVsIHsKICAgIHBvaW50ZXItZXZlbnRzOiBub25lOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIEJVVFRPTiBCQVJTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5idXR0b24tYmFyIHsKICAgIHNwYWNpbmc6IDA7Cn0KCi5idXR0b24tYmFyIC5idXR0b24gewogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIGJvcmRlci1jb2xvcjogI0FCQUJBQjsKfQoKLmJ1dHRvbi1iYXIgLmJ1dHRvbjpkb3duIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNhN2M0ZTI7CiAgICBjb2xvcjogd2hpdGU7Cn0KCi5ob3Jpem9udGFsLWJ1dHRvbi1iYXIgLmJ1dHRvbiB7CiAgICBib3JkZXItbGVmdC1zaXplOiAwOwp9CgouaG9yaXpvbnRhbC1idXR0b24tYmFyIC5idXR0b24uZmlyc3QgewogICAgYm9yZGVyLWxlZnQtc2l6ZTogMTsKfQoKLnZlcnRpY2FsLWJ1dHRvbi1iYXIgLmJ1dHRvbiB7CiAgICBib3JkZXItdG9wLXNpemU6IDA7Cn0KCi52ZXJ0aWNhbC1idXR0b24tYmFyIC5idXR0b24uZmlyc3QgewogICAgYm9yZGVyLXRvcC1zaXplOiAxOwp9Cg"},{ name : "haxeui-core/styles/default/dialogs/exclamation-small.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAwFBMVEUAAACbhQDBqAHk2jj68Jn89avSwBnp3W7l11+4ogbQux67pAXMswG/pwKmjwCchgDErAHJsAG1nQHMswG7owHCqQHHrgGwmQHLsgG+pQHk1ynm22PVzzXr33fUzEzr33jp22zPvy7LuxnSvzfGth7RvCzQuiXPuBLPuBHs3CXm2Sve1jHY0zkAAADz5XjS0D/77Yzs6YL27nh2dnZsbGzw32lgYGDTy0b06Ift4XDv3mnp22Hc1UzU0kUvLy8YGBjuZRp0AAAAKXRSTlMAyRH+/fnm29DBurKro52WkHt0ZVxFLyQdCfz29u/v5eXa2tDQxMSvr6tslocAAACYSURBVBjTdY9FEsJAFESHuLvibpOJC879b0UyFJAUlbfoX/1W/UEPhCQRHWFynNnu3o6m915L6Gwcs/qvOwKVZZTgfIU2C/M8nGufbm9ORVkW4dZ+d1+eXK6PZ1VNZR8La3W+RQhF0X1t4U3iKAiCJKljLDbrjAUJIUQI1iwNAFyePNYg1OSQd4HCHBrSFB9GAeqgg/r39wsyaBDiN04O2AAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/down_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAJElEQVQImWP8//8/AwZgeieriib0TlaVCUIhCzEwMDAhc+DSAPKbCiUI9YmvAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/tabs.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBUQUJCQVIgKFRPUCkKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnRhYmJhciB7CiAgICBwYWRkaW5nLWxlZnQ6IDBweDsKICAgIHBhZGRpbmctcmlnaHQ6IDBweDsKICAgIGhlaWdodDogYXV0bzsKICAgIHdpZHRoOiBhdXRvOwogICAgYm9yZGVyLWJvdHRvbS13aWR0aDogMXB4OwogICAgYm9yZGVyLWJvdHRvbS1jb2xvcjogI0FCQUJBQjsKICAgIGJvcmRlci10b3Atd2lkdGg6IDBweDsKICAgIGNsaXA6IHRydWU7Cn0KCi50YWJiYXIgPiAudGFiYmFyLWNvbnRlbnRzIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJvcmRlci1ib3R0b20td2lkdGg6IDFweDsKICAgIGJvcmRlci1ib3R0b20tY29sb3I6ICNBQkFCQUI7CiAgICBzcGFjaW5nOiAwOwp9CgoudGFiYmFyLWJ1dHRvbiB7CiAgICBib3JkZXItcmFkaXVzOiAwcHg7CiAgICBiYWNrZ3JvdW5kOiAjRURFREVEICNFNkU2RTYgdmVydGljYWw7CiAgICBwYWRkaW5nOiA2cHggOHB4OwogICAgdmVydGljYWwtYWxpZ246IGJvdHRvbTsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAwcHg7Cn0KCi50YWJiYXItYnV0dG9uLmZpcnN0IHsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAxcHg7Cn0KCi50YWJiYXItYnV0dG9uOmhvdmVyIHsKICAgIGJhY2tncm91bmQ6ICNGNUY1RjUgI0YxRjFGMSB2ZXJ0aWNhbDsKfQoKLnRhYmJhci1idXR0b246ZG93biB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjQUJBQkFCOwp9CgoudGFiYmFyLWJ1dHRvbi1zZWxlY3RlZCB7CiAgICBib3JkZXItcmFkaXVzOiAwcHg7CgogICAgYm9yZGVyLWJvdHRvbS13aWR0aDogMXB4OwogICAgYm9yZGVyLWJvdHRvbS1jb2xvcjogd2hpdGU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAwcHg7Cn0KCi50YWJiYXItYnV0dG9uLXNlbGVjdGVkLmZpcnN0IHsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAxcHg7Cn0KCi50YWJiYXItc2Nyb2xsLWxlZnQgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2xlZnRfYXJyb3cucG5nIjsKICAgIGJvcmRlci1yYWRpdXM6IDA7CiAgICBwYWRkaW5nOiA1cHg7Cn0KCi50YWJiYXItc2Nyb2xsLXJpZ2h0IHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvdy5wbmciOwogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIHBhZGRpbmc6IDVweDsKfQoKLnRhYmJhci1idXR0b24tc2VsZWN0ZWQgLmxhYmVsIHsKfQoKLnRhYmJhci1idXR0b24tc2VsZWN0ZWQgLmljb24gewp9CgoudGFiYmFyLWJ1dHRvbiAudGFiLWNsb3NlLWJ1dHRvbiB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3RpbnktY2xvc2UtYnV0dG9uLnBuZyI7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogVEFCQkFSIChCT1RUT00pCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi50YWJiYXI6Ym90dG9tIHsKICAgIHBhZGRpbmctbGVmdDogMHB4OwogICAgcGFkZGluZy1yaWdodDogMHB4OwogICAgaGVpZ2h0OiBhdXRvOwogICAgd2lkdGg6IGF1dG87CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAwcHg7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiAjQUJBQkFCOwogICAgY2xpcDogdHJ1ZTsKfQoKLnRhYmJhcjpib3R0b20gLnRhYmJhci1jb250ZW50cyB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAwcHg7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiAjQUJBQkFCOwogICAgc3BhY2luZzogMDsKfQoKLnRhYmJhci1idXR0b246Ym90dG9tIHsKICAgIHZlcnRpY2FsLWFsaWduOiB0b3A7CiAgICBib3JkZXItbGVmdC13aWR0aDogMHB4Owp9CgoudGFiYmFyLWJ1dHRvbi5maXJzdCB7CiAgICBib3JkZXItbGVmdC13aWR0aDogMXB4Owp9CgoudGFiYmFyLWJ1dHRvbi1zZWxlY3RlZDpib3R0b20gewogICAgYm9yZGVyLXJhZGl1czogMHB4OwoKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiB3aGl0ZTsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwogICAgYm9yZGVyLWxlZnQtd2lkdGg6IDBweDsKfQoKLnRhYmJhci1idXR0b24tc2VsZWN0ZWQuZmlyc3QgewogICAgYm9yZGVyLWxlZnQtd2lkdGg6IDFweDsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBUQUJWSUVXCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi50YWJ2aWV3IHsKICAgIGJvcmRlcjogbm9uZTsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwp9CgoudGFidmlldyA+IC50YWJ2aWV3LXRhYnMgewogICAgbWFyZ2luLXRvcDogMXB4Owp9CgoudGFidmlldzpib3R0b20gPiAudGFidmlldy10YWJzIHsKICAgIG1hcmdpbi10b3A6IDBweDsKfQoKLnRhYnZpZXcgPiAudGFidmlldy1jb250ZW50IHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBwYWRkaW5nOiA1cHg7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBUQUJWSUVXIEFMVCBTVFlMRVMKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmNvbGxhcHNpYmxlLWxhYmVscyAudGFiYmFyLWJ1dHRvbiAubGFiZWwgewogICAgaGlkZGVuOiB0cnVlOwp9CgouY29sbGFwc2libGUtbGFiZWxzIC50YWJiYXItYnV0dG9uLXNlbGVjdGVkIC5sYWJlbCB7CiAgICBoaWRkZW46IGZhbHNlOwp9Cg"},{ name : "haxeui-core/styles/default/small-close-button.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAwAAAANCAMAAACq939wAAAAhFBMVEV4eHj///8AAAAAAAAAAAAbGxsAAAAAAADn5+cAAADv7+8gICAiIiIZGRnr6+sAAADj4+Pm5uYAAAB4eHiOjo4TExMKCgqJiYkfHx/////Jycn09PT////////o6OgAAAD///+QkJCRkZEFBQUAAAAiIiIAAABiYmJtbW0+Pj5OTk4AAAByRYNBAAAALHRSTlMBgGhkXmBbeHd1eHVrW3U2c3FwZmVkZGFOQDc1MBwcDQdralhYVUxLRkY7Ld49hcYAAACESURBVAjXFY1HDoNAEAQnbYLFYHIG5/T//3moU5dUUoOSiws2h4ONXEnMZDcVCpURm3XtXRtX4clkZ6z5B1KaE/oCk0hPcCRqmKSBLTi2WYHoU5IbNKx94tFH28OHOm1Sj1f+wtq0dQwUL8GsAKNhYhE2o57u0+shtn9POxws8zDMi44/AScHBY0KWggAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/dropdowns.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBEUk9QRE9XTlMKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmRyb3Bkb3duIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9zb3J0YWJsZV9hcnJvd3MucG5nIjsKICAgIGljb24tcG9zaXRpb246IGZhci1yaWdodDsKICAgIHRleHQtYWxpZ246IGxlZnQ7CiAgICBwYWRkaW5nOiA1cHg7Cn0KCi5kcm9wZG93bi1wb3B1cCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogTU9CSUxFIFZBUklBTlRTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5kcm9wZG93bjptb2JpbGUgewogICAgbW9kZTogbW9iaWxlOwp9CgouZHJvcGRvd24tcG9wdXA6bW9iaWxlIHsKICAgIHdpZHRoOiA3NSU7Cn0K"},{ name : "haxeui-core/styles/dark/check.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5QEaCTskh/mOvAAAAS5JREFUKM+NkbtKA2EQhb/ZrLIGL2BnExDEIr2FguADBLMo/IWFCF7AwiewEkRQ7GwUkXRiY4LZGASLtbIQK4tgo7VWgmBMdrM7FokQxBinO2fmzAczwj8qn78cFzuaCmu1U7vbcLlcHqyH0TUqqR7HweoWqDXiPSAFBBLHd38SCgVvBtW1ppJt13UrHQme5yWxOAZE4SGsV3cBOhIaMTvAGNBIEC/PGRMA2OfF4oSFXBFLMQyqK8aYKO95k8RsAIiwn53N3n8vsiwYRRlGdMl2+g5zvu+IcgJYAo9vA/1b7WRRVbkolo4UVltWBTQNxKIy7bqZ2/aAJSIa1D/XBc6alqZbvYOfw0DzD8aY6PVlZBEotfynpNO7+dsxpF3kfN8Zev9Y0AQ385nM82+BL3sbaMn2+wKIAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/dark/tooltips.css", data : "LnRvb2x0aXAgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJjMmYzMDsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjA1LCA2LCAxLCAzMCwgMzUsIGZhbHNlKTsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHBhZGRpbmc6IDRweCA1cHg7CiAgICBtYXJnaW4tbGVmdDogMHB4OwogICAgbWFyZ2luLXRvcDogMzBweDsKfQoKLnRvb2x0aXAgLmxhYmVsIHsKICAgIGNvbG9yOiAjZDRkNGQ0Owp9"},{ name : "haxeui-core/styles/dark/main.css", data : "LmxhYmVsLCAuYnV0dG9uLCAudGV4dGZpZWxkLCAudGV4dGFyZWEgewogICAgY29sb3I6ICNiNGI0YjQ7Cn0KCi5kZWZhdWx0LWJhY2tncm91bmQgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJjMmYzMDsKfQoKLm1vZGFsLWJhY2tncm91bmQgewogICAgYmFja2dyb3VuZC1jb2xvcjogYmxhY2s7CiAgICBvcGFjaXR5OiAwLjg1Owp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIExBQkVMCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5sYWJlbCB7CiAgICBjb2xvcjogI2I0YjRiNDsKfQogICAgCi5sYWJlbDpkaXNhYmxlZCB7CiAgICBjb2xvcjogIzU5NTk1OTsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBMSU5LCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5saW5rIHsKICAgIGNvbG9yOiAjNDA3ZGJmOwp9Cg"},{ name : "haxeui-core/locale/en/dialog.properties", data : "ZGlhbG9nLnNhdmU9U2F2ZQpkaWFsb2cueWVzPVllcwpkaWFsb2cubm89Tm8KZGlhbG9nLmNsb3NlPUNsb3NlCmRpYWxvZy5vaz1PSwpkaWFsb2cuY2FuY2VsPUNhbmNlbApkaWFsb2cuYXBwbHk9QXBwbHkK"},{ name : "haxeui-core/styles/dark/sliders.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTTElERVJTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5ob3Jpem9udGFsLXNsaWRlciB7CiAgICBwYWRkaW5nLWxlZnQ6IDVweDsKICAgIHBhZGRpbmctcmlnaHQ6IDVweDsKICAgIHBhZGRpbmctdG9wOiAwcHg7CiAgICBwYWRkaW5nLWJvdHRvbTogMHB4OwogICAgaGVpZ2h0OiBhdXRvOwogICAgaW5pdGlhbC13aWR0aDogMTUwcHg7Cn0KCi5ob3Jpem9udGFsLXNsaWRlciAuc2xpZGVyLXZhbHVlIHsKICAgIHdpZHRoOiAxMDAlOwogICAgaGVpZ2h0OiA4cHg7CiAgICBib3JkZXItcmFkaXVzOiAycHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgouaG9yaXpvbnRhbC1zbGlkZXIud2l0aC1jZW50ZXIgLnJhbmdlLXZhbHVlIHsKICAgIGJvcmRlci1yYWRpdXM6IDBweDsKfQoKLmhvcml6b250YWwtc2xpZGVyIC5taW5vci10aWNrIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMxODFhMWI7Cn0KCi5ob3Jpem9udGFsLXNsaWRlciAubWFqb3ItdGljayB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMTgxYTFiOwp9CgouaG9yaXpvbnRhbC1zbGlkZXIgLmJ1dHRvbiB7CiAgICB3aWR0aDogMTFweDsKICAgIGhlaWdodDogMjBweDsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBmaWx0ZXI6IG5vbmU7Cn0KICAgIAoudmVydGljYWwtc2xpZGVyIHsKICAgIHBhZGRpbmctdG9wOiA1cHg7CiAgICBwYWRkaW5nLWJvdHRvbTogNXB4OwogICAgcGFkZGluZy1sZWZ0OiAwcHg7CiAgICBwYWRkaW5nLXJpZ2h0OiAwcHg7CiAgICB3aWR0aDogYXV0bzsKICAgIGluaXRpYWwtaGVpZ2h0OiAxNTBweDsKfQoKLnZlcnRpY2FsLXNsaWRlciAuc2xpZGVyLXZhbHVlIHsKICAgIGhlaWdodDogMTAwJTsKICAgIHdpZHRoOiA4cHg7CiAgICBib3JkZXItcmFkaXVzOiAycHg7CiAgICBob3Jpem9udGFsLWFsaWduOiBjZW50ZXI7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi52ZXJ0aWNhbC1zbGlkZXIud2l0aC1jZW50ZXIgLnJhbmdlLXZhbHVlIHsKICAgIGJvcmRlci1yYWRpdXM6IDBweDsKfQoKLnZlcnRpY2FsLXNsaWRlciAubWlub3ItdGljayB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMTgxYTFiOwp9CgoudmVydGljYWwtc2xpZGVyIC5tYWpvci10aWNrIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMxODFhMWI7Cn0KCi52ZXJ0aWNhbC1zbGlkZXIgLmJ1dHRvbiB7CiAgICB3aWR0aDogMjBweDsKICAgIGhlaWdodDogMTFweDsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIGhvcml6b250YWwtYWxpZ246IGNlbnRlcjsKICAgIGZpbHRlcjogbm9uZTsKfQoK"},{ name : "haxeui-core/styles/dark/left_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVQImWN8K6PCwMDAwMAg9Pg2E5zFwMDABGcxMDAw/v//nwEGmN7JqiI4DAwMcD7UAAgfAMkKDTd2MVgoAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/right_arrow_circled.png", data : "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"},{ name : "haxeui-core/styles/default/tooltips.css", data : "LnRvb2x0aXAgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2ZmZmZmODsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjA1LCA2LCAxLCAzMCwgMzUsIGZhbHNlKTsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHBhZGRpbmc6IDRweCA1cHg7CiAgICBtYXJnaW4tbGVmdDogMHB4OwogICAgbWFyZ2luLXRvcDogMzBweDsKfQo"},{ name : "haxeui-core/styles/default/blank.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QIKDCIwjMBeawAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAHElEQVQ4y2P8//8/AyWAiYFCMGrAqAGjBgwWAwBjmgMd7D3zQQAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/default/up_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAK0lEQVQImWN8K6PCwMDAwMAg9Pj2O1lVCJsJLgQnoaJwDpzN+P//fwYMAADCtw5xBtAKnQAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/default/haxeui.png", data : "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"},{ name : "haxeui-core/styles/default/dialogs/information-small.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAABJlBMVEUAAAB7e4CdnZ0REREzMzNUVFQ/Pz8lJSVRUVGmprLIyMg6Oj0LCwtQUFJqampycnILCws+Pj5CQkJVVVU6OjpFRUUmJiZVVVVRUVFISEhOTk4NDQ1UVFSqqqyfn6K/v76zs7IsWdUqVMj////a2utGaM4wVL8nTr3m5ubj4+NfgeFbfd9NcNXMzMwrVcvBwcIlSbMlSLAjRa1zlvTt7e1nievq6uowYuXW1uQxYOHg4N/c3NvQ0NtXedtQctijsNfW1tbPz9B1jNDNzc1LbM1eectBY8qVoshadciJlsYoUMKJlsBlfMA7W7xddLk3V7kmS7kfRrZEX7NOZK08V6wSM5Tu7u5ukO5sju3Y2NgzX9hSdNXOztRMbtHJydA+ZM8+YMMqUL/uhb8yAAAAIXRSTlMArqJRRz0YCQfc0pKHhnx4dG5sY2FcXFVNQj8dFdfX1NTah6qMAAAA7ElEQVQY0yXI02LEUBSF4R2ObRQnaeyMbVs13/8l2tP5rtb6ASsymUQiwxThystE/FVZrvojjPf/Z0m5NxyPhz2FzOKSJ5uTzlOp9NyZtMg8ABtuztWKzvN6RZu/hFnI3c3e1K7A80JX+5jd5yDVWquCMHVcx3W/10YK4oONNhVtY+TYtrix4hAzdvqPtB/195Ik7qwYJAfbL45b9pUlx3FbKwn0zUp8RaZSNhGSVrc0sKH3o9lA5UfU4I6fIRaAJtrnA6rV0OHcJmgA8KSJ+uJ0uZwWdSLtAVyogO/hjy9A4Y8VqGgwGKUKeP8C2jElNUboO20AAAAASUVORK5CYII"},{ name : "haxeui-core/styles/dark/tiny-close-button.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAEZXpUWHRSYXcgcHJvZmlsZSB0eXBlIGV4aWYAAHjarVdr0uMoDPyvU+wRECAQx8HYVO0N9vjbPGLH5LHfzGxIDJaFJLoluULHP39X+gsfa1jJS9SQQjD4+OSTzVioGZ8xs/H9+ixr9zc5nQ9g1jjMbtyGY+pnyOXaEP2Ub3c5xTLt6DT08DwNuubZYjH1dBpydsh53lOa+7J/Cn3+6iPaOKb13keAsQvsOUv2cOwMrtq8uPZjlzG3q3UBSsYlrKVfrUvvsaNzuYB3rhbsTJ5yd4eCTJgKYcFoylneY9cReo6IL8+3B2U7XbxiV3et9Rinyz4AqUDzUI+j9BUUN0Dp+raAEfETrGMfCUNxxALGdrC5YRTixBZoV/a8c+bKR58LF4To7WEjZmsLOGgyddEmWzoZvg2uNoKGnZyCiQLWHMT2jIW739T9FVZ43hmalmGMseNl0Dvh74zTUK0tdZmNnlghLttyGmE05toVWiCE68RUOr590FPemCdiHRiUDrPigNlsw8QmfOWW6zw76InxZEZpcNynAUAE34Jg2IEBE9gJBzbR2sgMHBX8ZERunbcbGGARuzNVcONQCdGqbb6xJ3LXtWKHGK0FRIgLLoIaFArI8l6QP9ErciiLE08iEiSKSpIcXPBBQggxtB6Vo4s+SgwxRo0pZnXqVTRoVNWkOdnk0MIkhRQpaUopZzjNMJ2xO0Mj581ubvObbGGLm25pywXpU3yREkosWlLJu93djvLfwx5p1z3t+eADqXT4Q45wxEOPdOSKXKuu+io11Fi1pppP1iard9Z4Ye47azxZa4z5rhcv1iCO8WGCWzuRxhkYs57BeGwMIKFt48woe28bc40zkyyKQixYY2nk7NwYA4P+YCuVT+4u5r7yRuJ/iTf7iTlq1P0fzFGjbjL3ytsb1vbc3yiuE9SqsGFqXEVjO9BlMr4Z7acvjJE22aSoFI+vaU2nL1tZTdkyk/nwwFxGAF83gnWTiHnMXi9dum/eugYqt4ekpp21LzNyacrez/TpQTOyjWVW8zjznNNDh0MXeGvovruNscVPmE5BTe7oy3QpPc00lPIDcPPq6+Yqablb8X7gQidAbQwo7RCUUxBLqn2JJF7wPmeKexhrWSG3vBBYwpPlfVg+M4TesYvCayv1i8Cc4IQhKCeVTO+hUH7JRa/5G7+0EjyT+nIui2WzD410j5eeTzBn+5KOiT+CfIJ94vcA3a0l93IU1iW4lhL0yLa5O5nvlfBxpqsSUrIrS2sBl5W1KyGoZF4y4lfnkUB0zyCXl2zgtaxeYxmh0J/HMkKhP49lhEI/9p1mwenqaSQ8XR3DnEnnhiDIf5Xxlf+V0uNM8vvRPBXtn0XTgqF7NI2HffH+sy5MX9rwvQuH6+UzYsRL8umgrWcHtzZqvxzjB22YvvXhLx3h6gBpaBDrd1DF2x+9LemHzQI9goeRku7P8O9o1tqnricLwW2pH1kh84muJ9oGBdsF1GyCJyz4a0E7eiL9C50ommlvGMFPAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5QEaCDsd2T5sgwAAALJJREFUGNNdi7FKw2AYRc/98j7O1oIuikM1ISk6CAVfwidShIJJ++dvQejS4uTs2wjmuhgonvGec9Wl/ATx1VSzd45YrzfXg3wSlj/E8NymzexIXlp+KYhP/Q1nllcED/rRt+U3y/dNWR40vtqUpqHIGDFQ1/XtHiDGoHBhIf4TAF3OE8sry3eySoJl1/cXAGr7/jSsPKDHeXWzBehSuhLxKquJsM5NLEYJ0FTVzsTC8uQXPKRNkQsV0ywAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/down_arrow_square.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAIAAABLMMCEAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAMUlEQVQImWN8K6PCgAGYMIUYGBhYkk10sKide+YKmtDcM1eYIBSyEMJcCAcuzYjVDQAFcxCadfC9sQAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/up_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAK0lEQVQImWN8K6PCwMDAwMBwfMYEy4wCCJsJLgQnoaJwDpzNuGXLFgYMAADK0A4MJuH53gAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/progressbars.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBQUk9HUkVTUwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwpAa2V5ZnJhbWVzIGluZGV0ZXJtaW5hdGUgewogICAgMCUgewogICAgICAgIHN0YXJ0OiAwOwogICAgICAgIGVuZDogMjU7CiAgICB9CiAgICA1MCUgewogICAgICAgIHN0YXJ0OiA3NTsKICAgICAgICBlbmQ6IDEwMDsKICAgIH0KICAgIDEwMCUgewogICAgICAgIHN0YXJ0OiAwOwogICAgICAgIGVuZDogMjU7CiAgICB9Cn0KCi5wcm9ncmVzczppbmRldGVybWluYXRlIHsKICAgIGFuaW1hdGlvbjogaW5kZXRlcm1pbmF0ZSAxcyBlYXNlIDBzIGluZmluaXRlOwp9CgoucHJvZ3Jlc3MtdmFsdWUgewogICAgYm9yZGVyOiBub25lOwogICAgYm9yZGVyLXJhZGl1czogMXB4Owp9CgouaG9yaXpvbnRhbC1wcm9ncmVzcyB7CiAgICBiYWNrZ3JvdW5kOiAjMjUyNzI4ICMyNTI3MjggdmVydGljYWw7CiAgICBpbml0aWFsLXdpZHRoOiAxNTBweDsKICAgIGluaXRpYWwtaGVpZ2h0OiA4cHg7Cn0KCi5ob3Jpem9udGFsLXByb2dyZXNzIC5wcm9ncmVzcy12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjNDE1OTgyICMyZjM3NDYgdmVydGljYWw7CiAgICBoZWlnaHQ6IDEwMCU7Cn0KCi52ZXJ0aWNhbC1wcm9ncmVzcyB7CiAgICBiYWNrZ3JvdW5kOiAjMjUyNzI4ICMyNTI3MjggaG9yaXpvbnRhbDsKICAgIGluaXRpYWwtd2lkdGg6IDhweDsKICAgIGluaXRpYWwtaGVpZ2h0OiAxNTBweDsKfQoKLnZlcnRpY2FsLXByb2dyZXNzIC5wcm9ncmVzcy12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjNDE1OTgyICMyZjM3NDYgaG9yaXpvbnRhbDsKICAgIHdpZHRoOiAxMDAlOwp9Cgo"},{ name : "haxeui-core/styles/dark/propertygrids.css", data : "LnByb3BlcnR5LWdyaWQgewp9CgoucHJvcGVydHktZ3JpZCAuc2Nyb2xsdmlldy1jb250ZW50cyB7CiAgICBwYWRkaW5nOiAwOwogICAgd2lkdGg6IDEwMCU7CiAgICBzcGFjaW5nOiAwOwp9CgoucHJvcGVydHktZ3JvdXAgewogICAgd2lkdGg6IDEwMCU7CiAgICBzcGFjaW5nOiAwOwp9CgoucHJvcGVydHktZ3JvdXAtaGVhZGVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMzRDNGNDE7CiAgICBwb2ludGVyLWV2ZW50czogdHJ1ZTsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogNXB4OwogICAgYm9yZGVyLWNvbG9yOiAjMTgxYTFiOwogICAgYm9yZGVyLWJvdHRvbS13aWR0aDogMXB4OwogICAgYm9yZGVyLWJvdHRvbS1zaXplOiAxcHg7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi5wcm9wZXJ0eS1ncm91cC1oZWFkZXIuc2Nyb2xsaW5nIHsKICAgIGJvcmRlci1yaWdodC13aWR0aDogMXB4OwogICAgYm9yZGVyLXJpZ2h0LXNpemU6IDFweDsKfQoKLnByb3BlcnR5LWdyb3VwLWhlYWRlcjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjNDM0NjQ3Owp9CgoucHJvcGVydHktZ3JvdXAtaGVhZGVyLWljb24gewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLnByb3BlcnR5LWdyb3VwLWhlYWRlcjpleHBhbmRlZCAucHJvcGVydHktZ3JvdXAtaGVhZGVyLWljb24gewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9kb3duX2Fycm93X3NxdWFyZS5wbmciOwp9CgoucHJvcGVydHktZ3JvdXAtaGVhZGVyOmNvbGxhcHNlZCAucHJvcGVydHktZ3JvdXAtaGVhZGVyLWljb24gewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9yaWdodF9hcnJvd19zcXVhcmUucG5nIjsKfQoKLnByb3BlcnR5LWdyb3VwLWhlYWRlci1sYWJlbCB7Cn0KCi5wcm9wZXJ0eS1ncm91cC1jb250ZW50cyB7CiAgICB3aWR0aDogMTAwJTsKICAgIHNwYWNpbmc6IDE7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMTgxYTFiOwogICAgcGFkZGluZy1ib3R0b206IDFweDsKfQoKLnByb3BlcnR5LWdyb3VwLWl0ZW0tbGFiZWwtY29udGFpbmVyIHsKICAgIHdpZHRoOiA1MCU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4OwogICAgaGVpZ2h0OiAxMDAlOwogICAgcGFkZGluZy1sZWZ0OiA1cHg7Cn0KCi5wcm9wZXJ0eS1ncm91cC1pdGVtLWVkaXRvci1jb250YWluZXIgewogICAgd2lkdGg6IDUwJTsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7Cn0gICAgICAgIAoKLnByb3BlcnR5LWdyb3VwLWl0ZW0tbGFiZWwgewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLnByb3BlcnR5LWdyb3VwLWl0ZW0tZWRpdG9yIHsKICAgIHdpZHRoOiAxMDAlOwp9CgoucHJvcGVydHktZ3JvdXAgLnRleHRmaWVsZCB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBmaWx0ZXI6IG5vbmU7CiAgICBib3JkZXItcmFkaXVzOiAwOwp9CgoucHJvcGVydHktZ3JvdXAgLmNoZWNrYm94IHsKICAgIHBhZGRpbmc6IDVweDsKICAgIHBhZGRpbmctbGVmdDogNHB4Owp9CgoucHJvcGVydHktZ3JvdXAgLm51bWJlci1zdGVwcGVyIHsKICAgIHBhZGRpbmc6IDA7Cn0KCi5wcm9wZXJ0eS1ncm91cCAuZHJvcGRvd24gewogICAgYm9yZGVyOiBub25lOwogICAgYm9yZGVyLXJhZGl1czogbm9uZTsKfQo"},{ name : "haxeui-core/styles/default/main.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBHRU5FUkFMCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5jb21wb25lbnQgewp9CgouY3VzdG9tLWNvbXBvbmVudCB7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKfQoKLm1vZGFsLWJhY2tncm91bmQgewogICAgYmFja2dyb3VuZC1jb2xvcjogd2hpdGU7CiAgICBvcGFjaXR5OiAwLjc1Owp9CgoubW9kYWwtY29tcG9uZW50IHsKICAgIGZpbHRlcjogYmx1cigxKTsKfQoKLnBvcHVwIHsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMiwgNDUsICMwMDAwMDAsIDAuMTUsIDYsIDEsIDMwLCAzNSwgZmFsc2UpOwp9CgpAa2V5ZnJhbWVzIGFuaW1hdGlvbkZhZGVJbiB7CiAgICAwJSB7CiAgICAgICAgb3BhY2l0eTogMDsKICAgIH0KICAgIDEwMCUgewogICAgICAgIG9wYWNpdHk6IDE7CiAgICB9Cn0KCi5mYWRlLWluIHsKICAgIGFuaW1hdGlvbjogYW5pbWF0aW9uRmFkZUluIDAuMXMgbGluZWFyIDBzIDE7Cn0KCi5mYWRlLW91dCB7CiAgICBhbmltYXRpb246IGFuaW1hdGlvbkZhZGVJbiAwLjFzIGxpbmVhciAwcyAxIHJldmVyc2U7Cn0KCi5kZWZhdWx0LWJhY2tncm91bmQgewogICAgYmFja2dyb3VuZC1jb2xvcjogd2hpdGU7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogQ09OVEFJTkVSUwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouYm94LCAudmJveCwgLmhib3gsIC5hYnNvbHV0ZSwgLmNvbnRpbnVvdXNoYm94LCAuaGdyaWQsIC52Z3JpZCwgLmdyaWQgewogICAgc3BhY2luZzogNXB4IDVweDsKfQoKLmJveCwgLnZib3gsIC5oYm94LCAuY29udGludW91c2hib3gsIC5oZ3JpZCwgLnZncmlkLCAuZ3JpZCB7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBMQUJFTAoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoubGFiZWwgewogICAgd2lkdGg6IGF1dG87CiAgICBoZWlnaHQ6IGF1dG87CiAgICBjb250ZW50LXR5cGU6IGF1dG87CiAgICBjb2xvcjogYmxhY2s7Cn0KICAgIAoubGFiZWw6ZGlzYWJsZWQgewogICAgY29sb3I6ICM5MDkwOTA7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogTElOSwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoubGluayB7CiAgICBjb2xvcjogIzQwN2RiZjsKICAgIGZvbnQtdW5kZXJsaW5lOiB0cnVlOwogICAgY3Vyc29yOiBwb2ludGVyOwogICAgcG9pbnRlci1ldmVudHM6IHRydWU7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogSU1BR0UKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmltYWdlIHsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwp9CgouaW1hZ2U6ZGlzYWJsZWQgewogICAgZmlsdGVyOiBncmF5c2NhbGU7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogRFJBRyAmIERST1AKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmRyYWdnYWJsZSB7CiAgICBjdXJzb3I6IG1vdmU7Cn0KCi5kcmFnZ2luZyB7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogSVRFTSBSRU5ERVJFUlMKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmJhc2ljaXRlbXJlbmRlcmVyIHsKICAgIHdpZHRoOiAxMDAlOwp9CgouYmFzaWMtcmVuZGVyZXItY29udGFpbmVyIHsKICAgIHdpZHRoOiAxMDAlOwp9CgouYmFzaWMtcmVuZGVyZXItbGFiZWwgewogICAgd2lkdGg6IDEwMCU7Cn0"},{ name : "haxeui-core/styles/default/right_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAL0lEQVQImWMMCAiYe+YKAwMDAwMDEwMDQ7KJDoID50M5ED6CM/fMFSY4C6oMbhoAEcwMOy/jUHEAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/dark/ranges.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBSQU5HRQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoucmFuZ2UgewogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIHBhZGRpbmc6IDFweDsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICMwMDAwMDAsIDAuMiwgMiwgMiwgMSwgMywgdHJ1ZSk7Cn0KCi5yYW5nZS12YWx1ZSB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItcmFkaXVzOiAycHg7Cn0KCi5ob3Jpem9udGFsLXJhbmdlIHsKICAgIGJhY2tncm91bmQ6ICMyNTI3MjggIzI1MjcyOCB2ZXJ0aWNhbDsKICAgIGluaXRpYWwtd2lkdGg6IDE1MHB4OwogICAgaW5pdGlhbC1oZWlnaHQ6IDhweDsKfSAgICAKCi5ob3Jpem9udGFsLXJhbmdlIC5yYW5nZS12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjNDE1OTgyICMyZjM3NDYgdmVydGljYWw7CiAgICBoZWlnaHQ6IDEwMCU7Cn0KCi52ZXJ0aWNhbC1yYW5nZSB7CiAgICBiYWNrZ3JvdW5kOiAjMjUyNzI4ICMyNTI3MjggaG9yaXpvbnRhbDsKICAgIGluaXRpYWwtd2lkdGg6IDhweDsKICAgIGluaXRpYWwtaGVpZ2h0OiAxNTBweDsKfQoKLnZlcnRpY2FsLXJhbmdlIC5yYW5nZS12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjNDE1OTgyICMyZjM3NDYgaG9yaXpvbnRhbDsKICAgIHdpZHRoOiAxMDAlOwp9Cg"},{ name : "haxeui-core/styles/dark/right_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAM0lEQVQImWP8////O1lVBgYGBgYGJgYGBqHHtxEcOJ/x////DDDABGe9k1VlgrOgMnDTADWiDmfiE8U7AAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/dark/accordion.css", data : "LmFjY29yZGlvbiB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjYWJhYmFiOwogICAgc3BhY2luZzogMDsKICAgIHBhZGRpbmc6IDFweDsKICAgIHBhZGRpbmctYm90dG9tOiAwcHg7CiAgICBjbGlwOiB0cnVlOwp9CgouYWNjb3JkaW9uLWJ1dHRvbiB7CiAgICBib3JkZXItcmFkaXVzOiAwOwogICAgYm9yZGVyOiAwcHggc29saWQgI2FiYWJhYjsKICAgIHdpZHRoOiAxMDAlOwogICAgdGV4dC1hbGlnbjogbGVmdDsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvd19zcXVhcmUucG5nIjsKICAgIGljb24tcG9zaXRpb246IGxlZnQ7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItY29sb3I6ICNhYmFiYWI7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAxcHg7Cn0KCi5hY2NvcmRpb24tYnV0dG9uOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2Rvd25fYXJyb3dfc3F1YXJlLnBuZyI7Cn0KCi5hY2NvcmRpb24tcGFnZSB7CiAgICB3aWR0aDogMTAwJTsKICAgIGNsaXA6IHRydWU7CiAgICB3aWR0aDogMTAwJTsKICAgIGJvcmRlci1jb2xvcjogI2FiYWJhYjsKICAgIGJvcmRlci1ib3R0b20td2lkdGg6IDFweDsKICAgIG9wYWNpdHk6IDE7CiAgICBwYWRkaW5nOiA1cHg7Cn0KCi5hY2NvcmRpb24tcGFnZTpleHBhbmRlZCB7CiAgICBhbmltYXRpb246IGFjY29yZGlvbkFuaW1hdGVFeHBhbmQgMC4zcyBlYXNlIDBzIDE7Cn0KCi5hY2NvcmRpb24tcGFnZTpjb2xsYXBzZWQgewogICAgYW5pbWF0aW9uOiBhY2NvcmRpb25BbmltYXRlQ29sbHBhc2UgMC4zcyBlYXNlIDBzIDE7Cn0KCkBrZXlmcmFtZXMgYWNjb3JkaW9uQW5pbWF0ZUV4cGFuZCB7CiAgICAwJSB7CiAgICAgICAgb3BhY2l0eTogMDsKICAgICAgICBoZWlnaHQ6IDAlOwogICAgfQogICAgMTAwJSB7CiAgICAgICAgb3BhY2l0eTogMTsKICAgICAgICBoZWlnaHQ6IDEwMCU7CiAgICB9Cn0KCkBrZXlmcmFtZXMgYWNjb3JkaW9uQW5pbWF0ZUNvbGxwYXNlIHsKICAgIDAlIHsKICAgICAgICBvcGFjaXR5OiAxOwogICAgICAgIGhlaWdodDogMTAwJTsKICAgIH0KICAgIDEwMCUgewogICAgICAgIG9wYWNpdHk6IDA7CiAgICAgICAgaGVpZ2h0OiAwJTsKICAgIH0KfQoKLmFjY29yZGlvbi1wYWdlIC5zY3JvbGx2aWV3IHsKICAgIGJvcmRlcjogbm9uZTsKICAgIHBhZGRpbmctdG9wOiAwOwogICAgcGFkZGluZy1yaWdodDogMDsKICAgIHBhZGRpbmctbGVmdDogMDsKICAgIHBhZGRpbmctYm90dG9tOiAwOwp9Cg"},{ name : "haxeui-core/styles/dark/switches.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTV0lUQ0ggKERFRkFVTFQpCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5zd2l0Y2gtYnV0dG9uLXN1YiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4OwogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICMwMDAwMDAsIDAuMiwgMiwgMiwgMSwgMywgdHJ1ZSk7Cn0KCkBrZXlmcmFtZXMgc3dpdGNoQW5pbWF0ZVNlbGVjdGVkIHsKICAgIDAlIHsKICAgICAgICBwb3M6IDA7CiAgICAgICAgYmFja2dyb3VuZC1jb2xvcjogIzI1MjcyODsKICAgIH0KICAgIDEwMCUgewogICAgICAgIHBvczogMTAwOwogICAgICAgIGJhY2tncm91bmQtY29sb3I6ICM0MTU5ODI7CiAgICB9Cn0K"},{ name : "haxeui-core/styles/dark/textinputs.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBURVhUIEZJRUxECioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi50ZXh0ZmllbGQgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzI1MjcyODsKICAgIGNvbG9yOiAjYjRiNGI0OwogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHBhZGRpbmc6IDVweCA1cHg7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjIsIDIsIDIsIDEsIDMsIHRydWUpOwogICAgaW5pdGlhbC13aWR0aDogMTUwcHg7CiAgICBoZWlnaHQ6IGF1dG87CiAgICBzcGFjaW5nOiA1cHg7CiAgICBpY29uLXBvc2l0aW9uOiByaWdodDsKfQoKLnRleHRmaWVsZDphY3RpdmUgewogICAgYm9yZGVyOiAxcHggc29saWQgIzQxNTk4MjsKfQoKLnRleHRmaWVsZDplbXB0eSB7CiAgICBjb2xvcjogIzQ0NDQ0NDsKfQoKLnRleHRmaWVsZDpkaXNhYmxlZCB7CiAgICBjb2xvcjogIzU5NTk1OTsKICAgIGJhY2tncm91bmQ6ICMyYzJmMzAgIzJjMmYzMCB2ZXJ0aWNhbDsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBURVhUIEFSRUEKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnRleHRhcmVhIHsKICAgIGNvbG9yOiAjYjRiNGI0OwogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHBhZGRpbmc6IDFweDsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICMwMDAwMDAsIDAuMiwgMiwgMiwgMSwgMywgdHJ1ZSk7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4OwogICAgaW5pdGlhbC13aWR0aDogMTUwcHg7CiAgICBpbml0aWFsLWhlaWdodDogMTAwcHg7Cn0KCi50ZXh0YXJlYTphY3RpdmUgewogICAgYm9yZGVyOiAxcHggc29saWQgIzQxNTk4MjsKfQoKLnRleHRhcmVhOmVtcHR5IHsKICAgIGNvbG9yOiAjNDQ0NDQ0Owp9CgoudGV4dGFyZWE6ZGlzYWJsZWQgewogICAgY29sb3I6ICM1OTU5NTk7CiAgICBiYWNrZ3JvdW5kOiAjMmMyZjMwICMyYzJmMzAgdmVydGljYWw7Cn0K"},{ name : "haxeui-core/styles/dark/down_arrow_square.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAIAAABLMMCEAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAMUlEQVQImWN8K6PCgAGYMIUYGBgYt2zZgkWtZUYBmpBlRgEThEIWQpgL4cClGbG6AQAStwro4kB3hAAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/default/sidebars.css", data : "LnNpZGViYXItbW9kYWwtYmFja2dyb3VuZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIG9wYWNpdHk6IDAuNjA7Cn0KCi5zaWRlYmFyIHsKICAgIG1hcmdpbjogNTBweDsKICAgIGJhY2tncm91bmQtY29sb3I6ICNFRUVFRUU7CiAgICBwYWRkaW5nOiA1cHg7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjEsIDMwLCAyLCAxLCAzLCBmYWxzZSk7Cn0KICAgIAouc2lkZWJhcjpsZWZ0IHsKICAgIGJvcmRlci1yaWdodDogMXB4IHNvbGlkICNBQkFCQUI7Cn0KCi5zaWRlYmFyOnJpZ2h0IHsKICAgIGJvcmRlci1sZWZ0OiAxcHggc29saWQgI0FCQUJBQjsKfQoKLnNpZGViYXI6dG9wIHsKICAgIGJvcmRlci1ib3R0b206IDFweCBzb2xpZCAjQUJBQkFCOwp9Cgouc2lkZWJhcjpib3R0b20gewogICAgYm9yZGVyLXRvcDogMXB4IHNvbGlkICNBQkFCQUI7Cn0KCgouc2lkZWJhcjpsZWZ0ICNjbG9zZVNpZGVCYXIgewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9sZWZ0X2Fycm93X2NpcmNsZWQucG5nICI7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi5zaWRlYmFyOnJpZ2h0ICNjbG9zZVNpZGVCYXIgewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvd19jaXJjbGVkLnBuZyAiOwogICAgY3Vyc29yOiBwb2ludGVyOwp9Cgouc2lkZWJhcjp0b3AgI2Nsb3NlU2lkZUJhciB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3VwX2Fycm93X2NpcmNsZWQucG5nICI7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi5zaWRlYmFyOmJvdHRvbSAjY2xvc2VTaWRlQmFyIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvZG93bl9hcnJvd19jaXJjbGVkLnBuZyAiOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLyogQU5JTUFUSU9OUyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICovCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoKLnNpZGVCYXJNb2RpZnlDb250ZW50IHsKICAgIGFuaW1hdGlvbjogc2lkZUJhck1vZGlmeUNvbnRlbnQgMC4zcyBlYXNlIDBzIDE7Cn0KCi5zaWRlQmFyUmVzdG9yZUNvbnRlbnQgewogICAgYW5pbWF0aW9uOiBzaWRlQmFyUmVzdG9yZUNvbnRlbnQgMC4zcyBlYXNlIDBzIDE7Cn0KCiAgICAKQGtleWZyYW1lcyBzaWRlQmFyTW9kaWZ5Q29udGVudCB7CiAgICAwJSB7CiAgICB9CiAgICAxMDAlIHsKICAgIH0KfQogICAgCkBrZXlmcmFtZXMgc2lkZUJhclJlc3RvcmVDb250ZW50IHsKICAgIDAlIHsKICAgIH0KICAgIDEwMCUgewogICAgfQp9CiAgICAKLnNob3dTaWRlQmFyTGVmdCB7CiAgICBhbmltYXRpb246IHNob3dTaWRlQmFyTGVmdCAwLjNzIGVhc2UgMHMgMTsKfQouaGlkZVNpZGVCYXJMZWZ0IHsKICAgIGFuaW1hdGlvbjogc2hvd1NpZGVCYXJMZWZ0IDAuM3MgZWFzZSAwcyAxIHJldmVyc2UgYmFja3dhcmRzOwp9CiAgICAKQGtleWZyYW1lcyBzaG93U2lkZUJhckxlZnQgewogICAgMCUgewogICAgfQogICAgMTAwJSB7CiAgICB9Cn0KCi5zaG93U2lkZUJhclJpZ2h0IHsKICAgIGFuaW1hdGlvbjogc2hvd1NpZGVCYXJSaWdodCAwLjNzIGVhc2UgMHMgMTsKfQoKLmhpZGVTaWRlQmFyUmlnaHQgewogICAgYW5pbWF0aW9uOiBzaG93U2lkZUJhclJpZ2h0IDAuM3MgZWFzZSAwcyAxIHJldmVyc2UgYmFja3dhcmRzOwp9CiAgICAKQGtleWZyYW1lcyBzaG93U2lkZUJhclJpZ2h0IHsKICAgIDAlIHsKICAgIH0KICAgIDEwMCUgewogICAgfQp9CiAgICAKLnNob3dTaWRlQmFyVG9wIHsKICAgIGFuaW1hdGlvbjogc2hvd1NpZGVCYXJUb3AgMC4zcyBlYXNlIDBzIDE7Cn0KLmhpZGVTaWRlQmFyVG9wIHsKICAgIGFuaW1hdGlvbjogc2hvd1NpZGVCYXJUb3AgMC4zcyBlYXNlIDBzIDEgcmV2ZXJzZSBiYWNrd2FyZHM7Cn0KICAgIApAa2V5ZnJhbWVzIHNob3dTaWRlQmFyVG9wIHsKICAgIDAlIHsKICAgIH0KICAgIDEwMCUgewogICAgfQp9CiAgICAKLnNob3dTaWRlQmFyQm90dG9tIHsKICAgIGFuaW1hdGlvbjogc2hvd1NpZGVCYXJCb3R0b20gMC4zcyBlYXNlIDBzIDE7Cn0KLmhpZGVTaWRlQmFyQm90dG9tIHsKICAgIGFuaW1hdGlvbjogc2hvd1NpZGVCYXJCb3R0b20gMC4zcyBlYXNlIDBzIDEgcmV2ZXJzZSBiYWNrd2FyZHM7Cn0KICAgIApAa2V5ZnJhbWVzIHNob3dTaWRlQmFyQm90dG9tIHsKICAgIDAlIHsKICAgIH0KICAgIDEwMCUgewogICAgfQp9Cg"},{ name : "haxeui-core/styles/default/menus.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBNRU5VQkFSCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5tZW51YmFyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNFRUVFRUU7CiAgICBwYWRkaW5nOiA1cHg7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAxcHg7CiAgICBib3JkZXItYm90dG9tLWNvbG9yOiAjQUJBQkFCOwogICAgZmlsdGVyOiBkcm9wLXNoYWRvdygyLCA0NSwgIzAwMDAwMCwgMC4xNSwgNiwgMSwgMzAsIDM1LCBmYWxzZSk7Cn0KCi5tZW51YmFyLWJ1dHRvbiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRUVFRUVFOwogICAgYm9yZGVyOiBub25lOwogICAgY29sb3I6ICM2NjY2NjY7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9CgoubWVudWJhci1idXR0b246aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0NDQ0NDQzsKICAgIGNvbG9yOiAjNDQ0NDQ0Owp9CgoubWVudWJhci1idXR0b246ZG93biB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIGNvbG9yOiBibGFjazsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAwcHg7CiAgICBib3JkZXItYm90dG9tLXNpemU6IDBweDsKfQoKLm1lbnViYXItYnV0dG9uLW5vLWNoaWxkcmVuIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNFRUVFRUU7CiAgICBib3JkZXI6IG5vbmU7CiAgICBjb2xvcjogIzY2NjY2NjsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7Cn0KCi5tZW51YmFyLWJ1dHRvbi1uby1jaGlsZHJlbjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjQ0NDQ0NDOwogICAgY29sb3I6ICM0NDQ0NDQ7Cn0KCi5tZW51YmFyLWJ1dHRvbi1uby1jaGlsZHJlbjpkb3duIHsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwogICAgY29sb3I6IGJsYWNrOwogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKfQoKLm1lbnViYXItYnV0dG9uLW5vLWNoaWxkcmVuLWFjdGl2ZSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRUVFRUVFOwogICAgYm9yZGVyOiBub25lOwogICAgY29sb3I6ICM2NjY2NjY7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9CgoubWVudWJhci1idXR0b24tbm8tY2hpbGRyZW4tYWN0aXZlOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwogICAgY29sb3I6IGJsYWNrOwogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKfQoKLm1lbnViYXItYnV0dG9uLW5vLWNoaWxkcmVuLWFjdGl2ZTpkb3duIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNDQ0NDQ0M7CiAgICBjb2xvcjogIzQ0NDQ0NDsKICAgIGJvcmRlcjogbm9uZTsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBNRU5VCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5tZW51IHsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwogICAgcGFkZGluZzogMXB4OwogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMiwgNDUsICMwMDAwMDAsIDAuMTUsIDYsIDEsIDMwLCAzNSwgZmFsc2UpOwogICAgc3BhY2luZzogMDsKICAgIHdpZHRoOiAyMDBweDsKfQoKLm1lbnUuZXhwYW5kZWQgewogICAgYm9yZGVyLXRvcC13aWR0aDogMHB4OwogICAgYm9yZGVyLXRvcC1zaXplOiAwcHg7Cn0KCi5tZW51LWZpbGxlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjQUJBQkFCOwogICAgaGVpZ2h0OiAxcHg7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogTUVOVUlURU1TCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5tZW51aXRlbSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogNXB4OwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgoubWVudWl0ZW0tbGFiZWwsIC5tZW51aXRlbS1jaGVja2JveCwgLm1lbnVpdGVtLW9wdGlvbmJveCwgLm1lbnVpdGVtLXNob3J0Y3V0LWxhYmVsIHsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7Cn0KCi5tZW51aXRlbS1zaG9ydGN1dC1sYWJlbCB7CiAgICB0ZXh0LWFsaWduOiByaWdodDsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBob3Jpem9udGFsLWFsaWduOiByaWdodDsKfQoKLm1lbnVpdGVtLWljb24gewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLm1lbnVpdGVtOmhvdmVyLCAubWVudWl0ZW06c2VsZWN0ZWQgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2Q5ZTVmMjsKfQoKLm1lbnVpdGVtIC5sYWJlbDpob3ZlciwgLm1lbnVpdGVtIC5sYWJlbDpzZWxlY3RlZCB7CiAgICBjb2xvcjogIzIyMjIyMjsKfQoKLm1lbnVpdGVtLWV4cGFuZGFibGUgewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvdy5wbmciOwogICAgdmVydGljYWwtYWxpZ246ICJjZW50ZXIiOwp9CgoubWVudXNlcGFyYXRvciB7CiAgICBoZWlnaHQ6IDFweDsKICAgIHdpZHRoOiAxMDAlOwogICAgYmFja2dyb3VuZC1jb2xvcjogI0FCQUJBQjsKICAgIGhvcml6b250YWwtYWxpZ246ICJjZW50ZXIiOwp9Cg"},{ name : "haxeui-core/styles/default/dialogs/question.png", data : "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"},{ name : "haxeui-core/styles/dark/up_arrow_circled.png", data : "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"},{ name : "haxeui-core/styles/default/check.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5QITChsNaCG5cQAAAS5JREFUKM+NkDFLw1AUhb/3DG0Q6pBOdSgI4tBRsaCTP0EcHeSBEpAQkt2lggiKUGg6WMRVhGziILg4CRUnh+KibiVLl06lmPdcglRsrXe5nMP9uJwj+Md4nrckpVwvFotX1rRj3/fnhBD3QLnX6yGnAVLKU6AMDIGnP4EwDDeMMW4mj6Io6kwEXNedTdP0AhDAi+M4JwATM9i2fQwsAp9a691arTYEsIIgWDXG3Akhbrrd7l4cx2kYhmtaaz9jz5rN5vN3JmPMAuAYY1SpVDpXStla60tAAq/9fv9w9PNMu93uVKvVeSHECrCcz+e3gAqggc1Wq/XxozXAJEmyD1xnXiXbUaPRePxVM0Acx+lgMNgBbjP/LZfLHYwrQ4wKpZRdKBS2Lct6qNfr7+OAL7OwYq6nyWzXAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/dark/left_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVQImWN8K6PCwMDAwMBwfMYEJjiLgYGBCc5iYGBg3LJlCwMMMFlmFCA4DAwMcD7UAAgfAK7lDFY1UPqoAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/optionboxes.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBPUFRJT05CT1gKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLm9wdGlvbmJveCB7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKICAgIGhvcml6b250YWwtc3BhY2luZzogNHB4OwogICAgY3Vyc29yOiBwb2ludGVyOwogICAgY29sb3I6ICMwMDAwMDA7Cn0KCi5vcHRpb25ib3g6aG92ZXIgewp9Cgoub3B0aW9uYm94OmRpc2FibGVkIHsKICAgIGN1cnNvcjogZGVmYXVsdDsKICAgIGNvbG9yOiAjOTA5MDkwOwp9Cgoub3B0aW9uYm94LXZhbHVlIHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRkZGRkZGOwogICAgd2lkdGg6IDE2cHg7CiAgICBoZWlnaHQ6IDE2cHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgYm9yZGVyLXJhZGl1czogMThweDsKICAgIGljb246IG5vbmU7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjODg4ODg4LCAwLjIsIDIsIDIsIDEsIDMsIHRydWUpOwogICAgcGFkZGluZy10b3A6IDFweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLm9wdGlvbmJveC12YWx1ZTpob3ZlciB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjMjE2QUFFOwp9Cgoub3B0aW9uYm94LXZhbHVlOnNlbGVjdGVkIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9vcHRpb24ucG5nIjsKfQoKLm9wdGlvbmJveC12YWx1ZTpkaXNhYmxlZCB7CiAgICBiYWNrZ3JvdW5kOiAjRDRENEQ0ICNDQ0NDQ0MgdmVydGljYWw7CiAgICBjdXJzb3I6IGRlZmF1bHQ7Cn0KCi5vcHRpb25ib3gtbGFiZWwgewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLm9wdGlvbmJveC1pY29uIHsKICAgIGhvcml6b250YWwtYWxpZ246IGNlbnRlcjsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICBvcGFjaXR5OiAxOwp9Cgoub3B0aW9uYm94LWljb246ZGlzYWJsZWQgewogICAgY3Vyc29yOiBkZWZhdWx0OwogICAgb3BhY2l0eTogMC41Owp9Cg"},{ name : "haxeui-core/styles/default/option.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAQlBMVEVYWGzW/9EAAACYtdLCqYPP6PTU////9KxYWFhUVlhXVVJ4rthXkMHs1Kxsj6lSYXvElmdYWGeefViUXFhfUVNWUk58LX/QAAAACHRSTlMnCADr69QWFksN2hQAAAA8SURBVAjXY2BiZxDi5OBjYGNiYGTh4OTg4BJkZmTgFeEAA35WBgFOCFOUm0EYyuTiQWYiFCBrQxiGZAUAvXcDb/w8amgAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/dark/scrollbars.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTQ1JPTEwKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnNjcm9sbCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmMyZjMwOwp9Cgouc2Nyb2xsIC5idXR0b24gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzNlNDE0MjsKICAgIG9wYWNpdHk6IC44Owp9Cgouc2Nyb2xsIC5idXR0b246aG92ZXIgewogICAgb3BhY2l0eTogMTsKfQoKLnZlcnRpY2FsLXNjcm9sbCB7CiAgICBib3JkZXItbGVmdDogMXB4IHNvbGlkICMxODFhMWI7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmMyZjMwOwp9CgouaG9yaXpvbnRhbC1zY3JvbGwgewogICAgYm9yZGVyLXRvcDogMXB4IHNvbGlkICMxODFhMWI7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmMyZjMwOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIENMQVNTSUMgVkFSSUFOVFMKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmNsYXNzaWMtc2Nyb2xscyAuc2Nyb2xsLAouc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmMyZjMwOwogICAgYm9yZGVyOm5vbmU7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnNjcm9sbCAuYnV0dG9uLAouc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuYnV0dG9uewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJjMmYzMDsKICAgIGJvcmRlcjpub25lOwp9CgouY2xhc3NpYy1zY3JvbGxzIC5zY3JvbGwgLnRodW1iLAouc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAudGh1bWIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzNkNDA0MjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuc2Nyb2xsIC50aHVtYjpob3ZlciwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLnRodW1iOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICM0NTQ4NGE7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnNjcm9sbCAudGh1bWI6ZG93biwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLnRodW1iOmRvd24gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzQ1NDg0YTsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuc2Nyb2xsIC50aHVtYjpkaXNhYmxlZCwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLnRodW1iOmRpc2FibGVkIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMzMzM3Mzg7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnZlcnRpY2FsLXNjcm9sbCAuZGVpbmMsCi52ZXJ0aWNhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5kZWluYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvdXBfYXJyb3cucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAudmVydGljYWwtc2Nyb2xsIC5kZWluYzpkb3duLAoudmVydGljYWwtc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuZGVpbmM6ZG93biB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvdXBfYXJyb3dfd2hpdGUucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAudmVydGljYWwtc2Nyb2xsIC5pbmMsCi52ZXJ0aWNhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5pbmMgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2Rvd25fYXJyb3cucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAudmVydGljYWwtc2Nyb2xsIC5pbmM6ZG93biwKLnZlcnRpY2FsLXNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLmluYzpkb3duIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9kb3duX2Fycm93X3doaXRlLnBuZyI7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLmhvcml6b250YWwtc2Nyb2xsIC5kZWluYywKLmhvcml6b250YWwtc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuZGVpbmMgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2xlZnRfYXJyb3cucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuaG9yaXpvbnRhbC1zY3JvbGwgLmRlaW5jOmRvd24sCi5ob3Jpem9udGFsLXNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLmRlaW5jOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2xlZnRfYXJyb3dfd2hpdGUucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuaG9yaXpvbnRhbC1zY3JvbGwgLmluYywKLmhvcml6b250YWwtc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuaW5jIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9yaWdodF9hcnJvdy5wbmciOwp9CgouY2xhc3NpYy1zY3JvbGxzIC5ob3Jpem9udGFsLXNjcm9sbCAuaW5jOmRvd24sCi5ob3Jpem9udGFsLXNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLmluYzpkb3duIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9yaWdodF9hcnJvd193aGl0ZS5wbmciOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIE1PQklMRSBWQVJJQU5UUwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouaG9yaXpvbnRhbC1zY3JvbGw6bW9iaWxlIHsKICAgIGJhY2tncm91bmQtY29sb3I6IG5vbmU7Cn0KCi5ob3Jpem9udGFsLXNjcm9sbDptb2JpbGUgLnRodW1iIHsKICAgIGhlaWdodDogNHB4OwogICAgYm9yZGVyLXJhZGl1czogNHB4Owp9CgoudmVydGljYWwtc2Nyb2xsOm1vYmlsZSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBub25lOwp9CgoudmVydGljYWwtc2Nyb2xsOm1vYmlsZSAudGh1bWIgewogICAgd2lkdGg6IDRweDsKICAgIGJvcmRlci1yYWRpdXM6IDRweDsKfQo"},{ name : "haxeui-core/styles/default/calendars.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBDQUxFTkRBUgoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouY2FsZW5kYXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIHBhZGRpbmc6IDVweDsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7Cn0KCi5jYWxlbmRhciAuYnV0dG9uIHsKICAgIHBhZGRpbmc6IDhweDsKfQoKLmNhbGVuZGFyIC5jYWxlbmRhci1vZmYtZGF5IHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwogICAgY3Vyc29yOiBkZWZhdWx0Owp9CgouY2FsZW5kYXIgLmNhbGVuZGFyLWRheSB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjZWNmMmY5Owp9CgouY2FsZW5kYXIgLmNhbGVuZGFyLWRheTpob3ZlciB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjYTdjNGUyOwp9CgouY2FsZW5kYXIgLmNhbGVuZGFyLWRheS1zZWxlY3RlZCB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjYTdjNGUyOwogICAgY29sb3I6IHdoaXRlOwp9CgoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBDQUxFTkRBUlZJRVcKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmNhbGVuZGFyLXZpZXcgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIHBhZGRpbmc6IDVweDsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7Cn0KCi5jYWxlbmRhci12aWV3IC5jYWxlbmRhciB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBwYWRkaW5nOiAwcHg7Cn0KCi5jYWxlbmRhci12aWV3IC5oYm94IHsKCXNwYWNpbmc6IDA7Cn0KCi5jYWxlbmRhci12aWV3ICNwcmV2LW1vbnRoIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9sZWZ0X2Fycm93LnBuZyI7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgYm9yZGVyOiBub25lOwogICAgYmFja2dyb3VuZC1jb2xvcjogd2hpdGU7Cn0KCi5jYWxlbmRhci12aWV3ICNuZXh0LW1vbnRoIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvdy5wbmciOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwp9CgouY2FsZW5kYXItdmlldyAjY3VycmVudC1tb250aCB7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9CgouY2FsZW5kYXItdmlldyAjY3VycmVudC15ZWFyIHsKICAgIHRleHQtYWxpZ246IHJpZ2h0OwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKCWJvcmRlcjogbm9uZTsKCXBhZGRpbmctdG9wOiAxcHg7CgliYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKfQouY2FsZW5kYXItdmlldyAjY3VycmVudC15ZWFyIC5idXR0b24gewoJYmFja2dyb3VuZC1jb2xvcjogd2hpdGU7Cglib3JkZXI6IG5vbmU7Cn0K"},{ name : "haxeui-core/styles/default/haxeui_tiny.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAwFBMVEUAAAA+drJml8uevd7K2+1Ee7c1aaBcjsWfv99RhsA7cKqfvt/J2e01aaHJ3Ow1Z56kweGsxuM5cKxzoM9PhMCnxOJBd7SBqdSTtNp6otG90ui2zeetx+RFerM1a6Rllsiow+JDe7qhvt9jlsqfvt9dj8SzzOaoxeJCd7A5bqhVicKAqdOev95ik8SsyOOivuCmw99ThcJ4pNCnv99kl8tomc1+p9RRiMSUtts8drV0oNFdkcibu96IrtdOhL9Cerg7AHaNAAAANXRSTlMASfTz8fHx5uTh4d/T00RE9PLy8fHw5+bl4uHh4eHh39bW0NC/v7m5ubm4tVROSkpIR0ZAQIt9oOEAAACUSURBVBjTRc1FEsMwEETRjpkdZmZmS5FD979VRjVVce/e3zS8MGyMz6DdpuV2x0X/QTPn++uu9pRSDtAl0wRJL4DFzjIuDqIXm8snRlJhc7FTYMnmsgZwZHMpUTjlRZA6rET+t9oAiSl0YatqiugtqLBpMSyyLmzloCe4sNUQnpaxOFy29S+FAK2Rb0/0G+4zw/WbP+FUKshItzNPAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/splitters.css", data : "LnNwbGl0dGVyIHsKICAgIHNwYWNpbmc6IDA7Cn0KCi52ZXJ0aWNhbC1zcGxpdHRlci1ncmlwcGVyIHsKICAgIHdpZHRoOiAxMDAlOwogICAgaGVpZ2h0OiA2cHg7CiAgICBjdXJzb3I6IHJvdy1yZXNpemU7CiAgICBfX2JhY2tncm91bmQtY29sb3I6ICNFRUVFRUU7Cn0KCi52ZXJ0aWNhbC1zcGxpdHRlci1ncmlwcGVyOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNEREREREQ7Cn0KCi52ZXJ0aWNhbC1zcGxpdHRlci1ncmlwcGVyIC5pbWFnZSB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3NpemVyX2dyaXBwZXJfaG9yaXpvbnRhbC5wbmciOwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLmhvcml6b250YWwtc3BsaXR0ZXItZ3JpcHBlciB7CiAgICB3aWR0aDogNnB4OwogICAgaGVpZ2h0OiAxMDAlOwogICAgY3Vyc29yOiBjb2wtcmVzaXplOwogICAgX19iYWNrZ3JvdW5kLWNvbG9yOiAjRUVFRUVFOwp9CgouaG9yaXpvbnRhbC1zcGxpdHRlci1ncmlwcGVyOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNEREREREQ7Cn0KCi5ob3Jpem9udGFsLXNwbGl0dGVyLWdyaXBwZXIgLmltYWdlIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc2l6ZXJfZ3JpcHBlcl92ZXJ0aWNhbC5wbmciOwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQo"},{ name : "haxeui-core/styles/default/up_arrow_circled.png", data : "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"},{ name : "haxeui-core/styles/dark/splitters.css", data : "LnNwbGl0dGVyIHsKICAgIHNwYWNpbmc6IDA7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4Cn0KCi52ZXJ0aWNhbC1zcGxpdHRlci1ncmlwcGVyIHsKICAgIHdpZHRoOiAxMDAlOwogICAgaGVpZ2h0OiA2cHg7CiAgICBjdXJzb3I6IHJvdy1yZXNpemU7CiAgICBfX2JhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7Cn0KCi52ZXJ0aWNhbC1zcGxpdHRlci1ncmlwcGVyOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICM5OGE2YWE7Cn0KCi52ZXJ0aWNhbC1zcGxpdHRlci1ncmlwcGVyIC5pbWFnZSB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3NpemVyX2dyaXBwZXJfaG9yaXpvbnRhbC5wbmciOwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLmhvcml6b250YWwtc3BsaXR0ZXItZ3JpcHBlciB7CiAgICB3aWR0aDogNnB4OwogICAgaGVpZ2h0OiAxMDAlOwogICAgY3Vyc29yOiBjb2wtcmVzaXplOwogICAgX19iYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4Owp9CgouaG9yaXpvbnRhbC1zcGxpdHRlci1ncmlwcGVyOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICM5OGE2YWE7Cn0KCi5ob3Jpem9udGFsLXNwbGl0dGVyLWdyaXBwZXIgLmltYWdlIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc2l6ZXJfZ3JpcHBlcl92ZXJ0aWNhbC5wbmciOwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQo"},{ name : "haxeui-core/styles/dark/buttons.css", data : "LmJ1dHRvbiB7CiAgICBiYWNrZ3JvdW5kOiAjM2U0MTQyICMzNjM4M2E7CiAgICBib3JkZXItY29sb3I6ICMxODFhMWI7CiAgICBjb2xvcjogI2I0YjRiNDsKfQoKLmJ1dHRvbjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kOiAjNDM0NjQ3ICMzOTNiM2M7CiAgICBib3JkZXItY29sb3I6ICMxODFhMWI7CiAgICBjb2xvcjogI2Q0ZDRkNDsKfQoKLmJ1dHRvbjpkb3duIHsKICAgIGJhY2tncm91bmQ6ICMyZjMxMzIgIzI3MjkyYTsKICAgIGJvcmRlci1jb2xvcjogIzE4MWExYjsKICAgIGNvbG9yOiAjZDRkNGQ0Owp9CgouYnV0dG9uOmRpc2FibGVkIHsKICAgIGNvbG9yOiAjNTk1OTU5OwogICAgY3Vyc29yOiBkZWZhdWx0Owp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIEJVVFRPTiBCQVJTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5idXR0b24tYmFyIHsKICAgIHNwYWNpbmc6IDA7Cn0KCi5idXR0b24tYmFyIC5idXR0b24gewogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIGJvcmRlci1jb2xvcjogIzE4MWExYjsKfQoKLmJ1dHRvbi1iYXIgLmJ1dHRvbjpkb3duIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICM0MTU5ODI7CiAgICBjb2xvcjogd2hpdGU7Cn0KCi5ob3Jpem9udGFsLWJ1dHRvbi1iYXIgLmJ1dHRvbiB7CiAgICBib3JkZXItbGVmdC1zaXplOiAwOwp9CgouaG9yaXpvbnRhbC1idXR0b24tYmFyIC5idXR0b24uZmlyc3QgewogICAgYm9yZGVyLWxlZnQtc2l6ZTogMTsKfQoKLnZlcnRpY2FsLWJ1dHRvbi1iYXIgLmJ1dHRvbiB7CiAgICBib3JkZXItdG9wLXNpemU6IDA7Cn0KCi52ZXJ0aWNhbC1idXR0b24tYmFyIC5idXR0b24uZmlyc3QgewogICAgYm9yZGVyLXRvcC1zaXplOiAxOwp9Cg"},{ name : "haxeui-core/styles/dark/right_arrow_square.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAIAAABLMMCEAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAMUlEQVQImWN8K6PCwMBwfMYEy4wCBhhggrOOz5iARRRZAkUULoEuCjGdCVMIRRTZDQD4NA07+SZ5fAAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/right_arrow_circled.png", data : "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"},{ name : "haxeui-core/styles/default/listview.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBMSVNUVklFVwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoubGlzdHZpZXcgewogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKICAgIGJvcmRlci1yYWRpdXM6IDFweDsKICAgIHBhZGRpbmc6IDFweDsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKfQoKLmxpc3R2aWV3IC5saXN0dmlldy1jb250ZW50cyB7CiAgICBzcGFjaW5nOiAwOwogICAgd2lkdGg6IDEwMCU7CiAgICBwYWRkaW5nOiAwcHg7Cn0KCi5saXN0dmlldyAuaXRlbXJlbmRlcmVyIHsKICAgIGN1cnNvcjogcG9pbnRlcjsgICAgCn0KCi5saXN0dmlldyAuaXRlbXJlbmRlcmVyIC5sYWJlbCB7CiAgICBjb2xvcjogYmxhY2s7Cn0KCi5saXN0dmlldyAuZXZlbiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRkZGRkZGOwp9CgoubGlzdHZpZXcgLmV2ZW46aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2Q5ZTVmMjsKfQoKLmxpc3R2aWV3IC5vZGQgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2Y4ZjhmODsKfQoKLmxpc3R2aWV3IC5vZGQ6aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2Q5ZTVmMjsKfQoKLmxpc3R2aWV3IC5pdGVtcmVuZGVyZXIgewogICAgaGVpZ2h0OiBhdXRvOwogICAgcGFkZGluZzogNXB4Owp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlcjpzZWxlY3RlZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjYTdjNGUyOwogICAgY29sb3I6IHdoaXRlOwp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlcjpzZWxlY3RlZCAubGFiZWwgewogICAgY29sb3I6IHdoaXRlOwp9Cg"},{ name : "haxeui-core/styles/dark/optionboxes.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBPUFRJT05CT1gKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLm9wdGlvbmJveCB7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKICAgIGhvcml6b250YWwtc3BhY2luZzogNHB4OwogICAgY3Vyc29yOiBwb2ludGVyOwogICAgY29sb3I6ICNiNGI0YjQ7Cn0KCi5vcHRpb25ib3g6aG92ZXIgewp9Cgoub3B0aW9uYm94OmRpc2FibGVkIHsKICAgIGN1cnNvcjogZGVmYXVsdDsKICAgIGNvbG9yOiAjNTk1OTU5Owp9Cgoub3B0aW9uYm94LXZhbHVlIHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4OwogICAgd2lkdGg6IDE2cHg7CiAgICBoZWlnaHQ6IDE2cHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgYm9yZGVyLXJhZGl1czogMThweDsKICAgIGljb246IG5vbmU7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjIsIDIsIDIsIDEsIDMsIHRydWUpOwogICAgcGFkZGluZy10b3A6IDFweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLm9wdGlvbmJveC12YWx1ZTpob3ZlciB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjMjE2QUFFOwp9Cgoub3B0aW9uYm94LXZhbHVlOnNlbGVjdGVkIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9vcHRpb24ucG5nIjsKfQoKLm9wdGlvbmJveC12YWx1ZTpkaXNhYmxlZCB7CiAgICBiYWNrZ3JvdW5kOiAjMmMyZjMwICMyYzJmMzAgdmVydGljYWw7CiAgICBjdXJzb3I6IGRlZmF1bHQ7Cn0KCi5vcHRpb25ib3gtbGFiZWwgewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLm9wdGlvbmJveC1pY29uIHsKICAgIGhvcml6b250YWwtYWxpZ246IGNlbnRlcjsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICBvcGFjaXR5OiAxOwp9Cgoub3B0aW9uYm94LWljb246ZGlzYWJsZWQgewogICAgY3Vyc29yOiBkZWZhdWx0OwogICAgb3BhY2l0eTogMC41Owp9Cg"},{ name : "haxeui-core/styles/default/left_arrow_circled.png", data : "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAACt0lEQVRIiaWVT0sbQRiHn3c3UbdI9dQaxJuYk9Ii9iSUQm3EQnvwC/QDeCiCEgktQ3tQclB6aA+lxQ8gCC3U+ucLpIKlFQ8tguBBbYKHNCA7bt2dHmKCJtm44O+08847z+9lZmde4QotLCx0aq1HRCRpjLkNICJ5EflljNlIp9N/m62XsInZ2dlBQIlICoiHpHnAmmVZanp6+nskg/n5ecfzvLfAs2YF1CgAFrXWE0opHWqQzWa7giD4DAxFBNdq0/f9J5lMJl8JWJUPpVRbEASfrgEHuGfb9hel1I06g7a2tnfAvWvAKxp0HOdNZSAA2Wz2ThAEWxcNa9XZ2UlHRwf7+/tRTIwxZmhmZmbLAvB9/3UzeHd3N+Pj46RSKfr7+6MYCPASQObm5jqAAtASBh8dHcW2bQByuRzb29tRTP61trbesoBUGDyRSJBKparwvb09dnZ2osAB4p7nPYwBfVEqd12Xw8NDkslkXW6pVOLg4KAubozpixljEiKX71MsFmNkZKQKB3Ach+Hh4dByl5eXOT4+rjVIWCJiGjgTBEEorFH+2dlZXVxETExEjoy57OH7Pqurq4yNjdHSUj4e13XJ5XL4vl8HKhaLFIvFRgZHMWPMbqOqCoUCKysrVRPHcejt7WV9fb2hSYh2LWCN8qsYauJ55emenh4GBgaiwk9d1123zt/ztbCsWhPXdaMarCqlSrHzwQvgMSG3uVAosLS0RHt7O/l8vlFKrQLLsl5RAabT6Z/AYrMVJycnUeGIyIdKA6pWrLWeAL5FIjTXVjwef14ZXOwH2vf9p8DmNeA527bHJicnqwd1ac8zmUxea30f+Ei5DUZVICLvtdYPpqamChcnmjX9u5Sb/ighjyHl3/vredP/0SjhyqaulLrpOM4jY0wf0HUe/mOM+X16erqhlCo1W/8f0YsgMTeU8ssAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/scrollview.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTQ1JPTExWSUVXCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5zY3JvbGx2aWV3IHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7CiAgICBwYWRkaW5nOiAxcHg7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKfQoKLnNjcm9sbHZpZXcgLnNjcm9sbHZpZXctY29udGVudHMgewogICAgaGVpZ2h0OiBhdXRvOwogICAgc3BhY2luZzogNXB4OwogICAgcGFkZGluZzogNXB4OwogICAgYm9yZGVyOiBub25lOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIE1PQklMRSBWQVJJQU5UUwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouc2Nyb2xsdmlldzptb2JpbGUgewogICAgbW9kZTogbW9iaWxlOwp9Cg"},{ name : "haxeui-core/styles/default/sizer_gripper_horizontal.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAECAIAAAA4WjmaAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAJElEQVQImWN8K6PCgBswMTAwTEqOnpQcjZXBhEcrAwMDI37DARkxCkFtOZfXAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/dialogs.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBESUFMT0dTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5kaWFsb2cgewogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICMwMDAwMDAsIDAuMiwgMzAsIDIsIDEsIDMsIGZhbHNlKTsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwogICAgYmFja2dyb3VuZC1jb2xvcjogd2hpdGU7CiAgICBwYWRkaW5nOiAxcHg7Cn0KCi5kaWFsb2ctY29udGFpbmVyIHsKICAgIHNwYWNpbmc6IDA7Cn0KCi5kaWFsb2ctdGl0bGUgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0VFRUVFRTsKICAgIHBhZGRpbmc6IDVweDsKICAgIGJvcmRlci1ib3R0b20td2lkdGg6IDFweDsKICAgIGJvcmRlci1ib3R0b20tY29sb3I6ICNBQkFCQUI7Cn0KCi5kaWFsb2ctdGl0bGUtbGFiZWwgewogICAgd2lkdGg6IDEwMCU7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgY29sb3I6ICM4ODg4ODg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogImNlbnRlciI7Cn0KCi5kaWFsb2ctY29udGVudCB7CiAgICBwYWRkaW5nOiA1cHg7Cn0KCi5kaWFsb2ctZm9vdGVyLWNvbnRhaW5lciB7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiAjQUJBQkFCOwogICAgYmFja2dyb3VuZC1jb2xvcjogI0VFRUVFRTsKfQoKLmRpYWxvZy1mb290ZXIgewogICAgcGFkZGluZzogNXB4OwogICAgaG9yaXpvbnRhbC1hbGlnbjogcmlnaHQ7Cn0KCi5kaWFsb2ctY2xvc2UtYnV0dG9uIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc21hbGwtY2xvc2UtYnV0dG9uLnBuZyI7CiAgICB2ZXJ0aWNhbC1hbGlnbjogImNlbnRlciI7CiAgICBjdXJzb3I6ICJwb2ludGVyIjsKfQoKLmRpYWxvZyAjaWNvbkltYWdlLmluZm8gewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9kaWFsb2dzL2luZm9ybWF0aW9uLnBuZyI7Cn0KCi5kaWFsb2cgI2ljb25JbWFnZS5xdWVzdGlvbiB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2RpYWxvZ3MvcXVlc3Rpb24ucG5nIjsKfQoKLmRpYWxvZyAjaWNvbkltYWdlLnllc25vIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvZGlhbG9ncy9xdWVzdGlvbi5wbmciOwp9CgouZGlhbG9nICNpY29uSW1hZ2Uud2FybmluZyB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2RpYWxvZ3MvZXhjbGFtYXRpb24ucG5nIjsKfQoKLmRpYWxvZyAjaWNvbkltYWdlLmVycm9yIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvZGlhbG9ncy9jcm9zcy1jaXJjbGUucG5nIjsKfQoKLm1lc3NhZ2Vib3ggewogICAgaW5pdGlhbC13aWR0aDogMzAwcHg7Cn0"},{ name : "haxeui-core/styles/default/expanded.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5AoNCwkgHyJHKAAAAJBJREFUOMtjYBgFAw8YkTlrt2xRYv77/+h/BgYJHOpf///LZBMU5H0LJsCELBvs43OPkeGfOwMDw0csmj8z/GP0RNaMYQADAwODv7//JSYGxkAGBoafSMK/Gf8zhgYG+pxFV8+EzZ3+/j77/zMwJjAwMPxjYGD4/5+BMTUgwGcnyQG0fuOW4vUbtxSPJhUaAwCz8idCJS/GkgAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/calendars.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBDQUxFTkRBUgoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouY2FsZW5kYXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzI1MjcyODsKICAgIHBhZGRpbmc6IDVweDsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7Cn0KCi5jYWxlbmRhciAuYnV0dG9uIHsKICAgIHBhZGRpbmc6IDhweDsKfQoKLmNhbGVuZGFyIC5jYWxlbmRhci1vZmYtZGF5IHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7CiAgICBjdXJzb3I6IGRlZmF1bHQ7Cn0KCi5jYWxlbmRhciAuY2FsZW5kYXItZGF5IHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyZjM3NDY7Cn0KCi5jYWxlbmRhciAuY2FsZW5kYXItZGF5OmhvdmVyIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6ICM0MTU5ODI7Cn0KCi5jYWxlbmRhciAuY2FsZW5kYXItZGF5LXNlbGVjdGVkIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6ICM0MTU5ODI7CiAgICBjb2xvcjogd2hpdGU7Cn0KCgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIENBTEVOREFSVklFVwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouY2FsZW5kYXItdmlldyB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4OwogICAgcGFkZGluZzogNXB4OwogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGJvcmRlci1yYWRpdXM6IDFweDsKfQoKLmNhbGVuZGFyLXZpZXcgLmNhbGVuZGFyIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIHBhZGRpbmc6IDBweDsKfQoKLmNhbGVuZGFyLXZpZXcgLmhib3ggewoJc3BhY2luZzogMDsKfQoKLmNhbGVuZGFyLXZpZXcgI3ByZXYtbW9udGggewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2xlZnRfYXJyb3cucG5nIjsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBib3JkZXI6IG5vbmU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4Owp9CgouY2FsZW5kYXItdmlldyAjbmV4dC1tb250aCB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvcmlnaHRfYXJyb3cucG5nIjsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBib3JkZXI6IG5vbmU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4Owp9CgouY2FsZW5kYXItdmlldyAjY3VycmVudC1tb250aCB7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9CgouY2FsZW5kYXItdmlldyAjY3VycmVudC15ZWFyIHsKICAgIHRleHQtYWxpZ246IHJpZ2h0OwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKCWJvcmRlcjogbm9uZTsKCXBhZGRpbmctdG9wOiAxcHg7CgliYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4Owp9Ci5jYWxlbmRhci12aWV3ICNjdXJyZW50LXllYXIgLmJ1dHRvbiB7CgliYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4OwoJYm9yZGVyOiBub25lOwp9Cg"},{ name : "haxeui-core/styles/dark/listview.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBMSVNUVklFVwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoubGlzdHZpZXcgewogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGJvcmRlci1yYWRpdXM6IDFweDsKICAgIHBhZGRpbmc6IDFweDsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwogICAgYmFja2dyb3VuZC1jb2xvcjogIzI1MjcyODsKfQoKCi5saXN0dmlldyAubGlzdHZpZXctY29udGVudHMgewogICAgc3BhY2luZzogMDsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogMHB4Owp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlciB7CiAgICBjdXJzb3I6IHBvaW50ZXI7ICAgIAp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlciAubGFiZWwgewogICAgY29sb3I6ICNiNGI0YjQ7Cn0KCi5saXN0dmlldyAuZXZlbiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4Owp9CgoubGlzdHZpZXcgLmV2ZW46aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJmMzc0NjsKfQoKLmxpc3R2aWV3IC5vZGQgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJhMmMyZDsKfQoKLmxpc3R2aWV3IC5vZGQ6aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJmMzc0NjsKfQoKLmxpc3R2aWV3IC5pdGVtcmVuZGVyZXIgewogICAgaGVpZ2h0OiBhdXRvOwogICAgcGFkZGluZzogNXB4Owp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlcjpzZWxlY3RlZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjNDE1OTgyOwogICAgY29sb3I6IHdoaXRlOwp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlcjpzZWxlY3RlZCAubGFiZWwgewogICAgY29sb3I6IHdoaXRlOwp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlcjpkaXNhYmxlZCB7CiAgICBjb2xvcjogIzU5NTk1OTsKfQoKLmxpc3R2aWV3IC5pdGVtcmVuZGVyZXI6ZGlzYWJsZWQgLmxhYmVsIHsKICAgIGNvbG9yOiAjNTk1OTU5Owp9Cg"},{ name : "haxeui-core/styles/default/sliders.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTTElERVJTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5ob3Jpem9udGFsLXNsaWRlciB7CiAgICBwYWRkaW5nLWxlZnQ6IDVweDsKICAgIHBhZGRpbmctcmlnaHQ6IDVweDsKICAgIHBhZGRpbmctdG9wOiAwcHg7CiAgICBwYWRkaW5nLWJvdHRvbTogMHB4OwogICAgaGVpZ2h0OiBhdXRvOwogICAgaW5pdGlhbC13aWR0aDogMTUwcHg7Cn0KCi5ob3Jpem9udGFsLXNsaWRlciAuc2xpZGVyLXZhbHVlIHsKICAgIHdpZHRoOiAxMDAlOwogICAgaGVpZ2h0OiA4cHg7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgouaG9yaXpvbnRhbC1zbGlkZXIud2l0aC1jZW50ZXIgLnJhbmdlLXZhbHVlIHsKICAgIGJvcmRlci1yYWRpdXM6IDBweDsKfQoKLmhvcml6b250YWwtc2xpZGVyIC5taW5vci10aWNrIHsKICAgIG1hcmdpbi10b3A6IDEwcHg7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjY2NjY2NjOwogICAgd2lkdGg6IDFweDsKICAgIGhlaWdodDogNHB4OwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLmhvcml6b250YWwtc2xpZGVyIC5tYWpvci10aWNrIHsKICAgIG1hcmdpbi10b3A6IDEycHg7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjY2NjY2NjOwogICAgd2lkdGg6IDFweDsKICAgIGhlaWdodDogOHB4OwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLmhvcml6b250YWwtc2xpZGVyIC5idXR0b24gewogICAgd2lkdGg6IDExcHg7CiAgICBoZWlnaHQ6IDIwcHg7CiAgICBib3JkZXItcmFkaXVzOiAycHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgZmlsdGVyOiBub25lOwp9CiAgICAKLnZlcnRpY2FsLXNsaWRlciB7CiAgICBwYWRkaW5nLXRvcDogNXB4OwogICAgcGFkZGluZy1ib3R0b206IDVweDsKICAgIHBhZGRpbmctbGVmdDogMHB4OwogICAgcGFkZGluZy1yaWdodDogMHB4OwogICAgd2lkdGg6IGF1dG87CiAgICBpbml0aWFsLWhlaWdodDogMTUwcHg7Cn0KCi52ZXJ0aWNhbC1zbGlkZXIgLnNsaWRlci12YWx1ZSB7CiAgICBoZWlnaHQ6IDEwMCU7CiAgICB3aWR0aDogOHB4OwogICAgYm9yZGVyLXJhZGl1czogMnB4OwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgoudmVydGljYWwtc2xpZGVyLndpdGgtY2VudGVyIC5yYW5nZS12YWx1ZSB7CiAgICBib3JkZXItcmFkaXVzOiAwcHg7Cn0KCi52ZXJ0aWNhbC1zbGlkZXIgLm1pbm9yLXRpY2sgewogICAgbWFyZ2luLWxlZnQ6IDEwcHg7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjY2NjY2NjOwogICAgd2lkdGg6IDRweDsKICAgIGhlaWdodDogMXB4OwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwp9CgoudmVydGljYWwtc2xpZGVyIC5tYWpvci10aWNrIHsKICAgIG1hcmdpbi1sZWZ0OiAxMnB4OwogICAgYmFja2dyb3VuZC1jb2xvcjogI2NjY2NjYzsKICAgIHdpZHRoOiA4cHg7CiAgICBoZWlnaHQ6IDFweDsKICAgIGhvcml6b250YWwtYWxpZ246IGNlbnRlcjsKfQoKLnZlcnRpY2FsLXNsaWRlciAuYnV0dG9uIHsKICAgIHdpZHRoOiAyMHB4OwogICAgaGVpZ2h0OiAxMXB4OwogICAgYm9yZGVyLXJhZGl1czogMnB4OwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgZmlsdGVyOiBub25lOwp9Cgo"},{ name : "haxeui-core/styles/dark/tabs.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBUQUJCQVIgKFRPUCkKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnRhYmJhciB7CiAgICBwYWRkaW5nLWxlZnQ6IDBweDsKICAgIHBhZGRpbmctcmlnaHQ6IDBweDsKICAgIGhlaWdodDogYXV0bzsKICAgIHdpZHRoOiBhdXRvOwogICAgYm9yZGVyLWJvdHRvbS13aWR0aDogMXB4OwogICAgYm9yZGVyLWJvdHRvbS1jb2xvcjogIzE4MWExYjsKICAgIGJvcmRlci10b3Atd2lkdGg6IDBweDsKICAgIGNsaXA6IHRydWU7Cn0KCi50YWJiYXIgPiAudGFiYmFyLWNvbnRlbnRzIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJvcmRlci1ib3R0b20td2lkdGg6IDFweDsKICAgIGJvcmRlci1ib3R0b20tY29sb3I6ICMxODFhMWI7CiAgICBzcGFjaW5nOiAwOwp9CgoudGFiYmFyLWJ1dHRvbiB7CiAgICBib3JkZXItcmFkaXVzOiAwcHg7CiAgICBiYWNrZ3JvdW5kOiAjMzEzMzM1ICMzMTMzMzUgdmVydGljYWw7CiAgICBwYWRkaW5nOiA2cHggOHB4OwogICAgdmVydGljYWwtYWxpZ246IGJvdHRvbTsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAwcHg7CiAgICBjb2xvcjogI2I0YjRiNDsKfQoKLnRhYmJhci1idXR0b24uZmlyc3QgewogICAgYm9yZGVyLWxlZnQtd2lkdGg6IDFweDsKfQoKLnRhYmJhci1idXR0b246aG92ZXIgewogICAgYmFja2dyb3VuZDogIzM5M2IzYyAjMzkzYjNjIHZlcnRpY2FsOwp9CgoudGFiYmFyLWJ1dHRvbjpkb3duIHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7Cn0KCi50YWJiYXItYnV0dG9uLXNlbGVjdGVkIHsKICAgIGJvcmRlci1yYWRpdXM6IDBweDsKCiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAxcHg7CiAgICBib3JkZXItYm90dG9tLWNvbG9yOiAjM0QzRjQxOwogICAgYmFja2dyb3VuZC1jb2xvcjogIzNEM0Y0MTsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAwcHg7CiAgICBjb2xvcjogI2Q0ZDRkNDsKfQoKCi50YWJiYXItYnV0dG9uLXNlbGVjdGVkLmZpcnN0IHsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAxcHg7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogVEFCQkFSIChCT1RUT00pCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi50YWJiYXI6Ym90dG9tIHsKICAgIHBhZGRpbmctbGVmdDogMHB4OwogICAgcGFkZGluZy1yaWdodDogMHB4OwogICAgaGVpZ2h0OiBhdXRvOwogICAgd2lkdGg6IGF1dG87CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAwcHg7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiAjMTgxYTFiOwogICAgY2xpcDogdHJ1ZTsKfQoKLnRhYmJhcjpib3R0b20gLnRhYmJhci1jb250ZW50cyB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAwcHg7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiAjMTgxYTFiOwogICAgc3BhY2luZzogMDsKfQoKLnRhYmJhci1idXR0b246Ym90dG9tIHsKICAgIHZlcnRpY2FsLWFsaWduOiB0b3A7CiAgICBib3JkZXItbGVmdC13aWR0aDogMHB4Owp9CgoudGFiYmFyLWJ1dHRvbi5maXJzdCB7CiAgICBib3JkZXItbGVmdC13aWR0aDogMXB4Owp9CgoudGFiYmFyLWJ1dHRvbi1zZWxlY3RlZDpib3R0b20gewogICAgYm9yZGVyLXJhZGl1czogMHB4OwoKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiAjM0QzRjQxOwogICAgYmFja2dyb3VuZC1jb2xvcjogIzNEM0Y0MTsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAwcHg7Cn0KCi50YWJiYXItYnV0dG9uLXNlbGVjdGVkLmZpcnN0IHsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAxcHg7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogVEFCVklFVwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoKLnRhYnZpZXcgPiAudGFidmlldy1jb250ZW50IHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjM0QzRjQxOwp9CgoKLnRhYmJhci1zY3JvbGwtbGVmdCB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvbGVmdF9hcnJvdy5wbmciOwogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIHBhZGRpbmc6IDVweDsKfQoKLnRhYmJhci1zY3JvbGwtcmlnaHQgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL3JpZ2h0X2Fycm93LnBuZyI7CiAgICBib3JkZXItcmFkaXVzOiAwOwogICAgcGFkZGluZzogNXB4Owp9CgoudGFiYmFyLWJ1dHRvbiAudGFiLWNsb3NlLWJ1dHRvbiB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL3RpbnktY2xvc2UtYnV0dG9uLnBuZyI7Cn0K"},{ name : "haxeui-core/styles/default/accordion.css", data : "LmFjY29yZGlvbiB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjYWJhYmFiOwogICAgc3BhY2luZzogMDsKICAgIHBhZGRpbmc6IDFweDsKICAgIHBhZGRpbmctYm90dG9tOiAwcHg7CiAgICBjbGlwOiB0cnVlOwp9CgouYWNjb3JkaW9uLWJ1dHRvbiB7CiAgICBib3JkZXItcmFkaXVzOiAwOwogICAgYm9yZGVyOiAwcHggc29saWQgI2FiYWJhYjsKICAgIHdpZHRoOiAxMDAlOwogICAgdGV4dC1hbGlnbjogbGVmdDsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvd19zcXVhcmUucG5nIjsKICAgIGljb24tcG9zaXRpb246IGxlZnQ7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItY29sb3I6ICNhYmFiYWI7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAxcHg7Cn0KCi5hY2NvcmRpb24tYnV0dG9uOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2Rvd25fYXJyb3dfc3F1YXJlLnBuZyI7Cn0KCi5hY2NvcmRpb24tcGFnZSB7CiAgICB3aWR0aDogMTAwJTsKICAgIGNsaXA6IHRydWU7CiAgICB3aWR0aDogMTAwJTsKICAgIGJvcmRlci1jb2xvcjogI2FiYWJhYjsKICAgIGJvcmRlci1ib3R0b20td2lkdGg6IDFweDsKICAgIG9wYWNpdHk6IDE7CiAgICBwYWRkaW5nOiA1cHg7Cn0KCi5hY2NvcmRpb24tcGFnZTpleHBhbmRlZCB7CiAgICBhbmltYXRpb246IGFjY29yZGlvbkFuaW1hdGVFeHBhbmQgMC4zcyBlYXNlIDBzIDE7Cn0KCi5hY2NvcmRpb24tcGFnZTpjb2xsYXBzZWQgewogICAgYW5pbWF0aW9uOiBhY2NvcmRpb25BbmltYXRlQ29sbHBhc2UgMC4zcyBlYXNlIDBzIDE7Cn0KCkBrZXlmcmFtZXMgYWNjb3JkaW9uQW5pbWF0ZUV4cGFuZCB7CiAgICAwJSB7CiAgICAgICAgb3BhY2l0eTogMDsKICAgICAgICBoZWlnaHQ6IDAlOwogICAgfQogICAgMTAwJSB7CiAgICAgICAgb3BhY2l0eTogMTsKICAgICAgICBoZWlnaHQ6IDEwMCU7CiAgICB9Cn0KCkBrZXlmcmFtZXMgYWNjb3JkaW9uQW5pbWF0ZUNvbGxwYXNlIHsKICAgIDAlIHsKICAgICAgICBvcGFjaXR5OiAxOwogICAgICAgIGhlaWdodDogMTAwJTsKICAgIH0KICAgIDEwMCUgewogICAgICAgIG9wYWNpdHk6IDA7CiAgICAgICAgaGVpZ2h0OiAwJTsKICAgIH0KfQoKLmFjY29yZGlvbi1wYWdlIC5zY3JvbGx2aWV3IHsKICAgIGJvcmRlcjogbm9uZTsKICAgIHBhZGRpbmctdG9wOiAwOwogICAgcGFkZGluZy1yaWdodDogMDsKICAgIHBhZGRpbmctbGVmdDogMDsKICAgIHBhZGRpbmctYm90dG9tOiAwOwp9Cg"},{ name : "haxeui-core/styles/dark/checkboxes.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBDSEVDS0JPWAoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouY2hlY2tib3ggewogICAgd2lkdGg6IGF1dG87CiAgICBoZWlnaHQ6IGF1dG87CiAgICBob3Jpem9udGFsLXNwYWNpbmc6IDRweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIGNvbG9yOiAjYjRiNGI0Owp9CgouY2hlY2tib3g6aG92ZXIgewp9CgouY2hlY2tib3g6ZGlzYWJsZWQgewogICAgY3Vyc29yOiBkZWZhdWx0OwogICAgY29sb3I6ICM1OTU5NTk7Cn0KCi5jaGVja2JveC12YWx1ZSB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjMTgxYTFiOwogICAgYmFja2dyb3VuZC1jb2xvcjogIzI1MjcyODsKICAgIHdpZHRoOiAxNnB4OwogICAgaGVpZ2h0OiAxNnB4OwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIGljb246IG5vbmU7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjIsIDIsIDIsIDEsIDMsIHRydWUpOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgouY2hlY2tib3gtdmFsdWU6aG92ZXIgewogICAgYm9yZGVyOiAxcHggc29saWQgIzQxNTk4MjsKfQoKLmNoZWNrYm94LXZhbHVlOnNlbGVjdGVkIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9jaGVjay5wbmciOwp9CgouY2hlY2tib3gtdmFsdWU6ZGlzYWJsZWQgewogICAgYmFja2dyb3VuZDogIzJjMmYzMCAjMmMyZjMwIHZlcnRpY2FsOwogICAgY3Vyc29yOiBkZWZhdWx0Owp9CgouY2hlY2tib3gtbGFiZWwgewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLmNoZWNrYm94LWljb24gewogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIG9wYWNpdHk6IDE7Cn0KCi5jaGVja2JveC1pY29uOmRpc2FibGVkIHsKICAgIGN1cnNvcjogZGVmYXVsdDsKICAgIG9wYWNpdHk6IDAuNTsKfQo"},{ name : "haxeui-core/styles/default/tableview.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBIRUFERVIKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmhlYWRlciB7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKICAgIHNwYWNpbmc6IDA7Cn0KCi5oZWFkZXIgLmNvbHVtbiB7CiAgICBib3JkZXItcmFkaXVzOiAwOwogICAgaWNvbi1wb3NpdGlvbjogZmFyLXJpZ2h0OwogICAgYm9yZGVyLWxlZnQtd2lkdGg6IDA7CiAgICB0ZXh0LWFsaWduOiBsZWZ0Owp9CgouaGVhZGVyIC5jb2x1bW4ubGFzdCB7CiAgICBib3JkZXItcmlnaHQtd2lkdGg6IDA7Cn0KCi8qCi5oZWFkZXIuc2Nyb2xsaW5nIC5jb2x1bW4ubGFzdCB7CiAgICBib3JkZXItcmlnaHQtd2lkdGg6IDFweDsKfQoqLwoKLmNvbHVtbi5zb3J0YWJsZSB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc29ydGFibGVfYXJyb3dzLnBuZyI7CiAgICBpY29uLXBvc2l0aW9uOiBmYXItcmlnaHQ7Cn0KCi5jb2x1bW4uc29ydC1hc2MgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3NvcnRhYmxlX2FzYy5wbmciOwp9CgouY29sdW1uLnNvcnQtZGVzYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc29ydGFibGVfZGVzYy5wbmciOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIFRBQkxFVklFVwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoudGFibGV2aWV3IHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7CiAgICBwYWRkaW5nOiAxcHg7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKICAgIGJhY2tncm91bmQtY29sb3I6ICNGRkZGRkY7CiAgICBzcGFjaW5nOiAwOwp9CgoudGFibGV2aWV3IC50YWJsZXZpZXctY29udGVudHMgewogICAgc3BhY2luZzogMDsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogMHB4Owp9CgoudGFibGV2aWV3IC5ldmVuIHsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgoudGFibGV2aWV3IC5vZGQgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2Y4ZjhmODsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLnRhYmxldmlldyAuY29tcG91bmRpdGVtcmVuZGVyZXIgLml0ZW1yZW5kZXJlciB7CiAgICBoZWlnaHQ6IGF1dG87CiAgICBwYWRkaW5nOiA1cHg7Cn0KCi50YWJsZXZpZXcgLmV2ZW46aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2Q5ZTVmMjsKfQoKLnRhYmxldmlldyAub2RkOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNkOWU1ZjI7Cn0KCi50YWJsZXZpZXcgLmNvbXBvdW5kaXRlbXJlbmRlcmVyIC5sYWJlbCB7CiAgICBjb2xvcjogYmxhY2s7Cn0KCi50YWJsZXZpZXcgLmNvbXBvdW5kaXRlbXJlbmRlcmVyOnNlbGVjdGVkIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNhN2M0ZTI7CiAgICBjb2xvcjogd2hpdGU7Cn0KCi50YWJsZXZpZXcgLmNvbXBvdW5kaXRlbXJlbmRlcmVyOnNlbGVjdGVkIC5sYWJlbCB7CiAgICBjb2xvcjogd2hpdGU7Cn0K"},{ name : "haxeui-core/styles/default/progressbars.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBQUk9HUkVTUwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwpAa2V5ZnJhbWVzIGluZGV0ZXJtaW5hdGUgewogICAgMCUgewogICAgICAgIHN0YXJ0OiAwOwogICAgICAgIGVuZDogMjU7CiAgICB9CiAgICA1MCUgewogICAgICAgIHN0YXJ0OiA3NTsKICAgICAgICBlbmQ6IDEwMDsKICAgIH0KICAgIDEwMCUgewogICAgICAgIHN0YXJ0OiAwOwogICAgICAgIGVuZDogMjU7CiAgICB9Cn0KCi5wcm9ncmVzczppbmRldGVybWluYXRlIHsKICAgIGFuaW1hdGlvbjogaW5kZXRlcm1pbmF0ZSAxcyBlYXNlIDBzIGluZmluaXRlOwp9CgoucHJvZ3Jlc3MtdmFsdWUgewogICAgYm9yZGVyOiBub25lOwogICAgYm9yZGVyLXJhZGl1czogMXB4Owp9CgouaG9yaXpvbnRhbC1wcm9ncmVzcyB7CiAgICBiYWNrZ3JvdW5kOiAjRjFGMUYxICNGRkZGRkYgdmVydGljYWw7CiAgICBpbml0aWFsLXdpZHRoOiAxNTBweDsKICAgIGluaXRpYWwtaGVpZ2h0OiA4cHg7Cn0KCi5ob3Jpem9udGFsLXByb2dyZXNzIC5wcm9ncmVzcy12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjOThjNGU2ICM1NDliZGUgdmVydGljYWw7CiAgICBoZWlnaHQ6IDEwMCU7Cn0KCi52ZXJ0aWNhbC1wcm9ncmVzcyB7CiAgICBiYWNrZ3JvdW5kOiAjRjFGMUYxICNGRkZGRkYgaG9yaXpvbnRhbDsKICAgIGluaXRpYWwtd2lkdGg6IDhweDsKICAgIGluaXRpYWwtaGVpZ2h0OiAxNTBweDsKfQoKLnZlcnRpY2FsLXByb2dyZXNzIC5wcm9ncmVzcy12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjOThjNGU2ICM1NDliZGUgaG9yaXpvbnRhbDsKICAgIHdpZHRoOiAxMDAlOwp9Cgo"},{ name : "haxeui-core/styles/default/tiny-close-button.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAABhWlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV9TpVUrCnYQcchQXbQgKuIoVSyChdJWaNXB5NIvaNKQpLg4Cq4FBz8Wqw4uzro6uAqC4AeIm5uToouU+L+k0CLWg+N+vLv3uHsHCLUSU82OCUDVLCMRjYjpzKroe0UX/OjHGHokZuqx5GIKbcfXPTx8vQvzrPbn/hy9StZkgEcknmO6YRFvEM9sWjrnfeIgK0gK8TnxuEEXJH7kuuzyG+e8wwLPDBqpxDxxkFjMt7DcwqxgqMTTxCFF1ShfSLuscN7irJYqrHFP/sJAVltJcp3mMKJYQgxxiJBRQRElWAjTqpFiIkH7kTb+IccfJ5dMriIYORZQhgrJ8YP/we9uzdzUpJsUiACdL7b9MQL4doF61ba/j227fgJ4n4Errekv14DZT9KrTS10BPRtAxfXTU3eAy53gMEnXTIkR/LSFHI54P2MvikDDNwC3Wtub419nD4AKepq+QY4OARG85S93ubd/tbe/j3T6O8HZkByogoVjmQAAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAADdcAAA3XAUIom3gAAAAHdElNRQflCQgQLBKUV9OZAAAA9klEQVQY012PTU4CQRCFv6qhh7gWdy6N0XtwAhPwEqzMzIJZ9QYIybAh3sEEPAEXgURPQGCv89PlwjQitavUq/e+J36+vA1qU5X6xWfZgbMZT5c3ztmiTdqxmjIB+mbp2pdl75+oY2ugn7TJRMbT1+vUhZVhjxifTW2DtNu0IbgVwoPAh1ANBMCXZS8eMHaAItwLsq1qHc6K0VH+os6cgejk83wPoFHYTb/EzE6PZkhVudOuETwE9/7LJFuMHcJdx8lbLCjnfDHuu75qLwuqWbqITlWdPPk838+K0VGkej45pzLXJmkKYBPbRSafZQfVeghsNGjxAx6fgSyXIE/yAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/down_arrow_circled.png", data : "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"},{ name : "haxeui-core/styles/default/textinputs.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBURVhUIEZJRUxECioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi50ZXh0ZmllbGQgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIGNvbG9yOiAjNDQ0NDQ0OwogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHBhZGRpbmc6IDVweCA1cHg7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjODg4ODg4LCAwLjIsIDEsIDEsIDEsIDMsIHRydWUpOwogICAgaW5pdGlhbC13aWR0aDogMTUwcHg7CiAgICBoZWlnaHQ6IGF1dG87CiAgICBzcGFjaW5nOiA1cHg7CiAgICBpY29uLXBvc2l0aW9uOiByaWdodDsKICAgIGNvbnRlbnQtdHlwZTogYXV0bzsKfQoKLnRleHRmaWVsZDphY3RpdmUgewogICAgYm9yZGVyOiAxcHggc29saWQgIzIxNkFBRTsKfQoKLnRleHRmaWVsZDplbXB0eSB7CiAgICBjb2xvcjogI0EwQTBBMDsKfQoKLnRleHRmaWVsZDpkaXNhYmxlZCB7CiAgICBjb2xvcjogIzkwOTA5MDsKICAgIGJhY2tncm91bmQ6ICNENEQ0RDQgI0NDQ0NDQyB2ZXJ0aWNhbDsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBURVhUIEFSRUEKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnRleHRhcmVhIHsKICAgIGNvbG9yOiAjNDQ0NDQ0OwogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHBhZGRpbmc6IDFweDsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICM4ODg4ODgsIDAuMiwgMSwgMSwgMSwgMywgdHJ1ZSk7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIGluaXRpYWwtd2lkdGg6IDE1MHB4OwogICAgaW5pdGlhbC1oZWlnaHQ6IDEwMHB4OwogICAgY29udGVudC10eXBlOiBhdXRvOwp9CgoudGV4dGFyZWE6YWN0aXZlIHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMyMTZBQUU7Cn0KCi50ZXh0YXJlYTplbXB0eSB7CiAgICBjb2xvcjogI0EwQTBBMDsKfQoKLnRleHRhcmVhOmRpc2FibGVkIHsKICAgIGNvbG9yOiAjOTA5MDkwOwogICAgYmFja2dyb3VuZDogI0Q0RDRENCAjQ0NDQ0NDIHZlcnRpY2FsOwp9"},{ name : "haxeui-core/styles/default/up_down_arrows.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAJCAIAAABxOqH0AAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAeklEQVQImWN8K6PCwMDAwMDQHhFQuWIDhM0EF2JgYOiMCkKIQoQgoDcujIGBgZkhI+X///9MTEyMjIwMDAxMTEynjPQY4eYiAxaIFjhgZmZmYGBg3nD/+XF9bQifiYmJgYGhYP5yJgYGhuJFqyBKIEIIl0E4EJKBgQEAK1sc1cc2psYAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/steppers.css", data : "Lm51bWJlcnN0ZXBwZXIgewogICAgcGFkZGluZzogMXB4OwogICAgc3BhY2luZzogMDsKfQoKLnN0ZXBwZXIgewogICAgc3BhY2luZzogMDsKfQoKLnN0ZXBwZXItYnV0dG9uIHsKICAgIHBhZGRpbmc6IDNweDsKICAgIHBhZGRpbmctdG9wOiA0cHg7CiAgICBwYWRkaW5nLWJvdHRvbTogNHB4OwogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6ICNFNkU2RTY7CiAgICBvcGFjaXR5OiAxOwp9Cgouc3RlcHBlci1idXR0b246aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0YxRjFGMTsKfQoKLnN0ZXBwZXItYnV0dG9uOmRvd24gewogICAgYmFja2dyb3VuZC1jb2xvcjogI0MyQzJDMjsKfQoKLnN0ZXBwZXItYnV0dG9uOmRpc2FibGVkIHsKICAgIG9wYWNpdHk6IDAuNTsKICAgIGJhY2tncm91bmQtY29sb3I6ICNDQ0NDQ0M7Cn0KCi5zdGVwcGVyLWluYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvdXBfYXJyb3cucG5nIjsKfQoKLnN0ZXBwZXItZGVpbmMgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2Rvd25fYXJyb3cucG5nIjsKfQoKLnN0ZXBwZXItaW5jOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3VwX2Fycm93X3doaXRlLnBuZyI7Cn0KCi5zdGVwcGVyLWRlaW5jOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2Rvd25fYXJyb3dfd2hpdGUucG5nIjsKfQoKLnN0ZXBwZXItdGV4dGZpZWxkLCAuc3RlcHBlci10ZXh0ZmllbGQ6YWN0aXZlIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogNHB4OwogICAgcGFkZGluZy10b3A6IDVweDsKICAgIHBhZGRpbmctYm90dG9tOiAzcHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgZmlsdGVyOiBkcm9wLXNoYWRvdygxLCA0NSwgIzg4ODg4OCwgMC4yLCAxLCAxLCAxLCAzLCB0cnVlKTsKICAgIGJhY2tncm91bmQtY29sb3I6IG5vbmU7Cn0KCi5zdGVwcGVyLXN0ZXAgewogICAgaGVpZ2h0OiAxMDAlOwp9Cgouc3RlcHBlci1zdGVwIC5zdGVwcGVyLWluYywgLnN0ZXBwZXItc3RlcCAuc3RlcHBlci1kZWluYyB7CiAgICBoZWlnaHQ6IDUwJTsKfQoKLm51bWJlci1zdGVwcGVyIHsKICAgIGluaXRpYWwtd2lkdGg6IDYwcHg7Cn0"},{ name : "haxeui-core/styles/default/dialogs/cross-circle-small.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAABFFBMVEUAAABSUlJ7e4CdnZ1AQEAREREzMzM/Pz8lJSVRUVGmprI6Oj0LCwtqampycnILCwtVVVU6OjpFRUUmJiZVVVVRUVFISEgNDQ1UVFSqqqyfn6K/v76zs7LIyMjHx8dRUVNQUFH////c3NzQ0NHm5uba2uvq6urW1tbeVlbNRUWiExPu7u7i4uLf39/Nzc3XUFCuISGwEhKsERHW1uTQ0NvAwMHTqKi9l6DEmpm5kZXGc3Pyamq2ZGTBYWHpYGCuXl+8Xl2iV12pTlCjSk3RSUm9QkKtNTWpMzOIGRrUERHQERHFERG4ERG2ERGdERGUEBD39/fY2NjJydDDw8PDPT3JOzu4Li62Li7BKiqrGhqxGRm0FxcilCapAAAAIXRSTlMAPq6ibVFHGAkH3JKHfHh0Y2FcXFVNQh0V19fU1NLShoYJuWjGAAAA5UlEQVQY0yXI1XbDMBBF0ZExzFSuZNWt7RjDzEzl0P//R6zkPMyafYFVQJlEIoMKcCuIYk8qpepzDAWvzvK02pxMmtUin2UL4s3OuNtqdbUO4RGAHDX7Nv7ww3b/KypD7qGuYYw1dn7rjzlIkbbt4E9qErLdt60UCMp0/K9byjvZ6s70RwDBmv25nu+i551mFQGSSu+wZqbq+tyrJEG6azi+XVc1jGPjXgL5RRnqZLNcbgx9+P0qA0hcebRbLRar3ajMSQAQSHOl2mA+H9RKXDoAbBHDoTe/UFhkZuXFeCQSF/PsvwDvMCJpV4jhMQAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/default/dialogs/information.png", data : "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"},{ name : "haxeui-core/styles/dark/up_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAK0lEQVQImWN8K6PCwMDAwMAg9Pj2O1lVCJsJLgQnoaJwDpzN+P//fwYMAADCtw5xBtAKnQAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/option.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5QEaCgw0CA+AtQAAAINJREFUGNN9zDEKwlAQRdE781egfdYQV6FgM0WWYpNNSPYRm2ktsgfb9LYSsE7+WAQE4ccDr7rwBMDdqyB1CEcAgkElt2Y2irtXoelBsOfXJLHUGqSuEAF2SLrq97Yg4KT8F0owbHe5q0pugalQX3nWi5rZKLHUAjfgvU76PKdD05yfH881KnTRsBd3AAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/switches.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTV0lUQ0ggKERFRkFVTFQpCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5zd2l0Y2ggewogICAgd2lkdGg6IGF1dG87CiAgICBoZWlnaHQ6IGF1dG87CiAgICBob3Jpem9udGFsLXNwYWNpbmc6IDVweDsKfQoKLnN3aXRjaC1sYWJlbCB7CiAgICBjb2xvcjogYmxhY2s7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9Cgouc3dpdGNoLWJ1dHRvbi1zdWIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItcmFkaXVzOiAycHg7CiAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICBwYWRkaW5nOiAwcHg7CiAgICBpbml0aWFsLXdpZHRoOiA0MHB4OwogICAgaW5pdGlhbC1oZWlnaHQ6IDIwcHg7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjODg4ODg4LCAwLjMsIDEsIDEsIDEsIDMsIHRydWUpOwp9Cgouc3dpdGNoLWJ1dHRvbi1zdWIgLmJ1dHRvbiB7CiAgICBoZWlnaHQ6IDEwMCU7CiAgICB3aWR0aDogNTAlOwogICAgYm9yZGVyLXJhZGl1czogMnB4OwogICAgZmlsdGVyOiBub25lOwp9Cgouc3dpdGNoLWJ1dHRvbi1zdWItZXh0cmEgewogICAgaGVpZ2h0OiAwOwogICAgd2lkdGg6IDA7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBub25lOwogICAgYm9yZGVyOiBub25lOwogICAgZmlsdGVyOiBub25lOwp9CgpAa2V5ZnJhbWVzIHN3aXRjaEFuaW1hdGVTZWxlY3RlZCB7CiAgICAwJSB7CiAgICAgICAgcG9zOiAwOwogICAgICAgIGJhY2tncm91bmQtY29sb3I6ICNGRkZGRkY7CiAgICB9CiAgICAxMDAlIHsKICAgICAgICBwb3M6IDEwMDsKICAgICAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjOThjNGU2OwogICAgfQp9Cgouc3dpdGNoLWJ1dHRvbi1zdWI6c2VsZWN0ZWQgewogICAgYW5pbWF0aW9uOiBzd2l0Y2hBbmltYXRlU2VsZWN0ZWQgMC4ycyBlYXNlIDBzIDE7Cn0KCi5zd2l0Y2gtYnV0dG9uLXN1Yjp1bnNlbGVjdGVkIHsKICAgIGFuaW1hdGlvbjogc3dpdGNoQW5pbWF0ZVNlbGVjdGVkIDAuMnMgZWFzZSAwcyAxIHJldmVyc2UgYmFja3dhcmRzOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIFNXSVRDSCAoQ0lSQ0xFKQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouY2lyY2xlLXN3aXRjaCAuc3dpdGNoLWJ1dHRvbi1zdWIgewogICAgYm9yZGVyOiBub25lOwogICAgZmlsdGVyOiBub25lOwogICAgYmFja2dyb3VuZC1jb2xvcjogbm9uZTsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIHBhZGRpbmc6IDBweDsKICAgIGluaXRpYWwtaGVpZ2h0OiAyMHB4OwogICAgaW5pdGlhbC13aWR0aDogNDBweDsKfQoKLmNpcmNsZS1zd2l0Y2ggLnN3aXRjaC1idXR0b24tc3ViLWV4dHJhIHsKICAgIGhlaWdodDogMTRweDsKICAgIHdpZHRoOiAxMDAlOwogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgYm9yZGVyLXJhZGl1czogMTBweDsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICM4ODg4ODgsIDAuMywgMSwgMSwgMSwgMywgdHJ1ZSk7Cn0KCi5jaXJjbGUtc3dpdGNoIC5zd2l0Y2gtYnV0dG9uLXN1YiAuYnV0dG9uIHsKICAgIHdpZHRoOiAyMHB4OwogICAgaGVpZ2h0OiAyMHB4OwogICAgYm9yZGVyLXJhZGl1czogNTBweDsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICMwMDAwMDAsIDAuMiwgMCwgMCwgMCwgMywgZmFsc2UpOwp9CgpAa2V5ZnJhbWVzIHN3aXRjaEFuaW1hdGVTZWxlY3RlZENpcmNsZSB7CiAgICAwJSB7CiAgICAgICAgcG9zOiAwOwogICAgfQogICAgMTAwJSB7CiAgICAgICAgcG9zOiAxMDA7CiAgICB9Cn0KCi5jaXJjbGUtc3dpdGNoIC5zd2l0Y2gtYnV0dG9uLXN1YjpzZWxlY3RlZCB7CiAgICBhbmltYXRpb246IHN3aXRjaEFuaW1hdGVTZWxlY3RlZENpcmNsZSAwLjJzIGVhc2UgMHMgMTsKfQogCi5jaXJjbGUtc3dpdGNoIC5zd2l0Y2gtYnV0dG9uLXN1Yjp1bnNlbGVjdGVkIHsKICAgIGFuaW1hdGlvbjogc3dpdGNoQW5pbWF0ZVNlbGVjdGVkQ2lyY2xlIDAuMnMgZWFzZSAwcyAxIHJldmVyc2UgYmFja3dhcmRzOwp9CgoKQGtleWZyYW1lcyBzd2l0Y2hBbmltYXRlRXh0cmFTZWxlY3RlZENpcmNsZSB7CiAgICAwJSB7CiAgICAgICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIH0KICAgIDEwMCUgewogICAgICAgIGJhY2tncm91bmQtY29sb3I6ICM5OGM0ZTY7CiAgICB9Cn0KCi5jaXJjbGUtc3dpdGNoIC5zd2l0Y2gtYnV0dG9uLXN1Yi1leHRyYTpzZWxlY3RlZCB7CiAgICBhbmltYXRpb246IHN3aXRjaEFuaW1hdGVFeHRyYVNlbGVjdGVkQ2lyY2xlIDAuMnMgZWFzZSAwcyAxOwp9CgouY2lyY2xlLXN3aXRjaCAuc3dpdGNoLWJ1dHRvbi1zdWItZXh0cmE6dW5zZWxlY3RlZCB7CiAgICBhbmltYXRpb246IHN3aXRjaEFuaW1hdGVFeHRyYVNlbGVjdGVkQ2lyY2xlIDAuMnMgZWFzZSAwcyAxIHJldmVyc2UgYmFja3dhcmRzOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIFNXSVRDSCAoUElMTCkKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnBpbGwtc3dpdGNoIC5zd2l0Y2gtYnV0dG9uLXN1YiB7CiAgICBib3JkZXItcmFkaXVzOiAyMHB4OwogICAgaW5pdGlhbC13aWR0aDogNDBweDsKICAgIGluaXRpYWwtaGVpZ2h0OiAyMHB4OwogICAgcGFkZGluZzogMHB4OwogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjODg4ODg4LCAwLjMsIDEsIDEsIDEsIDMsIHRydWUpOwp9CgoucGlsbC1zd2l0Y2ggLnN3aXRjaC1idXR0b24tc3ViIC5idXR0b24gewogICAgYm9yZGVyLXJhZGl1czogNTBweDsKICAgIHdpZHRoOiAyMHB4OwogICAgaGVpZ2h0OiAyMHB4OwogICAgZmlsdGVyOiBub25lOwp9CgoucGlsbC1zd2l0Y2ggLnN3aXRjaC1idXR0b24tc3ViLWV4dHJhIHsKICAgIGhlaWdodDogMDsKICAgIHdpZHRoOiAwOwogICAgYmFja2dyb3VuZC1jb2xvcjogbm9uZTsKICAgIGJvcmRlcjogbm9uZTsKICAgIGZpbHRlcjogbm9uZTsKfQoKQGtleWZyYW1lcyBzd2l0Y2hBbmltYXRlU2VsZWN0ZWRQaWxsIHsKICAgIDAlIHsKICAgICAgICBwb3M6IDA7CiAgICAgICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIH0KICAgIDEwMCUgewogICAgICAgIHBvczogMTAwOwogICAgICAgIGJhY2tncm91bmQtY29sb3I6ICM5OGM0ZTY7CiAgICB9Cn0KCi5waWxsLXN3aXRjaCAuc3dpdGNoLWJ1dHRvbi1zdWI6c2VsZWN0ZWQgewogICAgYW5pbWF0aW9uOiBzd2l0Y2hBbmltYXRlU2VsZWN0ZWRQaWxsIDAuMnMgZWFzZSAwcyAxOwp9CgoucGlsbC1zd2l0Y2ggLnN3aXRjaC1idXR0b24tc3ViOnVuc2VsZWN0ZWQgewogICAgYW5pbWF0aW9uOiBzd2l0Y2hBbmltYXRlU2VsZWN0ZWRQaWxsIDAuMnMgZWFzZSAwcyAxIHJldmVyc2UgYmFja3dhcmRzOwp9Cg"},{ name : "haxeui-core/styles/dark/dialogs.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBESUFMT0dTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5kaWFsb2cgewogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICMwMDAwMDAsIDAuMiwgMzAsIDIsIDEsIDMsIGZhbHNlKTsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwogICAgYmFja2dyb3VuZC1jb2xvcjogIzJjMmYzMDsKICAgIHBhZGRpbmc6IDFweDsKfQoKLmRpYWxvZy1jb250YWluZXIgewogICAgc3BhY2luZzogMDsKfQoKLmRpYWxvZy10aXRsZSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjM2QzZjQxOwogICAgcGFkZGluZzogNXB4OwogICAgYm9yZGVyLWJvdHRvbS13aWR0aDogMXB4OwogICAgYm9yZGVyLWJvdHRvbS1jb2xvcjogIzE4MWExYjsKfQoKLmRpYWxvZy10aXRsZS1sYWJlbCB7CiAgICB3aWR0aDogMTAwJTsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBjb2xvcjogI2Q0ZDRkNDsKICAgIHZlcnRpY2FsLWFsaWduOiAiY2VudGVyIjsKfQoKLmRpYWxvZy1jb250ZW50IHsKICAgIHBhZGRpbmc6IDVweDsKfQoKLmRpYWxvZy1mb290ZXItY29udGFpbmVyIHsKICAgIGJvcmRlci10b3Atd2lkdGg6IDFweDsKICAgIGJvcmRlci10b3AtY29sb3I6ICMxODFhMWI7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjM2QzZjQxOwp9CgouZGlhbG9nLWZvb3RlciB7CiAgICBwYWRkaW5nOiA1cHg7CiAgICBob3Jpem9udGFsLWFsaWduOiByaWdodDsKfQoKLmRpYWxvZy1jbG9zZS1idXR0b24gewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9zbWFsbC1jbG9zZS1idXR0b24ucG5nIjsKICAgIHZlcnRpY2FsLWFsaWduOiAiY2VudGVyIjsKICAgIGN1cnNvcjogInBvaW50ZXIiOwp9CgouZGlhbG9nICNpY29uSW1hZ2UuaW5mbyB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2RpYWxvZ3MvaW5mb3JtYXRpb24ucG5nIjsKfQoKLmRpYWxvZyAjaWNvbkltYWdlLnF1ZXN0aW9uIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvZGlhbG9ncy9xdWVzdGlvbi5wbmciOwp9CgouZGlhbG9nICNpY29uSW1hZ2Uud2FybmluZyB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2RpYWxvZ3MvZXhjbGFtYXRpb24ucG5nIjsKfQoKLmRpYWxvZyAjaWNvbkltYWdlLmVycm9yIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvZGlhbG9ncy9jcm9zcy1jaXJjbGUucG5nIjsKfQoKLm1lc3NhZ2Vib3ggewogICAgaW5pdGlhbC13aWR0aDogMzAwcHg7Cn0"},{ name : "haxeui-core/styles/dark/right_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAOElEQVQImWPYsmXLWxkVCGJiYGA4PmMCAwMDAwMDE4SC8Bm3bNnCAANMcJZlRgETnAWVgbAYGBgAg4cO3PCuD3sAAAAASUVORK5CYII"},{ name : "styles/main.css", data : ""},{ name : "haxeui-core/styles/default/down_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAJElEQVQImWP8//8/AwZgeieriib0TlaVCUIhCzEwMDAhc+DSAPKbCiUI9YmvAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/transparent_px.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAADElEQVQImWN4K6MCAAMnAS7qrFRjAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/sizer_gripper_vertical.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAKCAIAAAAcmWhZAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAH0lEQVQImWN8K6PCAANMDAwMk5KjJyVHQzlwwEg7ZQCDgwyl+MMKdgAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/down_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAJElEQVQImWPcsmULAwZgsswoQBOyzChgglDIQgwMDEzIHLg0AIkLCIq+gFfgAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/dark/sidebars.css", data : "LnNpZGViYXItbW9kYWwtYmFja2dyb3VuZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBibGFjazsKICAgIG9wYWNpdHk6IDAuNjA7Cn0KCi5zaWRlYmFyIHsKICAgIG1hcmdpbjogNTBweDsKICAgIGJhY2tncm91bmQtY29sb3I6ICMzZDNmNDE7CiAgICBwYWRkaW5nOiA1cHg7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjEsIDMwLCAyLCAxLCAzLCBmYWxzZSk7Cn0KICAgIAouc2lkZWJhcjpsZWZ0IHsKICAgIGJvcmRlci1yaWdodDogMXB4IHNvbGlkICMxODFhMWI7Cn0KCi5zaWRlYmFyOnJpZ2h0IHsKICAgIGJvcmRlci1sZWZ0OiAxcHggc29saWQgIzE4MWExYjsKfQoKLnNpZGViYXI6dG9wIHsKICAgIGJvcmRlci1ib3R0b206IDFweCBzb2xpZCAjMTgxYTFiOwp9Cgouc2lkZWJhcjpib3R0b20gewogICAgYm9yZGVyLXRvcDogMXB4IHNvbGlkICMxODFhMWI7Cn0KCi5zaWRlYmFyOmxlZnQgI2Nsb3NlU2lkZUJhciB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2xlZnRfYXJyb3dfY2lyY2xlZC5wbmcgIjsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLnNpZGViYXI6cmlnaHQgI2Nsb3NlU2lkZUJhciB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL3JpZ2h0X2Fycm93X2NpcmNsZWQucG5nICI7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi5zaWRlYmFyOnRvcCAjY2xvc2VTaWRlQmFyIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvdXBfYXJyb3dfY2lyY2xlZC5wbmcgIjsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLnNpZGViYXI6Ym90dG9tICNjbG9zZVNpZGVCYXIgewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9kb3duX2Fycm93X2NpcmNsZWQucG5nICI7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0"},{ name : "haxeui-core/styles/default/left_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVQImWN8K6PCwMDAwMAg9Pg2E5zFwMDABGcxMDAw/v//nwEGmN7JqiI4DAwMcD7UAAgfAMkKDTd2MVgoAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/rules.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBSVUxFCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5ydWxlIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNEREREREQ7Cn0KCi5ob3Jpem9udGFsLXJ1bGUgewogICAgaGVpZ2h0OiAxcHg7CiAgICB3aWR0aDogMTAwJTsKICAgIGhvcml6b250YWwtYWxpZ246ICJjZW50ZXIiOwp9CgoudmVydGljYWwtcnVsZSB7CiAgICBoZWlnaHQ6IDEwMCU7CiAgICB3aWR0aDogMXB4OwogICAgdmVydGljYWwtYWxpZ246ICJjZW50ZXIiOwp9"},{ name : "haxeui-core/styles/dark/menus.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBNRU5VQkFSCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5tZW51YmFyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMzRDNGNDE7CiAgICBwYWRkaW5nOiA1cHg7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAxcHg7CiAgICBib3JkZXItYm90dG9tLWNvbG9yOiAjMTgxYTFiOwogICAgZmlsdGVyOiBkcm9wLXNoYWRvdygyLCA0NSwgIzAwMDAwMCwgMC4xNSwgNiwgMSwgMzAsIDM1LCBmYWxzZSk7Cn0KCi5tZW51YmFyLWJ1dHRvbiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjM0QzRjQxOwogICAgYm9yZGVyOiBub25lOwogICAgY29sb3I6ICNiNGI0YjQ7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9CgoubWVudWJhci1idXR0b246aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzQxNTk4MjsKICAgIGNvbG9yOiB3aGl0ZTsKfQoKLm1lbnViYXItYnV0dG9uOmRvd24gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzM5M2IzYzsKICAgIGNvbG9yOiAjZDRkNGQ0OwogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGJvcmRlci1ib3R0b20td2lkdGg6IDBweDsKICAgIGJvcmRlci1ib3R0b20tc2l6ZTogMHB4Owp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIE1FTlUKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLm1lbnUgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzM5M2IzYzsKICAgIHBhZGRpbmc6IDFweDsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDIsIDQ1LCAjMDAwMDAwLCAwLjE1LCA2LCAxLCAzMCwgMzUsIGZhbHNlKTsKICAgIHNwYWNpbmc6IDA7CiAgICB3aWR0aDogMjAwcHg7Cn0KCi5tZW51LmV4cGFuZGVkIHsKICAgIGJvcmRlci10b3Atd2lkdGg6IDBweDsKICAgIGJvcmRlci10b3Atc2l6ZTogMHB4Owp9CgoubWVudS1maWxsZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzE4MWExYjsKICAgIGhlaWdodDogMXB4Owp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIE1FTlVJVEVNUwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoubWVudWl0ZW0gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzM5M2IzYzsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogNXB4OwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgoubWVudWl0ZW0tbGFiZWwsIC5tZW51aXRlbS1jaGVja2JveCwgLm1lbnVpdGVtLW9wdGlvbmJveCwgLm1lbnVpdGVtLXNob3J0Y3V0LWxhYmVsIHsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7Cn0KCi5tZW51aXRlbS1zaG9ydGN1dC1sYWJlbCB7CiAgICB0ZXh0LWFsaWduOiByaWdodDsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBob3Jpem9udGFsLWFsaWduOiByaWdodDsKfQoKLm1lbnVpdGVtLWljb24gewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLm1lbnVpdGVtOmhvdmVyLCAubWVudWl0ZW06c2VsZWN0ZWQgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzQxNTk4MjsKfQoKLm1lbnVpdGVtIC5sYWJlbDpob3ZlciwgLm1lbnVpdGVtIC5sYWJlbDpzZWxlY3RlZCB7CiAgICBjb2xvcjogd2hpdGU7Cn0KCi5tZW51aXRlbS1leHBhbmRhYmxlIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvcmlnaHRfYXJyb3cucG5nIjsKICAgIHZlcnRpY2FsLWFsaWduOiAiY2VudGVyIjsKfQoKLm1lbnVzZXBhcmF0b3IgewogICAgaGVpZ2h0OiAxcHg7CiAgICB3aWR0aDogMTAwJTsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7CiAgICBob3Jpem9udGFsLWFsaWduOiAiY2VudGVyIjsKfQo"},{ name : "haxeui-core/styles/native/main.css", data : "KiB7CiAgICBuYXRpdmU6IHRydWU7Cn0KCi5oc2xpZGVyOm5hdGl2ZSwgLnZzbGlkZXI6bmF0aXZlLCAuaHByb2dyZXNzOm5hdGl2ZSwgLnZwcm9ncmVzczpuYXRpdmUgewogICAgd2lkdGg6IGF1dG87CiAgICBoZWlnaHQ6IGF1dG87CiAgICBiYWNrZ3JvdW5kOiBub25lOwogICAgYm9yZGVyOiBub25lOwogICAgYm9yZGVyLXJhZGl1czogbm9uZTsKfQoKLmJ1dHRvbjpuYXRpdmUsIC5kcm9wZG93bjpuYXRpdmUgewogICAgYmFja2dyb3VuZDogbm9uZTsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJvcmRlci1yYWRpdXM6IG5vbmU7CiAgICBjb2xvcjogbm9uZTsKfQoKLnRleHRmaWVsZDpuYXRpdmUsIC50ZXh0YXJlYTpuYXRpdmUgewogICAgYmFja2dyb3VuZDogbm9uZTsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJvcmRlci1yYWRpdXM6IG5vbmU7CiAgICBjb2xvcjogbm9uZTsKICAgIGZpbHRlcjogbm9uZTsKfQoKLmRpYWxvZzpuYXRpdmUgewogICAgcGFkZGluZy10b3A6IDBweDsKfQ"},{ name : "haxeui-core/styles/default/haxeui_small.png", data : "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"},{ name : "haxeui-core/styles/dark/tableview.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBIRUFERVIKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmNvbHVtbi5zb3J0YWJsZSB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc29ydGFibGVfYXJyb3dzLnBuZyI7CiAgICBpY29uLXBvc2l0aW9uOiBmYXItcmlnaHQ7Cn0KCi5jb2x1bW4uc29ydC1hc2MgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3NvcnRhYmxlX2FzYy5wbmciOwp9CgouY29sdW1uLnNvcnQtZGVzYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc29ydGFibGVfZGVzYy5wbmciOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIFRBQkxFVklFVwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoudGFibGV2aWV3IHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7CiAgICBwYWRkaW5nOiAxcHg7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7CiAgICBzcGFjaW5nOiAwOwp9CgoudGFibGV2aWV3IC50YWJsZXZpZXctY29udGVudHMgewogICAgc3BhY2luZzogMDsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogMHB4Owp9CgoudGFibGV2aWV3IC5ldmVuIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi50YWJsZXZpZXcgLm9kZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmEyYzJkOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgoudGFibGV2aWV3IC5jb21wb3VuZGl0ZW1yZW5kZXJlciAuaXRlbXJlbmRlcmVyIHsKICAgIGhlaWdodDogYXV0bzsKICAgIHBhZGRpbmc6IDVweDsKfQoKLnRhYmxldmlldyAuZXZlbjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmYzNzQ2Owp9CgoudGFibGV2aWV3IC5vZGQ6aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJmMzc0NjsKfQoKLnRhYmxldmlldyAuY29tcG91bmRpdGVtcmVuZGVyZXIgLmxhYmVsIHsKICAgIGNvbG9yOiAjYjRiNGI0Owp9CgoudGFibGV2aWV3IC5jb21wb3VuZGl0ZW1yZW5kZXJlcjpzZWxlY3RlZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjNDE1OTgyOwogICAgY29sb3I6IHdoaXRlOwp9CgoudGFibGV2aWV3IC5jb21wb3VuZGl0ZW1yZW5kZXJlcjpzZWxlY3RlZCAubGFiZWwgewogICAgY29sb3I6IHdoaXRlOwp9CgoudGFibGV2aWV3IC5jb21wb3VuZGl0ZW1yZW5kZXJlcjpkaXNhYmxlZCB7CiAgICBjb2xvcjogIzU5NTk1OTsKfQoKLnRhYmxldmlldyAuY29tcG91bmRpdGVtcmVuZGVyZXI6ZGlzYWJsZWQgLmxhYmVsIHsKICAgIGNvbG9yOiAjNTk1OTU5Owp9Cg"},{ name : "haxeui-core/styles/default/sortable_desc.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAJCAIAAABxOqH0AAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA0UlEQVQIHQHGADn/Ae0cJAAAAAAAAIdYUHmosAAAAAAAAAIAAAAAAACHWFAAAACJWlIAAAAAAAACAAAAh1hQAgICAgICAAAAjV5WAAAAAe0cJAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAANannwAAAAAAAAAAAAAAACpZYQIAAAAqWWEAAAAAAAAAAAAqWWEAAAACAAAAAAAAKllhAAAAKllhAAAAAAAAmeIQ3V5WWXgAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/dialogs/exclamation.png", data : "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAB3VBMVEUAAACVfwD9+7zFrAHGrQGeiAC6owDUxDzr5oDd213v5oft44HZzE/Qwzbr4Ha6pxTo3Gy8qBTk11+WgAC+qhPVwjW+qRHTwCu/qQ7SvSHRuxehiwHQuA/MswHCqgaulwDDqwPGrQG0nAHIrwG3oAHKsQG7owHMswGVfwC+pgGahADMswHBqQGmjwDErAGymgHHrgG2ngHJsAG5oQHLsgHp5XD065Xe22rm1znk0iDz6pTi23Ph1EHdzSHx6JHe0kfYyynu44PZz0vUxzDZyUzBqQy/qAjt3SXn2irp2yfa1Dbk2S3S0D/h1y/d1jLu3WbX0znV0Tvt3ST15Xb043Lw32vv3mjOzkPw4z/v4Tnu3ioiIhoAAADv4TTv3y7++rj8+LX89q379av48aL58Z737JP38o787o716Yr46YLs6YLz5oD453p2dnaXknR4d3BwcHCopWt6eGhoaGh+e2FgYGDi3l6GgVxXV1ff2k3c1k3u40nVz0nT0ULi2j3Bvjbk2TOenC+GhSqVkSNtbSNfXhpIRxUuLg4eHQcdHAcWFgf37pjt4XPf33Dk4Wbr5GLZ0lzh11fl4FXt41OIglHV1FDo30fSyUbX1ETRyETd10A4ODZkYSzp2yglJSNztjb6AAAAR3RSTlMAzPoVDQgF0P7+7eTe3tzc1tPPzMnGw7+8ubKyq6uqoaCVkoiCenNtZmRgX1VORz05LishH/75+fj49fX09PDu7uro6NS0tIfvrv4AAAGdSURBVDjLrZFFWwJhFEZ1DOzu7u7ubtFPRRAkLLq7u8Hu9rc6MIAIDBs9q3ufc3Zvwn+TXF2dHDfoLCjojOeTqiCoKilO0Jp3dJTXiu6HKiAWC6oYQg2ac074/NOcZjQ/UA5xcDjOcfkAStCYSd+HoWc2xvZ9pcc4oUAgxJ2U9sXyqfUZDLxILBbh2fP1qTGCnuJTPEEqk0kJ+LPinmifUjfDBkCuUMgB4GXUpUQFXZgzAgAqtVoFAIGB6YpaqWaCBwB4eP/60D+/3kzWRG7WvnQOwK3e7vXaD2AuMe0RKy2PXGgNWKzV5bJiYR5HV35v1pKVZvAJi9NpwfpIz24J94NladpdHyaHw+Q/XtLLBsOCpqyrHT9KLleJXJrsph/fXzL8thGJpqQ/FDQs3G0j2DweW+A0LjYEfW/RtXkLwU2huLcCGIt6AyvVzj5tBiBTKOTgbZ6rRTbrzr9fCyIhkyVrIfK7/StVTpHWg+iYTF3o+Zyu9G3WkUtcRSO3Aw4Kx4hEIolEolKpNBrtEAY2ewjjhXDQlhiHtoS/8w0/HYkkEMHbQgAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/frames.css", data : "LmZyYW1lIHsKICAgIHBhZGRpbmctbGVmdDogMTBweDsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwp9CgouZnJhbWUtY29udGVudHMgewogICAgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgIzI1MjcyODsKICAgIGJvcmRlci1sZWZ0OiAxcHggc29saWQgIzI1MjcyODsKICAgIGJvcmRlci1ib3R0b206IDFweCBzb2xpZCAjMjUyNzI4OwogICAgcGFkZGluZzogMTBweDsKICAgIHBhZGRpbmctdG9wOiAxNXB4Owp9CgouZnJhbWUtdGl0bGUgewogICAgY29sb3I6ICNiNGI0YjQ7Cn0KCi5mcmFtZS1sZWZ0LWxpbmUsIC5mcmFtZS1yaWdodC1saW5lIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7CiAgICBoZWlnaHQ6IDFweDsKfQo"},{ name : "haxeui-core/styles/dark/up_down_arrows.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAJCAIAAABxOqH0AAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAARElEQVQImWN8K6PCwMDAwMBwfMYEy4wCCJsJLgQnoaJwDpzNuGXLFgYMwAg3F0UUq1omuL1wYJlRwAShkIUQLoNw4NIA3UcXw9uo6KsAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/frames.css", data : "LmZyYW1lIHsKICAgIHBhZGRpbmctbGVmdDogMTBweDsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwp9CgouZnJhbWUtY29udGVudHMgewogICAgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgI0RERERERDsKICAgIGJvcmRlci1sZWZ0OiAxcHggc29saWQgI0RERERERDsKICAgIGJvcmRlci1ib3R0b206IDFweCBzb2xpZCAjREREREREOwogICAgcGFkZGluZzogMTBweDsKICAgIHBhZGRpbmctdG9wOiAxNXB4Owp9CgouZnJhbWUtdGl0bGUgewogICAgY29sb3I6ICMyMjIyMjI7Cn0KCi5mcmFtZS1sZWZ0LWxpbmUsIC5mcmFtZS1yaWdodC1saW5lIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNEREREREQ7CiAgICBoZWlnaHQ6IDFweDsKfQo"},{ name : "haxeui-core/styles/dark/left_arrow_circled.png", data : "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAACtklEQVRIiaWVy04UQRSGv1MzAz0jYRBQYOVlAeJKQDCGGGOiYjTRV/ABXBgSyJCJpqILyCwgLnRhND6DJkbRrTFKGNSFtxjvFwRvkaBTtHSXi2EUZqaHTvhXXVWnvv90V/U5wioaGxurM8YcEJE2a20TgIjMiMgza+3tVCr1s9J+CVoYHh7uArSI9AGxgDAXGFdK6cHBwalQBqOjo3HXdc8DxyslUCQfuGKMOaG1NoEGmUym2ff9a0B3SHCxJjzPO5pOp2cKE6rwoLV2fN+/ugY4QE8kErmutU6UGDiOcwHoWQO8oK54PH6uMBCATCazw/f97HLDYs3Pz/Prd46NGxoRWfVorLW2e2hoKKsAPM87Wwn+9ds37ty9x2R2ijdv34V5CwFOA8jIyEgSmAWqguCT2Qd4ngdA+7Y2tm7ZHMbkT3V19UYF9AXBv3//sQLe0tzEls2bwsABYq7r7o8CrWEyr6qqor6+nvcfPpbEJhJxGhsaSuatta1Ra21L8aF5nkd26j8cwHVdHj95Gpjunt7d1NbWFhu0KBGxxcEiglKRQFj5+NI7IiI2KiLT1q70UErRvbOT+xOTLC4uAvlPtL29razxukSCmpqacgbTUWvti3JZ1SWT7OrZ+c/EdV0+fZqmq7OjbLYBeqGAcfJVMdAkGo0CMPvlKy9fvQ4LX8jlcrfUUj0fD4oqNnGc6rAGN7XWc9GlwSngCAF/c10yyd49veRyhvXr68LAfaXUGQrAVCr1CLhSaYfjOGHhiMilQgP6l7Ex5gRwPxShsrKxWOxkYbC8HxjP844BE2uA34tEIof7+/tzJQYA6XR6xhizF7hMvg2GlS8iF40x+wYGBmaXL1Rq+h3km/4hAooh+et9Y6npPywXsGrn0FrXxuPxg9baVqB5afqztfb5wsLCba31XKX9fwFEFAnZCIfj5AAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/down_arrow_circled.png", data : "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"},{ name : "haxeui-core/locale/es/dialog.properties", data : "ZGlhbG9nLnNhdmU9R3VhcmRhcgpkaWFsb2cueWVzPVNpCmRpYWxvZy5ubz1ObwpkaWFsb2cuY2xvc2U9Q2VycmFyCmRpYWxvZy5vaz1PSwpkaWFsb2cuY2FuY2VsPUNhbmNlbGFyCmRpYWxvZy5hcHBseT1BcGxpY2FyCgo"},{ name : "haxeui-core/styles/default/propertygrids.css", data : "LnByb3BlcnR5LWdyaWQgewp9CgoucHJvcGVydHktZ3JpZCAuc2Nyb2xsdmlldy1jb250ZW50cyB7CiAgICBwYWRkaW5nOiAwOwogICAgd2lkdGg6IDEwMCU7CiAgICBzcGFjaW5nOiAwOwp9CgoucHJvcGVydHktZ3JvdXAgewogICAgd2lkdGg6IDEwMCU7CiAgICBzcGFjaW5nOiAwOwp9CgoucHJvcGVydHktZ3JvdXAtaGVhZGVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNFREVERUQ7CiAgICBwb2ludGVyLWV2ZW50czogdHJ1ZTsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogNXB4OwogICAgYm9yZGVyLWNvbG9yOiAjQUJBQkFCOwogICAgYm9yZGVyLWJvdHRvbS13aWR0aDogMXB4OwogICAgYm9yZGVyLWJvdHRvbS1zaXplOiAxcHg7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi5wcm9wZXJ0eS1ncm91cC1oZWFkZXIuc2Nyb2xsaW5nIHsKICAgIGJvcmRlci1yaWdodC13aWR0aDogMXB4OwogICAgYm9yZGVyLXJpZ2h0LXNpemU6IDFweDsKfQoKLnByb3BlcnR5LWdyb3VwLWhlYWRlcjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRjVGNUY1Owp9CgoucHJvcGVydHktZ3JvdXAtaGVhZGVyLWljb24gewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLnByb3BlcnR5LWdyb3VwLWhlYWRlcjpleHBhbmRlZCAucHJvcGVydHktZ3JvdXAtaGVhZGVyLWljb24gewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9kb3duX2Fycm93X3NxdWFyZS5wbmciOwp9CgoucHJvcGVydHktZ3JvdXAtaGVhZGVyOmNvbGxhcHNlZCAucHJvcGVydHktZ3JvdXAtaGVhZGVyLWljb24gewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvd19zcXVhcmUucG5nIjsKfQoKLnByb3BlcnR5LWdyb3VwLWhlYWRlci1sYWJlbCB7Cn0KCi5wcm9wZXJ0eS1ncm91cC1jb250ZW50cyB7CiAgICB3aWR0aDogMTAwJTsKICAgIHNwYWNpbmc6IDE7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjQUJBQkFCOwogICAgcGFkZGluZy1ib3R0b206IDFweDsKfQoKLnByb3BlcnR5LWdyb3VwLmxhc3QgLnByb3BlcnR5LWdyb3VwLWNvbnRlbnRzLnNjcm9sbGluZyB7CiAgICBwYWRkaW5nLWJvdHRvbTogMHB4Owp9CgoucHJvcGVydHktZ3JvdXAtY29udGVudHMuc2Nyb2xsaW5nIHsKICAgIHBhZGRpbmctcmlnaHQ6IDFweDsKfQoKLnByb3BlcnR5LWdyb3VwLWl0ZW0tbGFiZWwtY29udGFpbmVyIHsKICAgIHdpZHRoOiA1MCU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIGhlaWdodDogMTAwJTsKICAgIHBhZGRpbmctbGVmdDogNXB4Owp9CgoucHJvcGVydHktZ3JvdXAtaXRlbS1lZGl0b3ItY29udGFpbmVyIHsKICAgIHdpZHRoOiA1MCU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKfSAgICAgICAgCgoucHJvcGVydHktZ3JvdXAtaXRlbS1sYWJlbCB7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9CgoucHJvcGVydHktZ3JvdXAtaXRlbS1lZGl0b3IgewogICAgd2lkdGg6IDEwMCU7Cn0KCi5wcm9wZXJ0eS1ncm91cCAudGV4dGZpZWxkIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGZpbHRlcjogbm9uZTsKICAgIGJvcmRlci1yYWRpdXM6IDA7Cn0KCi5wcm9wZXJ0eS1ncm91cCAuY2hlY2tib3ggewogICAgcGFkZGluZzogNXB4OwogICAgcGFkZGluZy1sZWZ0OiA0cHg7Cn0KCi5wcm9wZXJ0eS1ncm91cCAubnVtYmVyLXN0ZXBwZXIgewogICAgcGFkZGluZzogMDsKfQoKLnByb3BlcnR5LWdyb3VwIC5kcm9wZG93biB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItcmFkaXVzOiBub25lOwp9Cg"},{ name : "haxeui-core/styles/default/checkboxes.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBDSEVDS0JPWAoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouY2hlY2tib3ggewogICAgd2lkdGg6IGF1dG87CiAgICBoZWlnaHQ6IGF1dG87CiAgICBob3Jpem9udGFsLXNwYWNpbmc6IDRweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIGNvbG9yOiAjMDAwMDAwOwp9CgouY2hlY2tib3g6aG92ZXIgewp9CgouY2hlY2tib3g6ZGlzYWJsZWQgewogICAgY3Vyc29yOiBkZWZhdWx0OwogICAgY29sb3I6ICM5MDkwOTA7Cn0KCi5jaGVja2JveC12YWx1ZSB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjQUJBQkFCOwogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIHdpZHRoOiAxNnB4OwogICAgaGVpZ2h0OiAxNnB4OwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIGljb246IG5vbmU7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjODg4ODg4LCAwLjIsIDIsIDIsIDEsIDMsIHRydWUpOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgouY2hlY2tib3gtdmFsdWU6aG92ZXIgewogICAgYm9yZGVyOiAxcHggc29saWQgIzIxNkFBRTsKfQoKLmNoZWNrYm94LXZhbHVlOnNlbGVjdGVkIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9jaGVjay5wbmciOwp9CgouY2hlY2tib3gtdmFsdWU6ZGlzYWJsZWQgewogICAgYmFja2dyb3VuZDogI0Q0RDRENCAjQ0NDQ0NDIHZlcnRpY2FsOwogICAgY3Vyc29yOiBkZWZhdWx0Owp9CgouY2hlY2tib3gtbGFiZWwgewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLmNoZWNrYm94LWljb24gewogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIG9wYWNpdHk6IDE7Cn0KCi5jaGVja2JveC1pY29uOmRpc2FibGVkIHsKICAgIGN1cnNvcjogZGVmYXVsdDsKICAgIG9wYWNpdHk6IDAuNTsKfQo"},{ name : "haxeui-core/styles/default/scrollbars.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTQ1JPTEwKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnNjcm9sbCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBub25lOwogICAgcGFkZGluZzogMHB4OwogICAgYmFja2dyb3VuZC1jb2xvcjogI0U5RTlFOTsKfQoKLnNjcm9sbCAuYnV0dG9uIHsKICAgIHdpZHRoOiA3cHg7CiAgICBoZWlnaHQ6IDdweDsKICAgIGJhY2tncm91bmQtY29sb3I6ICNDNkM2QzY7CiAgICBib3JkZXItcmFkaXVzOiAwOwogICAgYm9yZGVyOiBub25lOwogICAgb3BhY2l0eTogLjg7CiAgICBmaWx0ZXI6IG5vbmU7Cn0KCi5zY3JvbGwgLmJ1dHRvbjpob3ZlciB7CiAgICBvcGFjaXR5OiAxOwp9CgoudmVydGljYWwtc2Nyb2xsIHsKICAgIHdpZHRoOiA4cHg7CiAgICBwYWRkaW5nLWxlZnQ6IDFweDsKICAgIGJvcmRlci1sZWZ0OiAxcHggc29saWQgI2FiYWJhYjsKfQoKLmhvcml6b250YWwtc2Nyb2xsIHsKICAgIGhlaWdodDogOHB4OwogICAgcGFkZGluZy10b3A6IDFweDsKICAgIGJvcmRlci10b3A6IDFweCBzb2xpZCAjYWJhYmFiOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIENMQVNTSUMgVkFSSUFOVFMKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmNsYXNzaWMtc2Nyb2xscyAuc2Nyb2xsLAouc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRTlFOUU5OwogICAgYm9yZGVyOm5vbmU7CiAgICBwYWRkaW5nOiAwOwp9CgouY2xhc3NpYy1zY3JvbGxzIC5zY3JvbGwgLmJ1dHRvbiwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLmJ1dHRvbnsKICAgIGJvcmRlci1yYWRpdXM6IDA7CiAgICBib3JkZXI6IG5vbmU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRTlFOUU5OwogICAgcGFkZGluZzogMDsKICAgIGZpbHRlcjogbm9uZTsKICAgIGhpZGRlbjogZmFsc2U7CiAgICB3aWR0aDogMTdweDsKICAgIGhlaWdodDogMTdweDsKICAgIG9wYWNpdHk6IDE7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnNjcm9sbCAuYnV0dG9uOmhvdmVyLAouc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuYnV0dG9uOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNEN0Q3RDc7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnNjcm9sbCAuYnV0dG9uOmRvd24sCi5zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5idXR0b246ZG93biB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjNTI1MjUyOwogICAgZmlsdGVyOiBub25lOwp9CgouY2xhc3NpYy1zY3JvbGxzIC5zY3JvbGwgLnRodW1iLAouc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAudGh1bWIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0M2QzZDNjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuc2Nyb2xsIC50aHVtYjpob3ZlciwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLnRodW1iOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNBQUFBQUE7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnNjcm9sbCAudGh1bWI6ZG93biwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLnRodW1iOmRvd24gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzUyNTI1MjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuc2Nyb2xsIC50aHVtYjpkaXNhYmxlZCwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLnRodW1iOmRpc2FibGVkIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNEREREREQ7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnZlcnRpY2FsLXNjcm9sbCwKLnZlcnRpY2FsLXNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgewogICAgd2lkdGg6IDE3cHg7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnZlcnRpY2FsLXNjcm9sbCAuZGVpbmMsCi52ZXJ0aWNhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5kZWluYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvdXBfYXJyb3cucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAudmVydGljYWwtc2Nyb2xsIC5kZWluYzpkb3duLAoudmVydGljYWwtc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuZGVpbmM6ZG93biB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvdXBfYXJyb3dfd2hpdGUucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAudmVydGljYWwtc2Nyb2xsIC5pbmMsCi52ZXJ0aWNhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5pbmMgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2Rvd25fYXJyb3cucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAudmVydGljYWwtc2Nyb2xsIC5pbmM6ZG93biwKLnZlcnRpY2FsLXNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLmluYzpkb3duIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9kb3duX2Fycm93X3doaXRlLnBuZyI7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLmhvcml6b250YWwtc2Nyb2xsLAouaG9yaXpvbnRhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIHsKICAgIGhlaWdodDogMTdweDsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuaG9yaXpvbnRhbC1zY3JvbGwgLmRlaW5jLAouaG9yaXpvbnRhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5kZWluYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvbGVmdF9hcnJvdy5wbmciOwp9CgouY2xhc3NpYy1zY3JvbGxzIC5ob3Jpem9udGFsLXNjcm9sbCAuZGVpbmM6ZG93biwKLmhvcml6b250YWwtc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuZGVpbmM6ZG93biB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvbGVmdF9hcnJvd193aGl0ZS5wbmciOwp9CgouY2xhc3NpYy1zY3JvbGxzIC5ob3Jpem9udGFsLXNjcm9sbCAuaW5jLAouaG9yaXpvbnRhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5pbmMgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3JpZ2h0X2Fycm93LnBuZyI7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLmhvcml6b250YWwtc2Nyb2xsIC5pbmM6ZG93biwKLmhvcml6b250YWwtc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuaW5jOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3JpZ2h0X2Fycm93X3doaXRlLnBuZyI7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogTU9CSUxFIFZBUklBTlRTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5zY3JvbGw6bW9iaWxlIC5pbmMsIC5zY3JvbGw6bW9iaWxlIC5kZWluYyB7CiAgICBoaWRkZW46IHRydWU7Cn0KCi5ob3Jpem9udGFsLXNjcm9sbDptb2JpbGUgewogICAgb3BhY2l0eTogLjU7CiAgICBoZWlnaHQ6IDhweDsKICAgIHBhZGRpbmc6IDJweDsKICAgIGJhY2tncm91bmQtY29sb3I6IG5vbmU7Cn0KCi5ob3Jpem9udGFsLXNjcm9sbDptb2JpbGUgLnRodW1iIHsKICAgIGhlaWdodDogNHB4OwogICAgYm9yZGVyLXJhZGl1czogNHB4Owp9CgoudmVydGljYWwtc2Nyb2xsOm1vYmlsZSB7CiAgICBvcGFjaXR5OiAuNTsKICAgIHdpZHRoOiA4cHg7CiAgICBwYWRkaW5nOiAycHg7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBub25lOwp9CgoudmVydGljYWwtc2Nyb2xsOm1vYmlsZSAudGh1bWIgewogICAgd2lkdGg6IDRweDsKICAgIGJvcmRlci1yYWRpdXM6IDRweDsKfQo"},{ name : "haxeui-core/styles/default/collapsed.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5AoNCwocG2BobAAAAHlJREFUOMtjYBi+YP36bcrEqGPCLfP36Pr1W4zJN4CBQZyB6f/B9Zs2eZJrAAMDAwM3w3/GDRs2bI4i1wAGBgYGtv+MDEs2bNpSTq4BeAELEWp+Mf5nSAzw91lGjgFfGRj/hwb4+20nxwUvGf4xegcG+p6laUIaBgAAk1kg6zuyVSkAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/dark/rules.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBSVUxFCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5ydWxlIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7Cn0K"},{ name : "haxeui-core/styles/dark/steppers.css", data : "Lm51bWJlcnN0ZXBwZXIgewogICAgcGFkZGluZzogMXB4OwogICAgc3BhY2luZzogMDsKfQoKLnN0ZXBwZXIgewogICAgc3BhY2luZzogMDsKfQoKLnN0ZXBwZXItYnV0dG9uIHsKICAgIHBhZGRpbmc6IDNweDsKICAgIHBhZGRpbmctdG9wOiA0cHg7CiAgICBwYWRkaW5nLWJvdHRvbTogNHB4OwogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyYzJmMzA7CiAgICBvcGFjaXR5OiAxOwp9Cgouc3RlcHBlci1idXR0b246aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzQ1NDg0YTsKfQoKLnN0ZXBwZXItYnV0dG9uOmRvd24gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzQ1NDg0YTsKfQoKLnN0ZXBwZXItYnV0dG9uOmRpc2FibGVkIHsKICAgIG9wYWNpdHk6IDAuNTsKICAgIGJhY2tncm91bmQtY29sb3I6ICMzMzM3Mzg7Cn0KCi5zdGVwcGVyLWluYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvdXBfYXJyb3cucG5nIjsKfQoKLnN0ZXBwZXItZGVpbmMgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2Rvd25fYXJyb3cucG5nIjsKfQoKLnN0ZXBwZXItaW5jOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL3VwX2Fycm93X3doaXRlLnBuZyI7Cn0KCi5zdGVwcGVyLWRlaW5jOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2Rvd25fYXJyb3dfd2hpdGUucG5nIjsKfQoKLnN0ZXBwZXItdGV4dGZpZWxkLCAuc3RlcHBlci10ZXh0ZmllbGQ6YWN0aXZlIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogNHB4OwogICAgcGFkZGluZy10b3A6IDVweDsKICAgIHBhZGRpbmctYm90dG9tOiAzcHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgZmlsdGVyOiBub25lOwogICAgYmFja2dyb3VuZC1jb2xvcjogIzI1MjcyODsKfQoKLnN0ZXBwZXItdGV4dGZpZWxkOmRpc2FibGVkIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyYzJmMzA7Cn0KCi5zdGVwcGVyLXN0ZXAgewogICAgaGVpZ2h0OiAxMDAlOwp9Cgouc3RlcHBlci1zdGVwIC5zdGVwcGVyLWluYywgLnN0ZXBwZXItc3RlcCAuc3RlcHBlci1kZWluYyB7CiAgICBoZWlnaHQ6IDUwJTsKfQoKLm51bWJlci1zdGVwcGVyIHsKICAgIGluaXRpYWwtd2lkdGg6IDYwcHg7Cn0"}];
+haxe_Resource.content = [{ name : "haxeui-core/styles/default/sortable_asc.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAJCAIAAABxOqH0AAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA0UlEQVQIHQHGADn/Ae0cJAAAAAAAANannypZYQAAAAAAAAIAAAAAAADWp58AAADWp58AAAAAAAACAAAA1qefAAAAAAAAAAAA1qefAAAAAe0cJAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAI1eVgAAAAAAAAAAAAMDA3CfpwIAAABzoqoAAAADAwMDAwNwn6cAAAACAAAAAAAAc6KqAAAAcJ+nAAAAAAAAAnQX2cErsvcAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/right_arrow_square.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAIAAABLMMCEAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAMUlEQVQImWN8K6PCwMCQbKIz98wVBhhggrOSTXSwiCJLoIjCJdBFIaYzYQqhiCK7AQAMqA07hk2gSAAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/default/dialogs/question-small.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAABLFBMVEUAAAB7e4AzMzNLS0tUVFQ/Pz8lJSVRUVGenp6mprLIyMg6Oj0LCwtqamoLCws+Pj5CQkJVVVU6OjpFRUUmJiZVVVULCwsXFxdRUVENDQ1UVFSqqqyfn6K/v76zs7KZmZlRUVNQUFFzc3NycnIsWdUqVMn////o6Oju7u7a2uvc3NvPz9FJas4nTr0mTLrh4eFfgeFbfd9XedvMzMwrVcs5Wr4xVb5cc7pzlvRtj+4wYuXW1uSjsNeRotVPctVLbdJ1jNBeectBY8qVoshadciJlsYtVMPAwMGJlsBlfMA3V7kfRrZEX7MkSLNOZK08V6wSM5S2wuZ/mOIyYeEwX+GcreDR0dvPz9rY2NgzX9jJydA+ZM+lrsfDw8M+YMN1h8IqUL93iLwmSrQkRq3qyJ1kAAAAJHRSTlMArkdAPRgJB6Hc0pKHfHRubGNhXFxVVE9NHRXX19TUooaGeHiocz46AAAA7ElEQVQY0yXI1XbCUBRF0ROD4K719gbSuAd397oL8P//wA3Mhz3GXuAp0plEIkMX4cRP3wbLWPCO9h9/ni03OpLUaahs3isUq3aNaqVSNbrCFQXARNSBZpSwR33wHmGAuui3tHaz+VB60dv9SwpSwlSTpJ79Z273v1MzBXHR1nvOzhW/l0vH/olDzJy1/mVFEBRZHs3GMUiK7hfHcYqCZ+SOk0CeTZwPZPG8hZA8OSeBuRYX1hPiefTMLT5vGACSeF3PUa2G5us3ggQAX5qoD1ebzWpYJ9I+8EouFLjHAqEc/keFbDQcjmYLgB0Ay8YloSiVm/0AAAAASUVORK5CYII"},{ name : "haxeui-core/styles/dark/scrollview.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTQ1JPTExWSUVXCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5zY3JvbGx2aWV3IHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7CiAgICBwYWRkaW5nOiAxcHg7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7Cn0K"},{ name : "haxeui-core/styles/dark/dropdowns.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBEUk9QRE9XTlMKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmRyb3Bkb3duLXBvcHVwIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjMTgxYTFiOwp9Cg"},{ name : "styles/default/main.css", data : "LmJ1dHRvbiwgLmxhYmVsLCAudGV4dGFyZWEsIC50ZXh0ZmllbGQgewogICAgZm9udC1uYW1lOiAiQXJpYWwiOwogICAgZm9udC1zaXplOiAxM3B4Owp9CgouY29tcG9uZW50OmRpc2FibGVkIHsKICAgIGN1cnNvcjogbm90LWFsbG93ZWQ7Cn0"},{ name : "haxeui-core/styles/default/up_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAKklEQVQImWN8K6PCwMDAwMCQbKIz98wVCJsJLgQnoaJwDpzNGBAQwIABAOGNCDDIObJsAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/right_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAM0lEQVQImWP8////O1lVBgYGBgYGJgYGBqHHtxEcOJ/x////DDDABGe9k1VlgrOgMnDTADWiDmfiE8U7AAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/global.css", data : ""},{ name : "haxeui-core/styles/default/ranges.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBSQU5HRQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoucmFuZ2UgewogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKICAgIHBhZGRpbmc6IDFweDsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICM4ODg4ODgsIDAuMiwgMiwgMiwgMSwgMywgdHJ1ZSk7Cn0KCi5yYW5nZS12YWx1ZSB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7Cn0KCi5ob3Jpem9udGFsLXJhbmdlIHsKICAgIGJhY2tncm91bmQ6ICNGMUYxRjEgI0ZGRkZGRiB2ZXJ0aWNhbDsKICAgIGluaXRpYWwtd2lkdGg6IDE1MHB4OwogICAgaW5pdGlhbC1oZWlnaHQ6IDhweDsKfSAgICAKCi5ob3Jpem9udGFsLXJhbmdlIC5yYW5nZS12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjOThjNGU2ICM1NDliZGUgdmVydGljYWw7CiAgICBoZWlnaHQ6IDEwMCU7Cn0KCi52ZXJ0aWNhbC1yYW5nZSB7CiAgICBiYWNrZ3JvdW5kOiAjRjFGMUYxICNGRkZGRkYgaG9yaXpvbnRhbDsKICAgIGluaXRpYWwtd2lkdGg6IDhweDsKICAgIGluaXRpYWwtaGVpZ2h0OiAxNTBweDsKfQoKLnZlcnRpY2FsLXJhbmdlIC5yYW5nZS12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjOThjNGU2ICM1NDliZGUgaG9yaXpvbnRhbDsKICAgIHdpZHRoOiAxMDAlOwp9Cg"},{ name : "haxeui-core/styles/default/sortable_arrows.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAJCAIAAABxOqH0AAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA0UlEQVQIHQHGADn/Ae0cJAAAAAAAAIdYUHmosAAAAAAAAAIAAAAAAACHWFAAAACJWlIAAAAAAAACAAAAh1hQAgICAgICAAAAjV5WAAAAAe0cJAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAI1eVgAAAAAAAAAAAAMDA3CfpwIAAABzoqoAAAADAwMDAwNwn6cAAAACAAAAAAAAc6KqAAAAcJ+nAAAAAAAA2WwUSXgyq8MAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/folder.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABhWlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV9TS1UqDnYQcchQXbQiKuIoVSyChdJWaNXB5NIPoUlDkuLiKLgWHPxYrDq4OOvq4CoIgh8gbm5Oii5S4v+SQosYD4778e7e4+4dINTLTDU7xgFVs4xUPCZmcyti8BVdCCCIMYxIzNQT6YUMPMfXPXx8vYvyLO9zf44eJW8ywCcSzzLdsIjXiac3LZ3zPnGYlSSF+Jx41KALEj9yXXb5jXPRYYFnho1Mao44TCwW21huY1YyVOIp4oiiapQvZF1WOG9xVstV1rwnf2Eory2nuU5zEHEsIoEkRMioYgNlWIjSqpFiIkX7MQ//gONPkksm1wYYOeZRgQrJ8YP/we9uzcLkhJsUigGBF9v+GAKCu0CjZtvfx7bdOAH8z8CV1vJX6sDMJ+m1lhY5Anq3gYvrlibvAZc7QP+TLhmSI/lpCoUC8H5G35QD+m6B7lW3t+Y+Th+ADHW1dAMcHALDRcpe83h3Z3tv/55p9vcDn0tyubRiDR8AAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAADdcAAA3XAUIom3gAAAAHdElNRQflCQUPOBy4URVbAAAARklEQVQ4y2NgoBAwMjAwMMxaseEMmvBzhv//56VFBqwnZAATduH/kgyMDNWzlm9MJdMFxIG0iAATJkrDYNSAYWHAKGBgAABfoBAAMkevhAAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/default/dialogs/cross-circle.png", data : "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"},{ name : "haxeui-core/styles/default/left_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVQImWN8K6PCwMDAwMCQbKLDBGcxMDAwwVkMDAzMt5zsGGCAae6ZKwgOAwMDnA81AMIHAN2yC5bbbdIbAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/down_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAJElEQVQImWMMCAhgwABMc89cQROae+YKE4RCFmJgYGBC5sClAQxaDmYcnISCAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/buttons.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBCVVRUT05TCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5idXR0b24gewogICAgYmFja2dyb3VuZDogI0VERURFRCAjRTZFNkU2IHZlcnRpY2FsOwogICAgY29sb3I6ICMyMjIyMjI7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjQUJBQkFCOwogICAgYm9yZGVyLXJhZGl1czogMnB4OwogICAgcGFkZGluZzogNXB4IDhweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwogICAgc3BhY2luZzogNXB4IDVweDsKICAgIHRleHQtYWxpZ246IGNlbnRlcjsKfQoKLmJ1dHRvbjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kOiAjRjVGNUY1ICNGMUYxRjEgdmVydGljYWw7CiAgICBjb2xvcjogIzAwMDAwMDsKfQoKLmJ1dHRvbjpkb3duIHsKICAgIGJhY2tncm91bmQ6ICNEMkQyRDIgI0MyQzJDMiB2ZXJ0aWNhbDsKICAgIGNvbG9yOiAjMDAwMDAwOwogICAgYm9yZGVyLWNvbG9yOiAjN0Y3RjdGOwp9CgouYnV0dG9uOmFjdGl2ZSB7CiAgICBib3JkZXI6IDJweCBzb2xpZCAjNzdDNkZGOwp9CgouYnV0dG9uLmVtcGhhc2l6ZWQgewogICAgYmFja2dyb3VuZDogI0RBRTRFRSAjRDRERUU4IHZlcnRpY2FsOwogICAgYm9yZGVyLWNvbG9yOiAjNkNBMUQ3Owp9CgouYnV0dG9uLmVtcGhhc2l6ZWQ6aG92ZXIgewogICAgYmFja2dyb3VuZDogI0UyRUNGNiAjREVFOEYyIHZlcnRpY2FsOwogICAgYm9yZGVyLWNvbG9yOiAjNkNBMUQ3Owp9CgouYnV0dG9uLmVtcGhhc2l6ZWQ6ZG93biB7CiAgICBiYWNrZ3JvdW5kOiAjQzJDQ0Q2ICNCNEJFQzggdmVydGljYWw7CiAgICBib3JkZXItY29sb3I6ICM1NjhDQzE7Cn0KCi5idXR0b246ZGlzYWJsZWQgewogICAgYmFja2dyb3VuZDogI0Q0RDRENCAjQ0NDQ0NDIHZlcnRpY2FsOwogICAgY29sb3I6ICM5MDkwOTA7CiAgICBjdXJzb3I6IGRlZmF1bHQ7Cn0KCi5idXR0b24gLmxhYmVsIHsKICAgIHBvaW50ZXItZXZlbnRzOiBub25lOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIEJVVFRPTiBCQVJTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5idXR0b24tYmFyIHsKICAgIHNwYWNpbmc6IDA7Cn0KCi5idXR0b24tYmFyIC5idXR0b24gewogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIGJvcmRlci1jb2xvcjogI0FCQUJBQjsKfQoKLmJ1dHRvbi1iYXIgLmJ1dHRvbjpkb3duIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNhN2M0ZTI7CiAgICBjb2xvcjogd2hpdGU7Cn0KCi5ob3Jpem9udGFsLWJ1dHRvbi1iYXIgLmJ1dHRvbiB7CiAgICBib3JkZXItbGVmdC1zaXplOiAwOwp9CgouaG9yaXpvbnRhbC1idXR0b24tYmFyIC5idXR0b24uZmlyc3QgewogICAgYm9yZGVyLWxlZnQtc2l6ZTogMTsKfQoKLnZlcnRpY2FsLWJ1dHRvbi1iYXIgLmJ1dHRvbiB7CiAgICBib3JkZXItdG9wLXNpemU6IDA7Cn0KCi52ZXJ0aWNhbC1idXR0b24tYmFyIC5idXR0b24uZmlyc3QgewogICAgYm9yZGVyLXRvcC1zaXplOiAxOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIEJVVFRPTiBCQVIgLSBMRUZUIE1FTlUgQUxURVJOQVRFCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5idXR0b24tYmFyLmxlZnQtbWVudSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRUVFRUVFOwogICAgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgI0FCQUJBQjsKfQoKLmJ1dHRvbi1iYXIubGVmdC1tZW51IC5idXR0b24gewogICAgYmFja2dyb3VuZC1jb2xvcjogI0VFRUVFRTsKICAgIGJvcmRlci1sZWZ0OiAgMXB4IHNvbGlkICNFRUVFRUU7CiAgICB3aWR0aDogMTAwcHg7CiAgICBoZWlnaHQ6IDEwMHB4OwogICAgaWNvbi1wb3NpdGlvbjogInRvcCI7Cn0KCi5idXR0b24tYmFyLmxlZnQtbWVudS53aXRoLWJvdHRvbS1idXR0b24gLmJ1dHRvbi5sYXN0IHsKICAgIGJvcmRlci10b3A6ICAxcHggc29saWQgI0FCQUJBQjsKICAgIGJvcmRlci1ib3R0b206ICAxcHggc29saWQgI0VFRUVFRTsKfQoKLmJ1dHRvbi1iYXIubGVmdC1tZW51IC5idXR0b246aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0Y1RjVGNTsKfQoKLmJ1dHRvbi1iYXIubGVmdC1tZW51IC5idXR0b246ZG93biB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIGNvbG9yOiAjMjIyMjIyOwogICAgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgd2hpdGU7CiAgICAKICAgIGJvcmRlci10b3A6ICAxcHggc29saWQgd2hpdGU7CiAgICBib3JkZXItbGVmdDogIDFweCBzb2xpZCB3aGl0ZTsKfQoKLmJ1dHRvbi1iYXIubGVmdC1tZW51LndpdGgtYm90dG9tLWJ1dHRvbiAuYnV0dG9uLmxhc3Q6ZG93biB7CiAgICBib3JkZXItdG9wOiAgMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItYm90dG9tOiAgMXB4IHNvbGlkIHdoaXRlOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIEJVVFRPTiBCQVIgLSBSSUdIVCBNRU5VIEFMVEVSTkFURQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouYnV0dG9uLWJhci5yaWdodC1tZW51IHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNFRUVFRUU7CiAgICBib3JkZXItbGVmdDogMXB4IHNvbGlkICNBQkFCQUI7Cn0KCi5idXR0b24tYmFyLnJpZ2h0LW1lbnUgLmJ1dHRvbiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRUVFRUVFOwogICAgYm9yZGVyLXJpZ2h0OiAgMXB4IHNvbGlkICNFRUVFRUU7CiAgICB3aWR0aDogMTAwcHg7CiAgICBoZWlnaHQ6IDEwMHB4OwogICAgaWNvbi1wb3NpdGlvbjogInRvcCI7Cn0KCi5idXR0b24tYmFyLnJpZ2h0LW1lbnUud2l0aC1ib3R0b20tYnV0dG9uIC5idXR0b24ubGFzdCB7CiAgICBib3JkZXItdG9wOiAgMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItYm90dG9tOiAgMXB4IHNvbGlkICNFRUVFRUU7Cn0KCi5idXR0b24tYmFyLnJpZ2h0LW1lbnUgLmJ1dHRvbjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRjVGNUY1Owp9CgouYnV0dG9uLWJhci5yaWdodC1tZW51IC5idXR0b246ZG93biB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIGNvbG9yOiAjMjIyMjIyOwogICAgYm9yZGVyLWxlZnQ6IDFweCBzb2xpZCB3aGl0ZTsKICAgIAogICAgYm9yZGVyLXRvcDogIDFweCBzb2xpZCB3aGl0ZTsKICAgIGJvcmRlci1yaWdodDogIDFweCBzb2xpZCB3aGl0ZTsKfQoKLmJ1dHRvbi1iYXIucmlnaHQtbWVudS53aXRoLWJvdHRvbS1idXR0b24gLmJ1dHRvbi5sYXN0OmRvd24gewogICAgYm9yZGVyLXRvcDogIDFweCBzb2xpZCAjQUJBQkFCOwogICAgYm9yZGVyLWJvdHRvbTogIDFweCBzb2xpZCB3aGl0ZTsKfQo"},{ name : "haxeui-core/styles/default/dialogs/exclamation-small.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAwFBMVEUAAACbhQDBqAHk2jj68Jn89avSwBnp3W7l11+4ogbQux67pAXMswG/pwKmjwCchgDErAHJsAG1nQHMswG7owHCqQHHrgGwmQHLsgG+pQHk1ynm22PVzzXr33fUzEzr33jp22zPvy7LuxnSvzfGth7RvCzQuiXPuBLPuBHs3CXm2Sve1jHY0zkAAADz5XjS0D/77Yzs6YL27nh2dnZsbGzw32lgYGDTy0b06Ift4XDv3mnp22Hc1UzU0kUvLy8YGBjuZRp0AAAAKXRSTlMAyRH+/fnm29DBurKro52WkHt0ZVxFLyQdCfz29u/v5eXa2tDQxMSvr6tslocAAACYSURBVBjTdY9FEsJAFESHuLvibpOJC879b0UyFJAUlbfoX/1W/UEPhCQRHWFynNnu3o6m915L6Gwcs/qvOwKVZZTgfIU2C/M8nGufbm9ORVkW4dZ+d1+eXK6PZ1VNZR8La3W+RQhF0X1t4U3iKAiCJKljLDbrjAUJIUQI1iwNAFyePNYg1OSQd4HCHBrSFB9GAeqgg/r39wsyaBDiN04O2AAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/down_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAJElEQVQImWP8//8/AwZgeieriib0TlaVCUIhCzEwMDAhc+DSAPKbCiUI9YmvAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/tabs.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBUQUJCQVIgKFRPUCkKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnRhYmJhciB7CiAgICBwYWRkaW5nLWxlZnQ6IDBweDsKICAgIHBhZGRpbmctcmlnaHQ6IDBweDsKICAgIGhlaWdodDogYXV0bzsKICAgIHdpZHRoOiBhdXRvOwogICAgYm9yZGVyLWJvdHRvbS13aWR0aDogMXB4OwogICAgYm9yZGVyLWJvdHRvbS1jb2xvcjogI0FCQUJBQjsKICAgIGJvcmRlci10b3Atd2lkdGg6IDBweDsKICAgIGNsaXA6IHRydWU7Cn0KCi50YWJiYXIgPiAudGFiYmFyLWNvbnRlbnRzIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJvcmRlci1ib3R0b20td2lkdGg6IDFweDsKICAgIGJvcmRlci1ib3R0b20tY29sb3I6ICNBQkFCQUI7CiAgICBzcGFjaW5nOiAwOwp9CgoudGFiYmFyLWJ1dHRvbiB7CiAgICBib3JkZXItcmFkaXVzOiAwcHg7CiAgICBiYWNrZ3JvdW5kOiAjRURFREVEICNFNkU2RTYgdmVydGljYWw7CiAgICBwYWRkaW5nOiA2cHggOHB4OwogICAgdmVydGljYWwtYWxpZ246IGJvdHRvbTsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAwcHg7Cn0KCi50YWJiYXItYnV0dG9uLmZpcnN0IHsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAxcHg7Cn0KCi50YWJiYXItYnV0dG9uOmhvdmVyIHsKICAgIGJhY2tncm91bmQ6ICNGNUY1RjUgI0YxRjFGMSB2ZXJ0aWNhbDsKfQoKLnRhYmJhci1idXR0b246ZG93biB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjQUJBQkFCOwp9CgoudGFiYmFyLWJ1dHRvbi1zZWxlY3RlZCB7CiAgICBib3JkZXItcmFkaXVzOiAwcHg7CgogICAgYm9yZGVyLWJvdHRvbS13aWR0aDogMXB4OwogICAgYm9yZGVyLWJvdHRvbS1jb2xvcjogd2hpdGU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAwcHg7Cn0KCi50YWJiYXItYnV0dG9uLXNlbGVjdGVkLmZpcnN0IHsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAxcHg7Cn0KCi50YWJiYXItc2Nyb2xsLWxlZnQgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2xlZnRfYXJyb3cucG5nIjsKICAgIGJvcmRlci1yYWRpdXM6IDA7CiAgICBwYWRkaW5nOiA1cHg7Cn0KCi50YWJiYXItc2Nyb2xsLXJpZ2h0IHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvdy5wbmciOwogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIHBhZGRpbmc6IDVweDsKfQoKLnRhYmJhci1idXR0b24tc2VsZWN0ZWQgLmxhYmVsIHsKfQoKLnRhYmJhci1idXR0b24tc2VsZWN0ZWQgLmljb24gewp9CgoudGFiYmFyLWJ1dHRvbiAudGFiLWNsb3NlLWJ1dHRvbiB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3RpbnktY2xvc2UtYnV0dG9uLnBuZyI7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogVEFCQkFSIChCT1RUT00pCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi50YWJiYXI6Ym90dG9tIHsKICAgIHBhZGRpbmctbGVmdDogMHB4OwogICAgcGFkZGluZy1yaWdodDogMHB4OwogICAgaGVpZ2h0OiBhdXRvOwogICAgd2lkdGg6IGF1dG87CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAwcHg7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiAjQUJBQkFCOwogICAgY2xpcDogdHJ1ZTsKfQoKLnRhYmJhcjpib3R0b20gLnRhYmJhci1jb250ZW50cyB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAwcHg7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiAjQUJBQkFCOwogICAgc3BhY2luZzogMDsKfQoKLnRhYmJhci1idXR0b246Ym90dG9tIHsKICAgIHZlcnRpY2FsLWFsaWduOiB0b3A7CiAgICBib3JkZXItbGVmdC13aWR0aDogMHB4Owp9CgoudGFiYmFyLWJ1dHRvbi5maXJzdCB7CiAgICBib3JkZXItbGVmdC13aWR0aDogMXB4Owp9CgoudGFiYmFyLWJ1dHRvbi1zZWxlY3RlZDpib3R0b20gewogICAgYm9yZGVyLXJhZGl1czogMHB4OwoKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiB3aGl0ZTsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwogICAgYm9yZGVyLWxlZnQtd2lkdGg6IDBweDsKfQoKLnRhYmJhci1idXR0b24tc2VsZWN0ZWQuZmlyc3QgewogICAgYm9yZGVyLWxlZnQtd2lkdGg6IDFweDsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBUQUJWSUVXCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi50YWJ2aWV3IHsKICAgIGJvcmRlcjogbm9uZTsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwp9CgoudGFidmlldyA+IC50YWJ2aWV3LXRhYnMgewogICAgbWFyZ2luLXRvcDogMXB4Owp9CgoudGFidmlldzpib3R0b20gPiAudGFidmlldy10YWJzIHsKICAgIG1hcmdpbi10b3A6IDBweDsKfQoKLnRhYnZpZXcgPiAudGFidmlldy1jb250ZW50IHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBwYWRkaW5nOiA1cHg7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBUQUJWSUVXIEFMVCBTVFlMRVMKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmNvbGxhcHNpYmxlLWxhYmVscyAudGFiYmFyLWJ1dHRvbiAubGFiZWwgewogICAgaGlkZGVuOiB0cnVlOwp9CgouY29sbGFwc2libGUtbGFiZWxzIC50YWJiYXItYnV0dG9uLXNlbGVjdGVkIC5sYWJlbCB7CiAgICBoaWRkZW46IGZhbHNlOwp9Cg"},{ name : "haxeui-core/styles/default/small-close-button.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAwAAAANCAMAAACq939wAAAAhFBMVEV4eHj///8AAAAAAAAAAAAbGxsAAAAAAADn5+cAAADv7+8gICAiIiIZGRnr6+sAAADj4+Pm5uYAAAB4eHiOjo4TExMKCgqJiYkfHx/////Jycn09PT////////o6OgAAAD///+QkJCRkZEFBQUAAAAiIiIAAABiYmJtbW0+Pj5OTk4AAAByRYNBAAAALHRSTlMBgGhkXmBbeHd1eHVrW3U2c3FwZmVkZGFOQDc1MBwcDQdralhYVUxLRkY7Ld49hcYAAACESURBVAjXFY1HDoNAEAQnbYLFYHIG5/T//3moU5dUUoOSiws2h4ONXEnMZDcVCpURm3XtXRtX4clkZ6z5B1KaE/oCk0hPcCRqmKSBLTi2WYHoU5IbNKx94tFH28OHOm1Sj1f+wtq0dQwUL8GsAKNhYhE2o57u0+shtn9POxws8zDMi44/AScHBY0KWggAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/dropdowns.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBEUk9QRE9XTlMKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmRyb3Bkb3duIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9zb3J0YWJsZV9hcnJvd3MucG5nIjsKICAgIGljb24tcG9zaXRpb246IGZhci1yaWdodDsKICAgIHRleHQtYWxpZ246IGxlZnQ7CiAgICBwYWRkaW5nOiA1cHg7Cn0KCi5kcm9wZG93bi1wb3B1cCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogTU9CSUxFIFZBUklBTlRTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5kcm9wZG93bjptb2JpbGUgewogICAgbW9kZTogbW9iaWxlOwp9CgouZHJvcGRvd24tcG9wdXA6bW9iaWxlIHsKICAgIHdpZHRoOiA3NSU7Cn0K"},{ name : "haxeui-core/styles/dark/check.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5QEaCTskh/mOvAAAAS5JREFUKM+NkbtKA2EQhb/ZrLIGL2BnExDEIr2FguADBLMo/IWFCF7AwiewEkRQ7GwUkXRiY4LZGASLtbIQK4tgo7VWgmBMdrM7FokQxBinO2fmzAczwj8qn78cFzuaCmu1U7vbcLlcHqyH0TUqqR7HweoWqDXiPSAFBBLHd38SCgVvBtW1ppJt13UrHQme5yWxOAZE4SGsV3cBOhIaMTvAGNBIEC/PGRMA2OfF4oSFXBFLMQyqK8aYKO95k8RsAIiwn53N3n8vsiwYRRlGdMl2+g5zvu+IcgJYAo9vA/1b7WRRVbkolo4UVltWBTQNxKIy7bqZ2/aAJSIa1D/XBc6alqZbvYOfw0DzD8aY6PVlZBEotfynpNO7+dsxpF3kfN8Zev9Y0AQ385nM82+BL3sbaMn2+wKIAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/dark/tooltips.css", data : "LnRvb2x0aXAgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJjMmYzMDsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjA1LCA2LCAxLCAzMCwgMzUsIGZhbHNlKTsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHBhZGRpbmc6IDRweCA1cHg7CiAgICBtYXJnaW4tbGVmdDogMHB4OwogICAgbWFyZ2luLXRvcDogMzBweDsKfQoKLnRvb2x0aXAgLmxhYmVsIHsKICAgIGNvbG9yOiAjZDRkNGQ0Owp9"},{ name : "haxeui-core/styles/dark/main.css", data : "LmxhYmVsLCAuYnV0dG9uLCAudGV4dGZpZWxkLCAudGV4dGFyZWEgewogICAgY29sb3I6ICNiNGI0YjQ7Cn0KCi5kZWZhdWx0LWJhY2tncm91bmQgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJjMmYzMDsKfQoKLm1vZGFsLWJhY2tncm91bmQgewogICAgYmFja2dyb3VuZC1jb2xvcjogYmxhY2s7CiAgICBvcGFjaXR5OiAwLjg1Owp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIExBQkVMCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5sYWJlbCB7CiAgICBjb2xvcjogI2I0YjRiNDsKfQogICAgCi5sYWJlbDpkaXNhYmxlZCB7CiAgICBjb2xvcjogIzU5NTk1OTsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBMSU5LCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5saW5rIHsKICAgIGNvbG9yOiAjNDA3ZGJmOwp9Cg"},{ name : "haxeui-core/locale/en/dialog.properties", data : "ZGlhbG9nLnNhdmU9U2F2ZQpkaWFsb2cueWVzPVllcwpkaWFsb2cubm89Tm8KZGlhbG9nLmNsb3NlPUNsb3NlCmRpYWxvZy5vaz1PSwpkaWFsb2cuY2FuY2VsPUNhbmNlbApkaWFsb2cuYXBwbHk9QXBwbHkK"},{ name : "haxeui-core/styles/dark/sliders.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTTElERVJTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5ob3Jpem9udGFsLXNsaWRlciB7CiAgICBwYWRkaW5nLWxlZnQ6IDVweDsKICAgIHBhZGRpbmctcmlnaHQ6IDVweDsKICAgIHBhZGRpbmctdG9wOiAwcHg7CiAgICBwYWRkaW5nLWJvdHRvbTogMHB4OwogICAgaGVpZ2h0OiBhdXRvOwogICAgaW5pdGlhbC13aWR0aDogMTUwcHg7Cn0KCi5ob3Jpem9udGFsLXNsaWRlciAuc2xpZGVyLXZhbHVlIHsKICAgIHdpZHRoOiAxMDAlOwogICAgaGVpZ2h0OiA4cHg7CiAgICBib3JkZXItcmFkaXVzOiAycHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgouaG9yaXpvbnRhbC1zbGlkZXIud2l0aC1jZW50ZXIgLnJhbmdlLXZhbHVlIHsKICAgIGJvcmRlci1yYWRpdXM6IDBweDsKfQoKLmhvcml6b250YWwtc2xpZGVyIC5taW5vci10aWNrIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMxODFhMWI7Cn0KCi5ob3Jpem9udGFsLXNsaWRlciAubWFqb3ItdGljayB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMTgxYTFiOwp9CgouaG9yaXpvbnRhbC1zbGlkZXIgLmJ1dHRvbiB7CiAgICB3aWR0aDogMTFweDsKICAgIGhlaWdodDogMjBweDsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBmaWx0ZXI6IG5vbmU7Cn0KICAgIAoudmVydGljYWwtc2xpZGVyIHsKICAgIHBhZGRpbmctdG9wOiA1cHg7CiAgICBwYWRkaW5nLWJvdHRvbTogNXB4OwogICAgcGFkZGluZy1sZWZ0OiAwcHg7CiAgICBwYWRkaW5nLXJpZ2h0OiAwcHg7CiAgICB3aWR0aDogYXV0bzsKICAgIGluaXRpYWwtaGVpZ2h0OiAxNTBweDsKfQoKLnZlcnRpY2FsLXNsaWRlciAuc2xpZGVyLXZhbHVlIHsKICAgIGhlaWdodDogMTAwJTsKICAgIHdpZHRoOiA4cHg7CiAgICBib3JkZXItcmFkaXVzOiAycHg7CiAgICBob3Jpem9udGFsLWFsaWduOiBjZW50ZXI7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi52ZXJ0aWNhbC1zbGlkZXIud2l0aC1jZW50ZXIgLnJhbmdlLXZhbHVlIHsKICAgIGJvcmRlci1yYWRpdXM6IDBweDsKfQoKLnZlcnRpY2FsLXNsaWRlciAubWlub3ItdGljayB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMTgxYTFiOwp9CgoudmVydGljYWwtc2xpZGVyIC5tYWpvci10aWNrIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMxODFhMWI7Cn0KCi52ZXJ0aWNhbC1zbGlkZXIgLmJ1dHRvbiB7CiAgICB3aWR0aDogMjBweDsKICAgIGhlaWdodDogMTFweDsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIGhvcml6b250YWwtYWxpZ246IGNlbnRlcjsKICAgIGZpbHRlcjogbm9uZTsKfQoK"},{ name : "haxeui-core/styles/dark/left_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVQImWN8K6PCwMDAwMAg9Pg2E5zFwMDABGcxMDAw/v//nwEGmN7JqiI4DAwMcD7UAAgfAMkKDTd2MVgoAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/right_arrow_circled.png", data : "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"},{ name : "haxeui-core/styles/default/tooltips.css", data : "LnRvb2x0aXAgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2ZmZmZmODsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjA1LCA2LCAxLCAzMCwgMzUsIGZhbHNlKTsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHBhZGRpbmc6IDRweCA1cHg7CiAgICBtYXJnaW4tbGVmdDogMHB4OwogICAgbWFyZ2luLXRvcDogMzBweDsKfQo"},{ name : "haxeui-core/styles/default/blank.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QIKDCIwjMBeawAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAHElEQVQ4y2P8//8/AyWAiYFCMGrAqAGjBgwWAwBjmgMd7D3zQQAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/default/up_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAK0lEQVQImWN8K6PCwMDAwMAg9Pj2O1lVCJsJLgQnoaJwDpzN+P//fwYMAADCtw5xBtAKnQAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/default/haxeui.png", data : "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"},{ name : "haxeui-core/styles/default/dialogs/information-small.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAABJlBMVEUAAAB7e4CdnZ0REREzMzNUVFQ/Pz8lJSVRUVGmprLIyMg6Oj0LCwtQUFJqampycnILCws+Pj5CQkJVVVU6OjpFRUUmJiZVVVVRUVFISEhOTk4NDQ1UVFSqqqyfn6K/v76zs7IsWdUqVMj////a2utGaM4wVL8nTr3m5ubj4+NfgeFbfd9NcNXMzMwrVcvBwcIlSbMlSLAjRa1zlvTt7e1nievq6uowYuXW1uQxYOHg4N/c3NvQ0NtXedtQctijsNfW1tbPz9B1jNDNzc1LbM1eectBY8qVoshadciJlsYoUMKJlsBlfMA7W7xddLk3V7kmS7kfRrZEX7NOZK08V6wSM5Tu7u5ukO5sju3Y2NgzX9hSdNXOztRMbtHJydA+ZM8+YMMqUL/uhb8yAAAAIXRSTlMArqJRRz0YCQfc0pKHhnx4dG5sY2FcXFVNQj8dFdfX1NTah6qMAAAA7ElEQVQY0yXI02LEUBSF4R2ObRQnaeyMbVs13/8l2tP5rtb6ASsymUQiwxThystE/FVZrvojjPf/Z0m5NxyPhz2FzOKSJ5uTzlOp9NyZtMg8ABtuztWKzvN6RZu/hFnI3c3e1K7A80JX+5jd5yDVWquCMHVcx3W/10YK4oONNhVtY+TYtrix4hAzdvqPtB/195Ik7qwYJAfbL45b9pUlx3FbKwn0zUp8RaZSNhGSVrc0sKH3o9lA5UfU4I6fIRaAJtrnA6rV0OHcJmgA8KSJ+uJ0uZwWdSLtAVyogO/hjy9A4Y8VqGgwGKUKeP8C2jElNUboO20AAAAASUVORK5CYII"},{ name : "haxeui-core/styles/dark/tiny-close-button.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAEZXpUWHRSYXcgcHJvZmlsZSB0eXBlIGV4aWYAAHjarVdr0uMoDPyvU+wRECAQx8HYVO0N9vjbPGLH5LHfzGxIDJaFJLoluULHP39X+gsfa1jJS9SQQjD4+OSTzVioGZ8xs/H9+ixr9zc5nQ9g1jjMbtyGY+pnyOXaEP2Ub3c5xTLt6DT08DwNuubZYjH1dBpydsh53lOa+7J/Cn3+6iPaOKb13keAsQvsOUv2cOwMrtq8uPZjlzG3q3UBSsYlrKVfrUvvsaNzuYB3rhbsTJ5yd4eCTJgKYcFoylneY9cReo6IL8+3B2U7XbxiV3et9Rinyz4AqUDzUI+j9BUUN0Dp+raAEfETrGMfCUNxxALGdrC5YRTixBZoV/a8c+bKR58LF4To7WEjZmsLOGgyddEmWzoZvg2uNoKGnZyCiQLWHMT2jIW739T9FVZ43hmalmGMseNl0Dvh74zTUK0tdZmNnlghLttyGmE05toVWiCE68RUOr590FPemCdiHRiUDrPigNlsw8QmfOWW6zw76InxZEZpcNynAUAE34Jg2IEBE9gJBzbR2sgMHBX8ZERunbcbGGARuzNVcONQCdGqbb6xJ3LXtWKHGK0FRIgLLoIaFArI8l6QP9ErciiLE08iEiSKSpIcXPBBQggxtB6Vo4s+SgwxRo0pZnXqVTRoVNWkOdnk0MIkhRQpaUopZzjNMJ2xO0Mj581ubvObbGGLm25pywXpU3yREkosWlLJu93djvLfwx5p1z3t+eADqXT4Q45wxEOPdOSKXKuu+io11Fi1pppP1iard9Z4Ye47azxZa4z5rhcv1iCO8WGCWzuRxhkYs57BeGwMIKFt48woe28bc40zkyyKQixYY2nk7NwYA4P+YCuVT+4u5r7yRuJ/iTf7iTlq1P0fzFGjbjL3ytsb1vbc3yiuE9SqsGFqXEVjO9BlMr4Z7acvjJE22aSoFI+vaU2nL1tZTdkyk/nwwFxGAF83gnWTiHnMXi9dum/eugYqt4ekpp21LzNyacrez/TpQTOyjWVW8zjznNNDh0MXeGvovruNscVPmE5BTe7oy3QpPc00lPIDcPPq6+Yqablb8X7gQidAbQwo7RCUUxBLqn2JJF7wPmeKexhrWSG3vBBYwpPlfVg+M4TesYvCayv1i8Cc4IQhKCeVTO+hUH7JRa/5G7+0EjyT+nIui2WzD410j5eeTzBn+5KOiT+CfIJ94vcA3a0l93IU1iW4lhL0yLa5O5nvlfBxpqsSUrIrS2sBl5W1KyGoZF4y4lfnkUB0zyCXl2zgtaxeYxmh0J/HMkKhP49lhEI/9p1mwenqaSQ8XR3DnEnnhiDIf5Xxlf+V0uNM8vvRPBXtn0XTgqF7NI2HffH+sy5MX9rwvQuH6+UzYsRL8umgrWcHtzZqvxzjB22YvvXhLx3h6gBpaBDrd1DF2x+9LemHzQI9goeRku7P8O9o1tqnricLwW2pH1kh84muJ9oGBdsF1GyCJyz4a0E7eiL9C50ommlvGMFPAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5QEaCDsd2T5sgwAAALJJREFUGNNdi7FKw2AYRc/98j7O1oIuikM1ISk6CAVfwidShIJJ++dvQejS4uTs2wjmuhgonvGec9Wl/ATx1VSzd45YrzfXg3wSlj/E8NymzexIXlp+KYhP/Q1nllcED/rRt+U3y/dNWR40vtqUpqHIGDFQ1/XtHiDGoHBhIf4TAF3OE8sry3eySoJl1/cXAGr7/jSsPKDHeXWzBehSuhLxKquJsM5NLEYJ0FTVzsTC8uQXPKRNkQsV0ywAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/down_arrow_square.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAIAAABLMMCEAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAMUlEQVQImWN8K6PCgAGYMIUYGBhYkk10sKide+YKmtDcM1eYIBSyEMJcCAcuzYjVDQAFcxCadfC9sQAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/up_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAK0lEQVQImWN8K6PCwMDAwMBwfMYEy4wCCJsJLgQnoaJwDpzNuGXLFgYMAADK0A4MJuH53gAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/progressbars.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBQUk9HUkVTUwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwpAa2V5ZnJhbWVzIGluZGV0ZXJtaW5hdGUgewogICAgMCUgewogICAgICAgIHN0YXJ0OiAwOwogICAgICAgIGVuZDogMjU7CiAgICB9CiAgICA1MCUgewogICAgICAgIHN0YXJ0OiA3NTsKICAgICAgICBlbmQ6IDEwMDsKICAgIH0KICAgIDEwMCUgewogICAgICAgIHN0YXJ0OiAwOwogICAgICAgIGVuZDogMjU7CiAgICB9Cn0KCi5wcm9ncmVzczppbmRldGVybWluYXRlIHsKICAgIGFuaW1hdGlvbjogaW5kZXRlcm1pbmF0ZSAxcyBlYXNlIDBzIGluZmluaXRlOwp9CgoucHJvZ3Jlc3MtdmFsdWUgewogICAgYm9yZGVyOiBub25lOwogICAgYm9yZGVyLXJhZGl1czogMXB4Owp9CgouaG9yaXpvbnRhbC1wcm9ncmVzcyB7CiAgICBiYWNrZ3JvdW5kOiAjMjUyNzI4ICMyNTI3MjggdmVydGljYWw7CiAgICBpbml0aWFsLXdpZHRoOiAxNTBweDsKICAgIGluaXRpYWwtaGVpZ2h0OiA4cHg7Cn0KCi5ob3Jpem9udGFsLXByb2dyZXNzIC5wcm9ncmVzcy12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjNDE1OTgyICMyZjM3NDYgdmVydGljYWw7CiAgICBoZWlnaHQ6IDEwMCU7Cn0KCi52ZXJ0aWNhbC1wcm9ncmVzcyB7CiAgICBiYWNrZ3JvdW5kOiAjMjUyNzI4ICMyNTI3MjggaG9yaXpvbnRhbDsKICAgIGluaXRpYWwtd2lkdGg6IDhweDsKICAgIGluaXRpYWwtaGVpZ2h0OiAxNTBweDsKfQoKLnZlcnRpY2FsLXByb2dyZXNzIC5wcm9ncmVzcy12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjNDE1OTgyICMyZjM3NDYgaG9yaXpvbnRhbDsKICAgIHdpZHRoOiAxMDAlOwp9Cgo"},{ name : "haxeui-core/styles/dark/propertygrids.css", data : "LnByb3BlcnR5LWdyaWQgewp9CgoucHJvcGVydHktZ3JpZCAuc2Nyb2xsdmlldy1jb250ZW50cyB7CiAgICBwYWRkaW5nOiAwOwogICAgd2lkdGg6IDEwMCU7CiAgICBzcGFjaW5nOiAwOwp9CgoucHJvcGVydHktZ3JvdXAgewogICAgd2lkdGg6IDEwMCU7CiAgICBzcGFjaW5nOiAwOwp9CgoucHJvcGVydHktZ3JvdXAtaGVhZGVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMzRDNGNDE7CiAgICBwb2ludGVyLWV2ZW50czogdHJ1ZTsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogNXB4OwogICAgYm9yZGVyLWNvbG9yOiAjMTgxYTFiOwogICAgYm9yZGVyLWJvdHRvbS13aWR0aDogMXB4OwogICAgYm9yZGVyLWJvdHRvbS1zaXplOiAxcHg7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi5wcm9wZXJ0eS1ncm91cC1oZWFkZXIuc2Nyb2xsaW5nIHsKICAgIGJvcmRlci1yaWdodC13aWR0aDogMXB4OwogICAgYm9yZGVyLXJpZ2h0LXNpemU6IDFweDsKfQoKLnByb3BlcnR5LWdyb3VwLWhlYWRlcjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjNDM0NjQ3Owp9CgoucHJvcGVydHktZ3JvdXAtaGVhZGVyLWljb24gewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLnByb3BlcnR5LWdyb3VwLWhlYWRlcjpleHBhbmRlZCAucHJvcGVydHktZ3JvdXAtaGVhZGVyLWljb24gewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9kb3duX2Fycm93X3NxdWFyZS5wbmciOwp9CgoucHJvcGVydHktZ3JvdXAtaGVhZGVyOmNvbGxhcHNlZCAucHJvcGVydHktZ3JvdXAtaGVhZGVyLWljb24gewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9yaWdodF9hcnJvd19zcXVhcmUucG5nIjsKfQoKLnByb3BlcnR5LWdyb3VwLWhlYWRlci1sYWJlbCB7Cn0KCi5wcm9wZXJ0eS1ncm91cC1jb250ZW50cyB7CiAgICB3aWR0aDogMTAwJTsKICAgIHNwYWNpbmc6IDE7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMTgxYTFiOwogICAgcGFkZGluZy1ib3R0b206IDFweDsKfQoKLnByb3BlcnR5LWdyb3VwLWl0ZW0tbGFiZWwtY29udGFpbmVyIHsKICAgIHdpZHRoOiA1MCU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4OwogICAgaGVpZ2h0OiAxMDAlOwogICAgcGFkZGluZy1sZWZ0OiA1cHg7Cn0KCi5wcm9wZXJ0eS1ncm91cC1pdGVtLWVkaXRvci1jb250YWluZXIgewogICAgd2lkdGg6IDUwJTsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7Cn0gICAgICAgIAoKLnByb3BlcnR5LWdyb3VwLWl0ZW0tbGFiZWwgewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLnByb3BlcnR5LWdyb3VwLWl0ZW0tZWRpdG9yIHsKICAgIHdpZHRoOiAxMDAlOwp9CgoucHJvcGVydHktZ3JvdXAgLnRleHRmaWVsZCB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBmaWx0ZXI6IG5vbmU7CiAgICBib3JkZXItcmFkaXVzOiAwOwp9CgoucHJvcGVydHktZ3JvdXAgLmNoZWNrYm94IHsKICAgIHBhZGRpbmc6IDVweDsKICAgIHBhZGRpbmctbGVmdDogNHB4Owp9CgoucHJvcGVydHktZ3JvdXAgLm51bWJlci1zdGVwcGVyIHsKICAgIHBhZGRpbmc6IDA7Cn0KCi5wcm9wZXJ0eS1ncm91cCAuZHJvcGRvd24gewogICAgYm9yZGVyOiBub25lOwogICAgYm9yZGVyLXJhZGl1czogbm9uZTsKfQo"},{ name : "haxeui-core/styles/default/main.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBHRU5FUkFMCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5jb21wb25lbnQgewp9CgouY3VzdG9tLWNvbXBvbmVudCB7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKfQoKLm1vZGFsLWJhY2tncm91bmQgewogICAgYmFja2dyb3VuZC1jb2xvcjogd2hpdGU7CiAgICBvcGFjaXR5OiAwLjc1Owp9CgoubW9kYWwtY29tcG9uZW50IHsKICAgIGZpbHRlcjogYmx1cigxKTsKfQoKLnBvcHVwIHsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMiwgNDUsICMwMDAwMDAsIDAuMTUsIDYsIDEsIDMwLCAzNSwgZmFsc2UpOwp9CgpAa2V5ZnJhbWVzIGFuaW1hdGlvbkZhZGVJbiB7CiAgICAwJSB7CiAgICAgICAgb3BhY2l0eTogMDsKICAgIH0KICAgIDEwMCUgewogICAgICAgIG9wYWNpdHk6IDE7CiAgICB9Cn0KCi5mYWRlLWluIHsKICAgIGFuaW1hdGlvbjogYW5pbWF0aW9uRmFkZUluIDAuMXMgbGluZWFyIDBzIDE7Cn0KCi5mYWRlLW91dCB7CiAgICBhbmltYXRpb246IGFuaW1hdGlvbkZhZGVJbiAwLjFzIGxpbmVhciAwcyAxIHJldmVyc2U7Cn0KCi5kZWZhdWx0LWJhY2tncm91bmQgewogICAgYmFja2dyb3VuZC1jb2xvcjogd2hpdGU7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogQ09OVEFJTkVSUwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouYm94LCAudmJveCwgLmhib3gsIC5hYnNvbHV0ZSwgLmNvbnRpbnVvdXNoYm94LCAuaGdyaWQsIC52Z3JpZCwgLmdyaWQgewogICAgc3BhY2luZzogNXB4IDVweDsKfQoKLmJveCwgLnZib3gsIC5oYm94LCAuY29udGludW91c2hib3gsIC5oZ3JpZCwgLnZncmlkLCAuZ3JpZCB7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBMQUJFTAoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoubGFiZWwgewogICAgd2lkdGg6IGF1dG87CiAgICBoZWlnaHQ6IGF1dG87CiAgICBjb250ZW50LXR5cGU6IGF1dG87CiAgICBjb2xvcjogYmxhY2s7Cn0KICAgIAoubGFiZWw6ZGlzYWJsZWQgewogICAgY29sb3I6ICM5MDkwOTA7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogTElOSwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoubGluayB7CiAgICBjb2xvcjogIzQwN2RiZjsKICAgIGZvbnQtdW5kZXJsaW5lOiB0cnVlOwogICAgY3Vyc29yOiBwb2ludGVyOwogICAgcG9pbnRlci1ldmVudHM6IHRydWU7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogSU1BR0UKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmltYWdlIHsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwp9CgouaW1hZ2U6ZGlzYWJsZWQgewogICAgZmlsdGVyOiBncmF5c2NhbGU7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogRFJBRyAmIERST1AKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmRyYWdnYWJsZSB7CiAgICBjdXJzb3I6IG1vdmU7Cn0KCi5kcmFnZ2luZyB7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogSVRFTSBSRU5ERVJFUlMKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmJhc2ljaXRlbXJlbmRlcmVyIHsKICAgIHdpZHRoOiAxMDAlOwp9CgouYmFzaWMtcmVuZGVyZXItY29udGFpbmVyIHsKICAgIHdpZHRoOiAxMDAlOwp9CgouYmFzaWMtcmVuZGVyZXItbGFiZWwgewogICAgd2lkdGg6IDEwMCU7Cn0"},{ name : "haxeui-core/styles/default/right_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAL0lEQVQImWMMCAiYe+YKAwMDAwMDEwMDQ7KJDoID50M5ED6CM/fMFSY4C6oMbhoAEcwMOy/jUHEAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/dark/ranges.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBSQU5HRQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoucmFuZ2UgewogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIHBhZGRpbmc6IDFweDsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICMwMDAwMDAsIDAuMiwgMiwgMiwgMSwgMywgdHJ1ZSk7Cn0KCi5yYW5nZS12YWx1ZSB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItcmFkaXVzOiAycHg7Cn0KCi5ob3Jpem9udGFsLXJhbmdlIHsKICAgIGJhY2tncm91bmQ6ICMyNTI3MjggIzI1MjcyOCB2ZXJ0aWNhbDsKICAgIGluaXRpYWwtd2lkdGg6IDE1MHB4OwogICAgaW5pdGlhbC1oZWlnaHQ6IDhweDsKfSAgICAKCi5ob3Jpem9udGFsLXJhbmdlIC5yYW5nZS12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjNDE1OTgyICMyZjM3NDYgdmVydGljYWw7CiAgICBoZWlnaHQ6IDEwMCU7Cn0KCi52ZXJ0aWNhbC1yYW5nZSB7CiAgICBiYWNrZ3JvdW5kOiAjMjUyNzI4ICMyNTI3MjggaG9yaXpvbnRhbDsKICAgIGluaXRpYWwtd2lkdGg6IDhweDsKICAgIGluaXRpYWwtaGVpZ2h0OiAxNTBweDsKfQoKLnZlcnRpY2FsLXJhbmdlIC5yYW5nZS12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjNDE1OTgyICMyZjM3NDYgaG9yaXpvbnRhbDsKICAgIHdpZHRoOiAxMDAlOwp9Cg"},{ name : "haxeui-core/styles/dark/right_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAM0lEQVQImWP8////O1lVBgYGBgYGJgYGBqHHtxEcOJ/x////DDDABGe9k1VlgrOgMnDTADWiDmfiE8U7AAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/dark/accordion.css", data : "LmFjY29yZGlvbiB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjYWJhYmFiOwogICAgc3BhY2luZzogMDsKICAgIHBhZGRpbmc6IDFweDsKICAgIHBhZGRpbmctYm90dG9tOiAwcHg7CiAgICBjbGlwOiB0cnVlOwp9CgouYWNjb3JkaW9uLWJ1dHRvbiB7CiAgICBib3JkZXItcmFkaXVzOiAwOwogICAgYm9yZGVyOiAwcHggc29saWQgI2FiYWJhYjsKICAgIHdpZHRoOiAxMDAlOwogICAgdGV4dC1hbGlnbjogbGVmdDsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvd19zcXVhcmUucG5nIjsKICAgIGljb24tcG9zaXRpb246IGxlZnQ7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItY29sb3I6ICNhYmFiYWI7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAxcHg7Cn0KCi5hY2NvcmRpb24tYnV0dG9uOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2Rvd25fYXJyb3dfc3F1YXJlLnBuZyI7Cn0KCi5hY2NvcmRpb24tcGFnZSB7CiAgICB3aWR0aDogMTAwJTsKICAgIGNsaXA6IHRydWU7CiAgICB3aWR0aDogMTAwJTsKICAgIGJvcmRlci1jb2xvcjogI2FiYWJhYjsKICAgIGJvcmRlci1ib3R0b20td2lkdGg6IDFweDsKICAgIG9wYWNpdHk6IDE7CiAgICBwYWRkaW5nOiA1cHg7Cn0KCi5hY2NvcmRpb24tcGFnZTpleHBhbmRlZCB7CiAgICBhbmltYXRpb246IGFjY29yZGlvbkFuaW1hdGVFeHBhbmQgMC4zcyBlYXNlIDBzIDE7Cn0KCi5hY2NvcmRpb24tcGFnZTpjb2xsYXBzZWQgewogICAgYW5pbWF0aW9uOiBhY2NvcmRpb25BbmltYXRlQ29sbHBhc2UgMC4zcyBlYXNlIDBzIDE7Cn0KCkBrZXlmcmFtZXMgYWNjb3JkaW9uQW5pbWF0ZUV4cGFuZCB7CiAgICAwJSB7CiAgICAgICAgb3BhY2l0eTogMDsKICAgICAgICBoZWlnaHQ6IDAlOwogICAgfQogICAgMTAwJSB7CiAgICAgICAgb3BhY2l0eTogMTsKICAgICAgICBoZWlnaHQ6IDEwMCU7CiAgICB9Cn0KCkBrZXlmcmFtZXMgYWNjb3JkaW9uQW5pbWF0ZUNvbGxwYXNlIHsKICAgIDAlIHsKICAgICAgICBvcGFjaXR5OiAxOwogICAgICAgIGhlaWdodDogMTAwJTsKICAgIH0KICAgIDEwMCUgewogICAgICAgIG9wYWNpdHk6IDA7CiAgICAgICAgaGVpZ2h0OiAwJTsKICAgIH0KfQoKLmFjY29yZGlvbi1wYWdlIC5zY3JvbGx2aWV3IHsKICAgIGJvcmRlcjogbm9uZTsKICAgIHBhZGRpbmctdG9wOiAwOwogICAgcGFkZGluZy1yaWdodDogMDsKICAgIHBhZGRpbmctbGVmdDogMDsKICAgIHBhZGRpbmctYm90dG9tOiAwOwp9Cg"},{ name : "haxeui-core/styles/dark/switches.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTV0lUQ0ggKERFRkFVTFQpCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5zd2l0Y2gtYnV0dG9uLXN1YiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4OwogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICMwMDAwMDAsIDAuMiwgMiwgMiwgMSwgMywgdHJ1ZSk7Cn0KCkBrZXlmcmFtZXMgc3dpdGNoQW5pbWF0ZVNlbGVjdGVkIHsKICAgIDAlIHsKICAgICAgICBwb3M6IDA7CiAgICAgICAgYmFja2dyb3VuZC1jb2xvcjogIzI1MjcyODsKICAgIH0KICAgIDEwMCUgewogICAgICAgIHBvczogMTAwOwogICAgICAgIGJhY2tncm91bmQtY29sb3I6ICM0MTU5ODI7CiAgICB9Cn0K"},{ name : "haxeui-core/styles/dark/textinputs.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBURVhUIEZJRUxECioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi50ZXh0ZmllbGQgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzI1MjcyODsKICAgIGNvbG9yOiAjYjRiNGI0OwogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHBhZGRpbmc6IDVweCA1cHg7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjIsIDIsIDIsIDEsIDMsIHRydWUpOwogICAgaW5pdGlhbC13aWR0aDogMTUwcHg7CiAgICBoZWlnaHQ6IGF1dG87CiAgICBzcGFjaW5nOiA1cHg7CiAgICBpY29uLXBvc2l0aW9uOiByaWdodDsKfQoKLnRleHRmaWVsZDphY3RpdmUgewogICAgYm9yZGVyOiAxcHggc29saWQgIzQxNTk4MjsKfQoKLnRleHRmaWVsZDplbXB0eSB7CiAgICBjb2xvcjogIzQ0NDQ0NDsKfQoKLnRleHRmaWVsZDpkaXNhYmxlZCB7CiAgICBjb2xvcjogIzU5NTk1OTsKICAgIGJhY2tncm91bmQ6ICMyYzJmMzAgIzJjMmYzMCB2ZXJ0aWNhbDsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBURVhUIEFSRUEKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnRleHRhcmVhIHsKICAgIGNvbG9yOiAjYjRiNGI0OwogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHBhZGRpbmc6IDFweDsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICMwMDAwMDAsIDAuMiwgMiwgMiwgMSwgMywgdHJ1ZSk7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4OwogICAgaW5pdGlhbC13aWR0aDogMTUwcHg7CiAgICBpbml0aWFsLWhlaWdodDogMTAwcHg7Cn0KCi50ZXh0YXJlYTphY3RpdmUgewogICAgYm9yZGVyOiAxcHggc29saWQgIzQxNTk4MjsKfQoKLnRleHRhcmVhOmVtcHR5IHsKICAgIGNvbG9yOiAjNDQ0NDQ0Owp9CgoudGV4dGFyZWE6ZGlzYWJsZWQgewogICAgY29sb3I6ICM1OTU5NTk7CiAgICBiYWNrZ3JvdW5kOiAjMmMyZjMwICMyYzJmMzAgdmVydGljYWw7Cn0K"},{ name : "haxeui-core/styles/dark/down_arrow_square.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAIAAABLMMCEAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAMUlEQVQImWN8K6PCgAGYMIUYGBgYt2zZgkWtZUYBmpBlRgEThEIWQpgL4cClGbG6AQAStwro4kB3hAAAAABJRU5ErkJggg"},{ name : "icons/icons8-dashboard-48.png", data : "iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAFOUlEQVRoge2ayW9TVxTGf8/P8ZQ4I2SiJJAGB0KgEzSoDAJVrbpgWdSqXbTqojvaZaVu2/4H/QMqWgmp6qalTC2CEiEBCRgKtElInEAGHBzHibEdT7FfF9dxSJ6f/TyEJFK/Ta7vvefe73vnvHOHF/gfawvp069/frW6YdcZW/XWZkk2Sis73Dr9uT8eDShrQU4TCjEkepILiS+MNU17/6hq6Nis2VehmvVFX0DhhCzLNoN903ZN8usdCrxtMMimteZRDCyGtWZQLIyLhVo77N8BEuB0gcevbVTT4KDr6Cfk5T1FYch5lieDVzM2m8uree3dk5itlRnbp0adDF4/nUVABexoAkmCMW92Acc++g6LxayffAr2egcz4/eIzs+q2g6f+Jb6phZN203NHUyPD+KbcGYWMOyG78/qI2Iya5OPLUA8Acmkui0UM2Cpas4ooLxyk6pOAaJxMV44BtbaFtASUCzCUZgLQyID8UIwH4O5ECSfS+GSapUqgQAF8IcgGC12pCWEojAb0tc3LcBmhp0vifLQEwiEdRjL8FYnlK14DC43XPsXtm6GY11wrR9GpvQRSiTFk9eL9NRtjXCoU5QlCW4PaxstujKeAF8QrGXL2xfFR1NhEI7pYCKJWJmPkdfCnxbw4DG4Z0Ua9T7LbqQoQsSzMFy4rd3P44ffenUyUcRTiS/o7J/CMufP5CC+iEUPROP5TaYHyTz3XUWtxPlOBqAoGkapECJDpsk2YVqALIv34OVG9Uu5El7PU0JRWEjkorsc8WiQ8OxYxjb3o37CMYhpelXhmadfVZumunsrHN0jytcHoG9Im8jlUyep23YA2ah/NVaUJHOT94hHgxnbe3/9hrpt3ZisVRnbg14XgWl1ZkkL6J+AUASQYNybnUwiHsEz9Jdu8vqgMPPoRt5WaQHxBXDpzNXrCRt+O73hBRS8FzJZKzCZK0rJRROKkiTknybTGl2QgL1HPqbr4AfF8soLIb+HP3/8ivnAzLL6gkLI8cbxkpDKB+VV9WxxHFDVFyTAIJfl7rQKkI3qeUt2oNGL+mqwmcRGb74EZ4gXJsAgwevt0FIvfieTcGsIJnIsmjnHLZ6aPuxuFeSH3XCuD4IR2OeAOru6ryTB5iporRe3JdnwQjxQa4f2Znjig/O3xXnCF4IPD8GbO+HKXYikNnEWE3R3QN1ztyuzQeGtTFh1D0gSvNImSF+5L/4C+AJw+T5YTXBglzjS1lTA0b2C/J0RONMHf49ClQ2O7IHGxlrV+KvugdZ6QczpUh+YBiYEue4OeG+fqFtIwEUnDE6K36NTMPoUju+D9rYWVm4hV1WAuQy6tols06sRAjcfwqQP2hrEOvtgDGYDy/uMTcPFO2C21qnsixZQboGuVqithPmIeKpPZ0E2wH4HmIxw6W62g4rIRLmykWsKEjMzqvqiBNhTsWk2irxebYODneCZE7Ftt4kYHnYXM8sSwlH1ib9gAQYDdDvAaIDf+8S9T7kFDnfC9gZIKOJuyOkqinNOFCxgdwtUlkPPP0uXVqEIXHBmtys1Ckqj5jKJtkYRNndHSk0pP6Q9YDaKHCwbRL4OZ9mntDfFkOUyeh++CIpLiAQ8qrq0gM4W6Ngiyr4g3BjQHujcL6dQ3v+M0clY1mucUiLqdzNw7QdVfVqAN5BaJSXwZvm4AXCz5zw3e86XmmNBSAsYn4afrooQyiVgPcGYTMTS37pWroAbABFD0DuifjM2Di4ZvY/vvJNMxM/aaloy/quBJOFHWmff6hViKFxNJhNfrjWV//EfzRm/y878pTgAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/sidebars.css", data : "LnNpZGViYXItbW9kYWwtYmFja2dyb3VuZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIG9wYWNpdHk6IDAuNjA7Cn0KCi5zaWRlYmFyIHsKICAgIG1hcmdpbjogNTBweDsKICAgIGJhY2tncm91bmQtY29sb3I6ICNFRUVFRUU7CiAgICBwYWRkaW5nOiA1cHg7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjEsIDMwLCAyLCAxLCAzLCBmYWxzZSk7Cn0KICAgIAouc2lkZWJhcjpsZWZ0IHsKICAgIGJvcmRlci1yaWdodDogMXB4IHNvbGlkICNBQkFCQUI7Cn0KCi5zaWRlYmFyOnJpZ2h0IHsKICAgIGJvcmRlci1sZWZ0OiAxcHggc29saWQgI0FCQUJBQjsKfQoKLnNpZGViYXI6dG9wIHsKICAgIGJvcmRlci1ib3R0b206IDFweCBzb2xpZCAjQUJBQkFCOwp9Cgouc2lkZWJhcjpib3R0b20gewogICAgYm9yZGVyLXRvcDogMXB4IHNvbGlkICNBQkFCQUI7Cn0KCgouc2lkZWJhcjpsZWZ0ICNjbG9zZVNpZGVCYXIgewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9sZWZ0X2Fycm93X2NpcmNsZWQucG5nICI7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi5zaWRlYmFyOnJpZ2h0ICNjbG9zZVNpZGVCYXIgewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvd19jaXJjbGVkLnBuZyAiOwogICAgY3Vyc29yOiBwb2ludGVyOwp9Cgouc2lkZWJhcjp0b3AgI2Nsb3NlU2lkZUJhciB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3VwX2Fycm93X2NpcmNsZWQucG5nICI7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi5zaWRlYmFyOmJvdHRvbSAjY2xvc2VTaWRlQmFyIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvZG93bl9hcnJvd19jaXJjbGVkLnBuZyAiOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLyogQU5JTUFUSU9OUyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICovCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoKLnNpZGVCYXJNb2RpZnlDb250ZW50IHsKICAgIGFuaW1hdGlvbjogc2lkZUJhck1vZGlmeUNvbnRlbnQgMC4zcyBlYXNlIDBzIDE7Cn0KCi5zaWRlQmFyUmVzdG9yZUNvbnRlbnQgewogICAgYW5pbWF0aW9uOiBzaWRlQmFyUmVzdG9yZUNvbnRlbnQgMC4zcyBlYXNlIDBzIDE7Cn0KCiAgICAKQGtleWZyYW1lcyBzaWRlQmFyTW9kaWZ5Q29udGVudCB7CiAgICAwJSB7CiAgICB9CiAgICAxMDAlIHsKICAgIH0KfQogICAgCkBrZXlmcmFtZXMgc2lkZUJhclJlc3RvcmVDb250ZW50IHsKICAgIDAlIHsKICAgIH0KICAgIDEwMCUgewogICAgfQp9CiAgICAKLnNob3dTaWRlQmFyTGVmdCB7CiAgICBhbmltYXRpb246IHNob3dTaWRlQmFyTGVmdCAwLjNzIGVhc2UgMHMgMTsKfQouaGlkZVNpZGVCYXJMZWZ0IHsKICAgIGFuaW1hdGlvbjogc2hvd1NpZGVCYXJMZWZ0IDAuM3MgZWFzZSAwcyAxIHJldmVyc2UgYmFja3dhcmRzOwp9CiAgICAKQGtleWZyYW1lcyBzaG93U2lkZUJhckxlZnQgewogICAgMCUgewogICAgfQogICAgMTAwJSB7CiAgICB9Cn0KCi5zaG93U2lkZUJhclJpZ2h0IHsKICAgIGFuaW1hdGlvbjogc2hvd1NpZGVCYXJSaWdodCAwLjNzIGVhc2UgMHMgMTsKfQoKLmhpZGVTaWRlQmFyUmlnaHQgewogICAgYW5pbWF0aW9uOiBzaG93U2lkZUJhclJpZ2h0IDAuM3MgZWFzZSAwcyAxIHJldmVyc2UgYmFja3dhcmRzOwp9CiAgICAKQGtleWZyYW1lcyBzaG93U2lkZUJhclJpZ2h0IHsKICAgIDAlIHsKICAgIH0KICAgIDEwMCUgewogICAgfQp9CiAgICAKLnNob3dTaWRlQmFyVG9wIHsKICAgIGFuaW1hdGlvbjogc2hvd1NpZGVCYXJUb3AgMC4zcyBlYXNlIDBzIDE7Cn0KLmhpZGVTaWRlQmFyVG9wIHsKICAgIGFuaW1hdGlvbjogc2hvd1NpZGVCYXJUb3AgMC4zcyBlYXNlIDBzIDEgcmV2ZXJzZSBiYWNrd2FyZHM7Cn0KICAgIApAa2V5ZnJhbWVzIHNob3dTaWRlQmFyVG9wIHsKICAgIDAlIHsKICAgIH0KICAgIDEwMCUgewogICAgfQp9CiAgICAKLnNob3dTaWRlQmFyQm90dG9tIHsKICAgIGFuaW1hdGlvbjogc2hvd1NpZGVCYXJCb3R0b20gMC4zcyBlYXNlIDBzIDE7Cn0KLmhpZGVTaWRlQmFyQm90dG9tIHsKICAgIGFuaW1hdGlvbjogc2hvd1NpZGVCYXJCb3R0b20gMC4zcyBlYXNlIDBzIDEgcmV2ZXJzZSBiYWNrd2FyZHM7Cn0KICAgIApAa2V5ZnJhbWVzIHNob3dTaWRlQmFyQm90dG9tIHsKICAgIDAlIHsKICAgIH0KICAgIDEwMCUgewogICAgfQp9Cg"},{ name : "haxeui-core/styles/default/menus.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBNRU5VQkFSCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5tZW51YmFyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNFRUVFRUU7CiAgICBwYWRkaW5nOiA1cHg7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAxcHg7CiAgICBib3JkZXItYm90dG9tLWNvbG9yOiAjQUJBQkFCOwogICAgZmlsdGVyOiBkcm9wLXNoYWRvdygyLCA0NSwgIzAwMDAwMCwgMC4xNSwgNiwgMSwgMzAsIDM1LCBmYWxzZSk7Cn0KCi5tZW51YmFyLWJ1dHRvbiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRUVFRUVFOwogICAgYm9yZGVyOiBub25lOwogICAgY29sb3I6ICM2NjY2NjY7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9CgoubWVudWJhci1idXR0b246aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0NDQ0NDQzsKICAgIGNvbG9yOiAjNDQ0NDQ0Owp9CgoubWVudWJhci1idXR0b246ZG93biB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIGNvbG9yOiBibGFjazsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAwcHg7CiAgICBib3JkZXItYm90dG9tLXNpemU6IDBweDsKfQoKLm1lbnViYXItYnV0dG9uLW5vLWNoaWxkcmVuIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNFRUVFRUU7CiAgICBib3JkZXI6IG5vbmU7CiAgICBjb2xvcjogIzY2NjY2NjsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7Cn0KCi5tZW51YmFyLWJ1dHRvbi1uby1jaGlsZHJlbjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjQ0NDQ0NDOwogICAgY29sb3I6ICM0NDQ0NDQ7Cn0KCi5tZW51YmFyLWJ1dHRvbi1uby1jaGlsZHJlbjpkb3duIHsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwogICAgY29sb3I6IGJsYWNrOwogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKfQoKLm1lbnViYXItYnV0dG9uLW5vLWNoaWxkcmVuLWFjdGl2ZSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRUVFRUVFOwogICAgYm9yZGVyOiBub25lOwogICAgY29sb3I6ICM2NjY2NjY7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9CgoubWVudWJhci1idXR0b24tbm8tY2hpbGRyZW4tYWN0aXZlOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwogICAgY29sb3I6IGJsYWNrOwogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKfQoKLm1lbnViYXItYnV0dG9uLW5vLWNoaWxkcmVuLWFjdGl2ZTpkb3duIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNDQ0NDQ0M7CiAgICBjb2xvcjogIzQ0NDQ0NDsKICAgIGJvcmRlcjogbm9uZTsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBNRU5VCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5tZW51IHsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwogICAgcGFkZGluZzogMXB4OwogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMiwgNDUsICMwMDAwMDAsIDAuMTUsIDYsIDEsIDMwLCAzNSwgZmFsc2UpOwogICAgc3BhY2luZzogMDsKICAgIHdpZHRoOiAyMDBweDsKfQoKLm1lbnUuZXhwYW5kZWQgewogICAgYm9yZGVyLXRvcC13aWR0aDogMHB4OwogICAgYm9yZGVyLXRvcC1zaXplOiAwcHg7Cn0KCi5tZW51LWZpbGxlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjQUJBQkFCOwogICAgaGVpZ2h0OiAxcHg7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogTUVOVUlURU1TCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5tZW51aXRlbSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogNXB4OwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgoubWVudWl0ZW0tbGFiZWwsIC5tZW51aXRlbS1jaGVja2JveCwgLm1lbnVpdGVtLW9wdGlvbmJveCwgLm1lbnVpdGVtLXNob3J0Y3V0LWxhYmVsIHsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7Cn0KCi5tZW51aXRlbS1zaG9ydGN1dC1sYWJlbCB7CiAgICB0ZXh0LWFsaWduOiByaWdodDsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBob3Jpem9udGFsLWFsaWduOiByaWdodDsKfQoKLm1lbnVpdGVtLWljb24gewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLm1lbnVpdGVtOmhvdmVyLCAubWVudWl0ZW06c2VsZWN0ZWQgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2Q5ZTVmMjsKfQoKLm1lbnVpdGVtIC5sYWJlbDpob3ZlciwgLm1lbnVpdGVtIC5sYWJlbDpzZWxlY3RlZCB7CiAgICBjb2xvcjogIzIyMjIyMjsKfQoKLm1lbnVpdGVtLWV4cGFuZGFibGUgewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvdy5wbmciOwogICAgdmVydGljYWwtYWxpZ246ICJjZW50ZXIiOwp9CgoubWVudXNlcGFyYXRvciB7CiAgICBoZWlnaHQ6IDFweDsKICAgIHdpZHRoOiAxMDAlOwogICAgYmFja2dyb3VuZC1jb2xvcjogI0FCQUJBQjsKICAgIGhvcml6b250YWwtYWxpZ246ICJjZW50ZXIiOwp9Cg"},{ name : "haxeui-core/styles/default/dialogs/question.png", data : "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"},{ name : "haxeui-core/styles/dark/up_arrow_circled.png", data : "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"},{ name : "haxeui-core/styles/default/check.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5QITChsNaCG5cQAAAS5JREFUKM+NkDFLw1AUhb/3DG0Q6pBOdSgI4tBRsaCTP0EcHeSBEpAQkt2lggiKUGg6WMRVhGziILg4CRUnh+KibiVLl06lmPdcglRsrXe5nMP9uJwj+Md4nrckpVwvFotX1rRj3/fnhBD3QLnX6yGnAVLKU6AMDIGnP4EwDDeMMW4mj6Io6kwEXNedTdP0AhDAi+M4JwATM9i2fQwsAp9a691arTYEsIIgWDXG3Akhbrrd7l4cx2kYhmtaaz9jz5rN5vN3JmPMAuAYY1SpVDpXStla60tAAq/9fv9w9PNMu93uVKvVeSHECrCcz+e3gAqggc1Wq/XxozXAJEmyD1xnXiXbUaPRePxVM0Acx+lgMNgBbjP/LZfLHYwrQ4wKpZRdKBS2Lct6qNfr7+OAL7OwYq6nyWzXAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/dark/left_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVQImWN8K6PCwMDAwMBwfMYEJjiLgYGBCc5iYGBg3LJlCwMMMFlmFCA4DAwMcD7UAAgfAK7lDFY1UPqoAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/optionboxes.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBPUFRJT05CT1gKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLm9wdGlvbmJveCB7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKICAgIGhvcml6b250YWwtc3BhY2luZzogNHB4OwogICAgY3Vyc29yOiBwb2ludGVyOwogICAgY29sb3I6ICMwMDAwMDA7Cn0KCi5vcHRpb25ib3g6aG92ZXIgewp9Cgoub3B0aW9uYm94OmRpc2FibGVkIHsKICAgIGN1cnNvcjogZGVmYXVsdDsKICAgIGNvbG9yOiAjOTA5MDkwOwp9Cgoub3B0aW9uYm94LXZhbHVlIHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRkZGRkZGOwogICAgd2lkdGg6IDE2cHg7CiAgICBoZWlnaHQ6IDE2cHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgYm9yZGVyLXJhZGl1czogMThweDsKICAgIGljb246IG5vbmU7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjODg4ODg4LCAwLjIsIDIsIDIsIDEsIDMsIHRydWUpOwogICAgcGFkZGluZy10b3A6IDFweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLm9wdGlvbmJveC12YWx1ZTpob3ZlciB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjMjE2QUFFOwp9Cgoub3B0aW9uYm94LXZhbHVlOnNlbGVjdGVkIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9vcHRpb24ucG5nIjsKfQoKLm9wdGlvbmJveC12YWx1ZTpkaXNhYmxlZCB7CiAgICBiYWNrZ3JvdW5kOiAjRDRENEQ0ICNDQ0NDQ0MgdmVydGljYWw7CiAgICBjdXJzb3I6IGRlZmF1bHQ7Cn0KCi5vcHRpb25ib3gtbGFiZWwgewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLm9wdGlvbmJveC1pY29uIHsKICAgIGhvcml6b250YWwtYWxpZ246IGNlbnRlcjsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICBvcGFjaXR5OiAxOwp9Cgoub3B0aW9uYm94LWljb246ZGlzYWJsZWQgewogICAgY3Vyc29yOiBkZWZhdWx0OwogICAgb3BhY2l0eTogMC41Owp9Cg"},{ name : "haxeui-core/styles/default/option.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAQlBMVEVYWGzW/9EAAACYtdLCqYPP6PTU////9KxYWFhUVlhXVVJ4rthXkMHs1Kxsj6lSYXvElmdYWGeefViUXFhfUVNWUk58LX/QAAAACHRSTlMnCADr69QWFksN2hQAAAA8SURBVAjXY2BiZxDi5OBjYGNiYGTh4OTg4BJkZmTgFeEAA35WBgFOCFOUm0EYyuTiQWYiFCBrQxiGZAUAvXcDb/w8amgAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/dark/scrollbars.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTQ1JPTEwKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnNjcm9sbCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmMyZjMwOwp9Cgouc2Nyb2xsIC5idXR0b24gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzNlNDE0MjsKICAgIG9wYWNpdHk6IC44Owp9Cgouc2Nyb2xsIC5idXR0b246aG92ZXIgewogICAgb3BhY2l0eTogMTsKfQoKLnZlcnRpY2FsLXNjcm9sbCB7CiAgICBib3JkZXItbGVmdDogMXB4IHNvbGlkICMxODFhMWI7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmMyZjMwOwp9CgouaG9yaXpvbnRhbC1zY3JvbGwgewogICAgYm9yZGVyLXRvcDogMXB4IHNvbGlkICMxODFhMWI7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmMyZjMwOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIENMQVNTSUMgVkFSSUFOVFMKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmNsYXNzaWMtc2Nyb2xscyAuc2Nyb2xsLAouc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmMyZjMwOwogICAgYm9yZGVyOm5vbmU7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnNjcm9sbCAuYnV0dG9uLAouc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuYnV0dG9uewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJjMmYzMDsKICAgIGJvcmRlcjpub25lOwp9CgouY2xhc3NpYy1zY3JvbGxzIC5zY3JvbGwgLnRodW1iLAouc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAudGh1bWIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzNkNDA0MjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuc2Nyb2xsIC50aHVtYjpob3ZlciwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLnRodW1iOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICM0NTQ4NGE7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnNjcm9sbCAudGh1bWI6ZG93biwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLnRodW1iOmRvd24gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzQ1NDg0YTsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuc2Nyb2xsIC50aHVtYjpkaXNhYmxlZCwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLnRodW1iOmRpc2FibGVkIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMzMzM3Mzg7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnZlcnRpY2FsLXNjcm9sbCAuZGVpbmMsCi52ZXJ0aWNhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5kZWluYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvdXBfYXJyb3cucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAudmVydGljYWwtc2Nyb2xsIC5kZWluYzpkb3duLAoudmVydGljYWwtc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuZGVpbmM6ZG93biB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvdXBfYXJyb3dfd2hpdGUucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAudmVydGljYWwtc2Nyb2xsIC5pbmMsCi52ZXJ0aWNhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5pbmMgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2Rvd25fYXJyb3cucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAudmVydGljYWwtc2Nyb2xsIC5pbmM6ZG93biwKLnZlcnRpY2FsLXNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLmluYzpkb3duIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9kb3duX2Fycm93X3doaXRlLnBuZyI7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLmhvcml6b250YWwtc2Nyb2xsIC5kZWluYywKLmhvcml6b250YWwtc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuZGVpbmMgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2xlZnRfYXJyb3cucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuaG9yaXpvbnRhbC1zY3JvbGwgLmRlaW5jOmRvd24sCi5ob3Jpem9udGFsLXNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLmRlaW5jOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2xlZnRfYXJyb3dfd2hpdGUucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuaG9yaXpvbnRhbC1zY3JvbGwgLmluYywKLmhvcml6b250YWwtc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuaW5jIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9yaWdodF9hcnJvdy5wbmciOwp9CgouY2xhc3NpYy1zY3JvbGxzIC5ob3Jpem9udGFsLXNjcm9sbCAuaW5jOmRvd24sCi5ob3Jpem9udGFsLXNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLmluYzpkb3duIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9yaWdodF9hcnJvd193aGl0ZS5wbmciOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIE1PQklMRSBWQVJJQU5UUwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouaG9yaXpvbnRhbC1zY3JvbGw6bW9iaWxlIHsKICAgIGJhY2tncm91bmQtY29sb3I6IG5vbmU7CiAgICBib3JkZXI6IG5vbmU7Cn0KCi5ob3Jpem9udGFsLXNjcm9sbDptb2JpbGUgLnRodW1iIHsKICAgIGhlaWdodDogNHB4OwogICAgYm9yZGVyLXJhZGl1czogNHB4Owp9CgoudmVydGljYWwtc2Nyb2xsOm1vYmlsZSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBub25lOwogICAgYm9yZGVyOiBub25lOwp9CgoudmVydGljYWwtc2Nyb2xsOm1vYmlsZSAudGh1bWIgewogICAgd2lkdGg6IDRweDsKICAgIGJvcmRlci1yYWRpdXM6IDRweDsKfQo"},{ name : "haxeui-core/styles/default/calendars.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBDQUxFTkRBUgoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouY2FsZW5kYXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIHBhZGRpbmc6IDVweDsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7Cn0KCi5jYWxlbmRhciAuYnV0dG9uIHsKICAgIHBhZGRpbmc6IDhweDsKfQoKLmNhbGVuZGFyIC5jYWxlbmRhci1vZmYtZGF5IHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwogICAgY3Vyc29yOiBkZWZhdWx0Owp9CgouY2FsZW5kYXIgLmNhbGVuZGFyLWRheSB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjZWNmMmY5Owp9CgouY2FsZW5kYXIgLmNhbGVuZGFyLWRheTpob3ZlciB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjYTdjNGUyOwp9CgouY2FsZW5kYXIgLmNhbGVuZGFyLWRheS1zZWxlY3RlZCB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjYTdjNGUyOwogICAgY29sb3I6IHdoaXRlOwp9CgoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBDQUxFTkRBUlZJRVcKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmNhbGVuZGFyLXZpZXcgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIHBhZGRpbmc6IDVweDsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7Cn0KCi5jYWxlbmRhci12aWV3IC5jYWxlbmRhciB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBwYWRkaW5nOiAwcHg7Cn0KCi5jYWxlbmRhci12aWV3IC5oYm94IHsKCXNwYWNpbmc6IDA7Cn0KCi5jYWxlbmRhci12aWV3ICNwcmV2LW1vbnRoIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9sZWZ0X2Fycm93LnBuZyI7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgYm9yZGVyOiBub25lOwogICAgYmFja2dyb3VuZC1jb2xvcjogd2hpdGU7Cn0KCi5jYWxlbmRhci12aWV3ICNuZXh0LW1vbnRoIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvdy5wbmciOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwp9CgouY2FsZW5kYXItdmlldyAjY3VycmVudC1tb250aCB7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9CgouY2FsZW5kYXItdmlldyAjY3VycmVudC15ZWFyIHsKICAgIHRleHQtYWxpZ246IHJpZ2h0OwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKCWJvcmRlcjogbm9uZTsKCXBhZGRpbmctdG9wOiAxcHg7CgliYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKfQouY2FsZW5kYXItdmlldyAjY3VycmVudC15ZWFyIC5idXR0b24gewoJYmFja2dyb3VuZC1jb2xvcjogd2hpdGU7Cglib3JkZXI6IG5vbmU7Cn0K"},{ name : "haxeui-core/styles/default/haxeui_tiny.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAwFBMVEUAAAA+drJml8uevd7K2+1Ee7c1aaBcjsWfv99RhsA7cKqfvt/J2e01aaHJ3Ow1Z56kweGsxuM5cKxzoM9PhMCnxOJBd7SBqdSTtNp6otG90ui2zeetx+RFerM1a6Rllsiow+JDe7qhvt9jlsqfvt9dj8SzzOaoxeJCd7A5bqhVicKAqdOev95ik8SsyOOivuCmw99ThcJ4pNCnv99kl8tomc1+p9RRiMSUtts8drV0oNFdkcibu96IrtdOhL9Cerg7AHaNAAAANXRSTlMASfTz8fHx5uTh4d/T00RE9PLy8fHw5+bl4uHh4eHh39bW0NC/v7m5ubm4tVROSkpIR0ZAQIt9oOEAAACUSURBVBjTRc1FEsMwEETRjpkdZmZmS5FD979VRjVVce/e3zS8MGyMz6DdpuV2x0X/QTPn++uu9pRSDtAl0wRJL4DFzjIuDqIXm8snRlJhc7FTYMnmsgZwZHMpUTjlRZA6rET+t9oAiSl0YatqiugtqLBpMSyyLmzloCe4sNUQnpaxOFy29S+FAK2Rb0/0G+4zw/WbP+FUKshItzNPAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/splitters.css", data : "LnNwbGl0dGVyIHsKICAgIHNwYWNpbmc6IDA7Cn0KCi52ZXJ0aWNhbC1zcGxpdHRlci1ncmlwcGVyIHsKICAgIHdpZHRoOiAxMDAlOwogICAgaGVpZ2h0OiA2cHg7CiAgICBjdXJzb3I6IHJvdy1yZXNpemU7CiAgICBfX2JhY2tncm91bmQtY29sb3I6ICNFRUVFRUU7Cn0KCi52ZXJ0aWNhbC1zcGxpdHRlci1ncmlwcGVyOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNEREREREQ7Cn0KCi52ZXJ0aWNhbC1zcGxpdHRlci1ncmlwcGVyIC5pbWFnZSB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3NpemVyX2dyaXBwZXJfaG9yaXpvbnRhbC5wbmciOwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLmhvcml6b250YWwtc3BsaXR0ZXItZ3JpcHBlciB7CiAgICB3aWR0aDogNnB4OwogICAgaGVpZ2h0OiAxMDAlOwogICAgY3Vyc29yOiBjb2wtcmVzaXplOwogICAgX19iYWNrZ3JvdW5kLWNvbG9yOiAjRUVFRUVFOwp9CgouaG9yaXpvbnRhbC1zcGxpdHRlci1ncmlwcGVyOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNEREREREQ7Cn0KCi5ob3Jpem9udGFsLXNwbGl0dGVyLWdyaXBwZXIgLmltYWdlIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc2l6ZXJfZ3JpcHBlcl92ZXJ0aWNhbC5wbmciOwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQo"},{ name : "haxeui-core/styles/default/up_arrow_circled.png", data : "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"},{ name : "haxeui-core/styles/dark/splitters.css", data : "LnNwbGl0dGVyIHsKICAgIHNwYWNpbmc6IDA7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4Cn0KCi52ZXJ0aWNhbC1zcGxpdHRlci1ncmlwcGVyIHsKICAgIHdpZHRoOiAxMDAlOwogICAgaGVpZ2h0OiA2cHg7CiAgICBjdXJzb3I6IHJvdy1yZXNpemU7CiAgICBfX2JhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7Cn0KCi52ZXJ0aWNhbC1zcGxpdHRlci1ncmlwcGVyOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICM5OGE2YWE7Cn0KCi52ZXJ0aWNhbC1zcGxpdHRlci1ncmlwcGVyIC5pbWFnZSB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3NpemVyX2dyaXBwZXJfaG9yaXpvbnRhbC5wbmciOwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLmhvcml6b250YWwtc3BsaXR0ZXItZ3JpcHBlciB7CiAgICB3aWR0aDogNnB4OwogICAgaGVpZ2h0OiAxMDAlOwogICAgY3Vyc29yOiBjb2wtcmVzaXplOwogICAgX19iYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4Owp9CgouaG9yaXpvbnRhbC1zcGxpdHRlci1ncmlwcGVyOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICM5OGE2YWE7Cn0KCi5ob3Jpem9udGFsLXNwbGl0dGVyLWdyaXBwZXIgLmltYWdlIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc2l6ZXJfZ3JpcHBlcl92ZXJ0aWNhbC5wbmciOwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQo"},{ name : "haxeui-core/styles/dark/buttons.css", data : "LmJ1dHRvbiB7CiAgICBiYWNrZ3JvdW5kOiAjM2U0MTQyICMzNjM4M2E7CiAgICBib3JkZXItY29sb3I6ICMxODFhMWI7CiAgICBjb2xvcjogI2I0YjRiNDsKfQoKLmJ1dHRvbjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kOiAjNDM0NjQ3ICMzOTNiM2M7CiAgICBib3JkZXItY29sb3I6ICMxODFhMWI7CiAgICBjb2xvcjogI2Q0ZDRkNDsKfQoKLmJ1dHRvbjpkb3duIHsKICAgIGJhY2tncm91bmQ6ICMyZjMxMzIgIzI3MjkyYTsKICAgIGJvcmRlci1jb2xvcjogIzE4MWExYjsKICAgIGNvbG9yOiAjZDRkNGQ0Owp9CgouYnV0dG9uOmRpc2FibGVkIHsKICAgIGNvbG9yOiAjNTk1OTU5OwogICAgY3Vyc29yOiBkZWZhdWx0Owp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIEJVVFRPTiBCQVJTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5idXR0b24tYmFyIHsKICAgIHNwYWNpbmc6IDA7Cn0KCi5idXR0b24tYmFyIC5idXR0b24gewogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIGJvcmRlci1jb2xvcjogIzE4MWExYjsKfQoKLmJ1dHRvbi1iYXIgLmJ1dHRvbjpkb3duIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICM0MTU5ODI7CiAgICBjb2xvcjogd2hpdGU7Cn0KCi5ob3Jpem9udGFsLWJ1dHRvbi1iYXIgLmJ1dHRvbiB7CiAgICBib3JkZXItbGVmdC1zaXplOiAwOwp9CgouaG9yaXpvbnRhbC1idXR0b24tYmFyIC5idXR0b24uZmlyc3QgewogICAgYm9yZGVyLWxlZnQtc2l6ZTogMTsKfQoKLnZlcnRpY2FsLWJ1dHRvbi1iYXIgLmJ1dHRvbiB7CiAgICBib3JkZXItdG9wLXNpemU6IDA7Cn0KCi52ZXJ0aWNhbC1idXR0b24tYmFyIC5idXR0b24uZmlyc3QgewogICAgYm9yZGVyLXRvcC1zaXplOiAxOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIEJVVFRPTiBCQVIgLSBMRUZUIE1FTlUgQUxURVJOQVRFCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5idXR0b24tYmFyLmxlZnQtbWVudSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjM0QzRjQxOwogICAgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgIzE4MWExYjsKfQoKLmJ1dHRvbi1iYXIubGVmdC1tZW51IC5idXR0b24gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzNEM0Y0MTsKICAgIGJvcmRlci1sZWZ0OiAgMXB4IHNvbGlkICMzRDNGNDE7Cn0KCi5idXR0b24tYmFyLmxlZnQtbWVudS53aXRoLWJvdHRvbS1idXR0b24gLmJ1dHRvbi5sYXN0IHsKICAgIGJvcmRlci10b3A6ICAxcHggc29saWQgIzE4MWExYjsKICAgIGJvcmRlci1ib3R0b206ICAxcHggc29saWQgIzNEM0Y0MTsKfQoKLmJ1dHRvbi1iYXIubGVmdC1tZW51IC5idXR0b246aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzQzNDY0NzsKfQoKLmJ1dHRvbi1iYXIubGVmdC1tZW51IC5idXR0b246ZG93biB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmMyZjMwOwogICAgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgIzJjMmYzMDsKICAgIAogICAgYm9yZGVyLXRvcDogIDFweCBzb2xpZCAjMmMyZjMwOwogICAgYm9yZGVyLWxlZnQ6ICAxcHggc29saWQgIzJjMmYzMDsKfQoKLmJ1dHRvbi1iYXIubGVmdC1tZW51LndpdGgtYm90dG9tLWJ1dHRvbiAuYnV0dG9uLmxhc3Q6ZG93biB7CiAgICBib3JkZXItdG9wOiAgMXB4IHNvbGlkICMxODFhMWI7CiAgICBib3JkZXItYm90dG9tOiAgMXB4IHNvbGlkICMyYzJmMzA7Cn0KCgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIEJVVFRPTiBCQVIgLSBSSUdIVCBNRU5VIEFMVEVSTkFURQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouYnV0dG9uLWJhci5yaWdodC1tZW51IHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMzRDNGNDE7CiAgICBib3JkZXItbGVmdDogMXB4IHNvbGlkICMxODFhMWI7Cn0KCi5idXR0b24tYmFyLnJpZ2h0LW1lbnUgLmJ1dHRvbiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjM0QzRjQxOwogICAgYm9yZGVyLXJpZ2h0OiAgMXB4IHNvbGlkICMzRDNGNDE7Cn0KCi5idXR0b24tYmFyLnJpZ2h0LW1lbnUud2l0aC1ib3R0b20tYnV0dG9uIC5idXR0b24ubGFzdCB7CiAgICBib3JkZXItdG9wOiAgMXB4IHNvbGlkICMxODFhMWI7CiAgICBib3JkZXItYm90dG9tOiAgMXB4IHNvbGlkICMzRDNGNDE7Cn0KCi5idXR0b24tYmFyLnJpZ2h0LW1lbnUgLmJ1dHRvbjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjNDM0NjQ3Owp9CgouYnV0dG9uLWJhci5yaWdodC1tZW51IC5idXR0b246ZG93biB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmMyZjMwOwogICAgYm9yZGVyLWxlZnQ6IDFweCBzb2xpZCAjMmMyZjMwOwogICAgCiAgICBib3JkZXItdG9wOiAgMXB4IHNvbGlkICMyYzJmMzA7CiAgICBib3JkZXItcmlnaHQ6ICAxcHggc29saWQgIzJjMmYzMDsKfQoKLmJ1dHRvbi1iYXIucmlnaHQtbWVudS53aXRoLWJvdHRvbS1idXR0b24gLmJ1dHRvbi5sYXN0OmRvd24gewogICAgYm9yZGVyLXRvcDogIDFweCBzb2xpZCAjMTgxYTFiOwogICAgYm9yZGVyLWJvdHRvbTogIDFweCBzb2xpZCAjMmMyZjMwOwp9Cg"},{ name : "haxeui-core/styles/dark/right_arrow_square.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAIAAABLMMCEAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAMUlEQVQImWN8K6PCwMBwfMYEy4wCBhhggrOOz5iARRRZAkUULoEuCjGdCVMIRRTZDQD4NA07+SZ5fAAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/right_arrow_circled.png", data : "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"},{ name : "haxeui-core/styles/default/listview.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBMSVNUVklFVwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoubGlzdHZpZXcgewogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKICAgIGJvcmRlci1yYWRpdXM6IDFweDsKICAgIHBhZGRpbmc6IDFweDsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKfQoKLmxpc3R2aWV3IC5saXN0dmlldy1jb250ZW50cyB7CiAgICBzcGFjaW5nOiAwOwogICAgd2lkdGg6IDEwMCU7CiAgICBwYWRkaW5nOiAwcHg7Cn0KCi5saXN0dmlldyAuaXRlbXJlbmRlcmVyIHsKICAgIGN1cnNvcjogcG9pbnRlcjsgICAgCn0KCi5saXN0dmlldyAuaXRlbXJlbmRlcmVyIC5sYWJlbCB7CiAgICBjb2xvcjogYmxhY2s7Cn0KCi5saXN0dmlldyAuZXZlbiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRkZGRkZGOwp9CgoubGlzdHZpZXcgLmV2ZW46aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2Q5ZTVmMjsKfQoKLmxpc3R2aWV3IC5vZGQgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2Y4ZjhmODsKfQoKLmxpc3R2aWV3IC5vZGQ6aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2Q5ZTVmMjsKfQoKLmxpc3R2aWV3IC5pdGVtcmVuZGVyZXIgewogICAgaGVpZ2h0OiBhdXRvOwogICAgcGFkZGluZzogNXB4Owp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlcjpzZWxlY3RlZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjYTdjNGUyOwogICAgY29sb3I6IHdoaXRlOwp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlcjpzZWxlY3RlZCAubGFiZWwgewogICAgY29sb3I6IHdoaXRlOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIExJU1QgVklFVyAtIExFRlQgTUVOVSBBTFRFUk5BVEUKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KCi5saXN0dmlldy5sZWZ0LW1lbnUgewogICAgYm9yZGVyOiBub25lOwogICAgcGFkZGluZzogMHB4OwogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIGJhY2tncm91bmQtY29sb3I6ICNFRUVFRUU7CiAgICBtb2RlOiBtb2JpbGU7CiAgICBib3JkZXItcmlnaHQ6IDFweCBzb2xpZCAjQUJBQkFCOwp9CgoubGlzdHZpZXcubGVmdC1tZW51IC52ZXJ0aWNhbC1zY3JvbGwgLmRlaW5jLCAubGlzdHZpZXcubGVmdC1tZW51IC52ZXJ0aWNhbC1zY3JvbGwgLmluYyB7CiAgICBoaWRkZW46IHRydWU7Cn0KCi5saXN0dmlldy5sZWZ0LW1lbnUgLnZlcnRpY2FsLXNjcm9sbCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBub25lOwogICAgd2lkdGg6IDlweDsKICAgIHBhZGRpbmc6IDJweDsKfQoKLmxpc3R2aWV3LmxlZnQtbWVudSAudmVydGljYWwtc2Nyb2xsIC50aHVtYiB7CiAgICBiYWNrZ3JvdW5kLW9wYWNpdHk6IC4zOwogICAgd2lkdGg6IDVweDsKICAgIGJvcmRlci1yYWRpdXM6IDRweDsKfQoKLmxpc3R2aWV3LmxlZnQtbWVudSAubGlzdHZpZXctY29udGVudHMgewp9CiAgICAgICAgCi5saXN0dmlldy5sZWZ0LW1lbnUgLmV2ZW4gewogICAgYmFja2dyb3VuZC1jb2xvcjogI0VFRUVFRTsKICAgIGJvcmRlci1yaWdodDogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItYm90dG9tOiAxcHggc29saWQgI0FCQUJBQjsKICAgIAogICAgcGFkZGluZy10b3A6IDhweDsKICAgIHBhZGRpbmctYm90dG9tOiA4cHg7Cn0KCi5saXN0dmlldy5sZWZ0LW1lbnUgLmV2ZW46aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0Y1RjVGNTsKICAgIGJvcmRlci1yaWdodDogMXB4IHNvbGlkICNBQkFCQUI7CiAgICAKICAgIHBhZGRpbmctdG9wOiA4cHg7CiAgICBwYWRkaW5nLWJvdHRvbTogOHB4Owp9CgoubGlzdHZpZXcubGVmdC1tZW51IC5vZGQgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0VFRUVFRTsKICAgIGJvcmRlci1yaWdodDogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItYm90dG9tOiAxcHggc29saWQgI0FCQUJBQjsKICAgIAogICAgcGFkZGluZy10b3A6IDhweDsKICAgIHBhZGRpbmctYm90dG9tOiA4cHg7Cn0KCi5saXN0dmlldy5sZWZ0LW1lbnUgLm9kZDpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRjVGNUY1OwogICAgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgI0FCQUJBQjsKICAgIAogICAgcGFkZGluZy10b3A6IDhweDsKICAgIHBhZGRpbmctYm90dG9tOiA4cHg7Cn0KCi5saXN0dmlldy5sZWZ0LW1lbnUgLml0ZW1yZW5kZXJlcjpzZWxlY3RlZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjZmZmZmZmOwogICAgY29sb3I6ICMyMjIyMjI7CiAgICBib3JkZXItcmlnaHQ6IDFweCBzb2xpZCB3aGl0ZTsKfQoKCi5saXN0dmlldy5sZWZ0LW1lbnUgLml0ZW1yZW5kZXJlcjpzZWxlY3RlZCAubGFiZWwgewogICAgY29sb3I6ICMyMjIyMjI7Cn0KICAgIAoubGlzdHZpZXcubGVmdC1tZW51IC52ZXJ0aWNhbC1zY3JvbGwgewogICAgb3BhY2l0eTogLjU7CiAgICB3aWR0aDogOHB4OwogICAgcGFkZGluZzogMnB4OwogICAgYmFja2dyb3VuZC1jb2xvcjogbm9uZTsKICAgIGJvcmRlcjogbm9uZTsKfQo"},{ name : "haxeui-core/styles/dark/optionboxes.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBPUFRJT05CT1gKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLm9wdGlvbmJveCB7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKICAgIGhvcml6b250YWwtc3BhY2luZzogNHB4OwogICAgY3Vyc29yOiBwb2ludGVyOwogICAgY29sb3I6ICNiNGI0YjQ7Cn0KCi5vcHRpb25ib3g6aG92ZXIgewp9Cgoub3B0aW9uYm94OmRpc2FibGVkIHsKICAgIGN1cnNvcjogZGVmYXVsdDsKICAgIGNvbG9yOiAjNTk1OTU5Owp9Cgoub3B0aW9uYm94LXZhbHVlIHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4OwogICAgd2lkdGg6IDE2cHg7CiAgICBoZWlnaHQ6IDE2cHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgYm9yZGVyLXJhZGl1czogMThweDsKICAgIGljb246IG5vbmU7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjIsIDIsIDIsIDEsIDMsIHRydWUpOwogICAgcGFkZGluZy10b3A6IDFweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLm9wdGlvbmJveC12YWx1ZTpob3ZlciB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjMjE2QUFFOwp9Cgoub3B0aW9uYm94LXZhbHVlOnNlbGVjdGVkIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9vcHRpb24ucG5nIjsKfQoKLm9wdGlvbmJveC12YWx1ZTpkaXNhYmxlZCB7CiAgICBiYWNrZ3JvdW5kOiAjMmMyZjMwICMyYzJmMzAgdmVydGljYWw7CiAgICBjdXJzb3I6IGRlZmF1bHQ7Cn0KCi5vcHRpb25ib3gtbGFiZWwgewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLm9wdGlvbmJveC1pY29uIHsKICAgIGhvcml6b250YWwtYWxpZ246IGNlbnRlcjsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICBvcGFjaXR5OiAxOwp9Cgoub3B0aW9uYm94LWljb246ZGlzYWJsZWQgewogICAgY3Vyc29yOiBkZWZhdWx0OwogICAgb3BhY2l0eTogMC41Owp9Cg"},{ name : "haxeui-core/styles/default/left_arrow_circled.png", data : "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAACt0lEQVRIiaWVT0sbQRiHn3c3UbdI9dQaxJuYk9Ii9iSUQm3EQnvwC/QDeCiCEgktQ3tQclB6aA+lxQ8gCC3U+ucLpIKlFQ8tguBBbYKHNCA7bt2dHmKCJtm44O+08847z+9lZmde4QotLCx0aq1HRCRpjLkNICJ5EflljNlIp9N/m62XsInZ2dlBQIlICoiHpHnAmmVZanp6+nskg/n5ecfzvLfAs2YF1CgAFrXWE0opHWqQzWa7giD4DAxFBNdq0/f9J5lMJl8JWJUPpVRbEASfrgEHuGfb9hel1I06g7a2tnfAvWvAKxp0HOdNZSAA2Wz2ThAEWxcNa9XZ2UlHRwf7+/tRTIwxZmhmZmbLAvB9/3UzeHd3N+Pj46RSKfr7+6MYCPASQObm5jqAAtASBh8dHcW2bQByuRzb29tRTP61trbesoBUGDyRSJBKparwvb09dnZ2osAB4p7nPYwBfVEqd12Xw8NDkslkXW6pVOLg4KAubozpixljEiKX71MsFmNkZKQKB3Ach+Hh4dByl5eXOT4+rjVIWCJiGjgTBEEorFH+2dlZXVxETExEjoy57OH7Pqurq4yNjdHSUj4e13XJ5XL4vl8HKhaLFIvFRgZHMWPMbqOqCoUCKysrVRPHcejt7WV9fb2hSYh2LWCN8qsYauJ55emenh4GBgaiwk9d1123zt/ztbCsWhPXdaMarCqlSrHzwQvgMSG3uVAosLS0RHt7O/l8vlFKrQLLsl5RAabT6Z/AYrMVJycnUeGIyIdKA6pWrLWeAL5FIjTXVjwef14ZXOwH2vf9p8DmNeA527bHJicnqwd1ac8zmUxea30f+Ei5DUZVICLvtdYPpqamChcnmjX9u5Sb/ighjyHl3/vredP/0SjhyqaulLrpOM4jY0wf0HUe/mOM+X16erqhlCo1W/8f0YsgMTeU8ssAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/scrollview.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTQ1JPTExWSUVXCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5zY3JvbGx2aWV3IHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7CiAgICBwYWRkaW5nOiAxcHg7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKfQoKLnNjcm9sbHZpZXcgLnNjcm9sbHZpZXctY29udGVudHMgewogICAgaGVpZ2h0OiBhdXRvOwogICAgc3BhY2luZzogNXB4OwogICAgcGFkZGluZzogNXB4OwogICAgYm9yZGVyOiBub25lOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIE1PQklMRSBWQVJJQU5UUwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouc2Nyb2xsdmlldzptb2JpbGUgewogICAgbW9kZTogbW9iaWxlOwp9Cg"},{ name : "haxeui-core/styles/default/sizer_gripper_horizontal.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAECAIAAAA4WjmaAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAJElEQVQImWN8K6PCgBswMTAwTEqOnpQcjZXBhEcrAwMDI37DARkxCkFtOZfXAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/dialogs.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBESUFMT0dTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5kaWFsb2cgewogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICMwMDAwMDAsIDAuMiwgMzAsIDIsIDEsIDMsIGZhbHNlKTsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwogICAgYmFja2dyb3VuZC1jb2xvcjogd2hpdGU7CiAgICBwYWRkaW5nOiAxcHg7Cn0KCi5kaWFsb2ctY29udGFpbmVyIHsKICAgIHNwYWNpbmc6IDA7Cn0KCi5kaWFsb2ctdGl0bGUgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0VFRUVFRTsKICAgIHBhZGRpbmc6IDVweDsKICAgIGJvcmRlci1ib3R0b20td2lkdGg6IDFweDsKICAgIGJvcmRlci1ib3R0b20tY29sb3I6ICNBQkFCQUI7Cn0KCi5kaWFsb2ctdGl0bGUtbGFiZWwgewogICAgd2lkdGg6IDEwMCU7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgY29sb3I6ICM4ODg4ODg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogImNlbnRlciI7Cn0KCi5kaWFsb2ctY29udGVudCB7CiAgICBwYWRkaW5nOiA1cHg7Cn0KCi5kaWFsb2ctZm9vdGVyLWNvbnRhaW5lciB7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiAjQUJBQkFCOwogICAgYmFja2dyb3VuZC1jb2xvcjogI0VFRUVFRTsKfQoKLmRpYWxvZy1mb290ZXIgewogICAgcGFkZGluZzogNXB4OwogICAgaG9yaXpvbnRhbC1hbGlnbjogcmlnaHQ7Cn0KCi5kaWFsb2ctY2xvc2UtYnV0dG9uIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc21hbGwtY2xvc2UtYnV0dG9uLnBuZyI7CiAgICB2ZXJ0aWNhbC1hbGlnbjogImNlbnRlciI7CiAgICBjdXJzb3I6ICJwb2ludGVyIjsKfQoKLmRpYWxvZyAjaWNvbkltYWdlLmluZm8gewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9kaWFsb2dzL2luZm9ybWF0aW9uLnBuZyI7Cn0KCi5kaWFsb2cgI2ljb25JbWFnZS5xdWVzdGlvbiB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2RpYWxvZ3MvcXVlc3Rpb24ucG5nIjsKfQoKLmRpYWxvZyAjaWNvbkltYWdlLnllc25vIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvZGlhbG9ncy9xdWVzdGlvbi5wbmciOwp9CgouZGlhbG9nICNpY29uSW1hZ2Uud2FybmluZyB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2RpYWxvZ3MvZXhjbGFtYXRpb24ucG5nIjsKfQoKLmRpYWxvZyAjaWNvbkltYWdlLmVycm9yIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvZGlhbG9ncy9jcm9zcy1jaXJjbGUucG5nIjsKfQoKLm1lc3NhZ2Vib3ggewogICAgaW5pdGlhbC13aWR0aDogMzAwcHg7Cn0"},{ name : "haxeui-core/styles/default/expanded.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5AoNCwkgHyJHKAAAAJBJREFUOMtjYBgFAw8YkTlrt2xRYv77/+h/BgYJHOpf///LZBMU5H0LJsCELBvs43OPkeGfOwMDw0csmj8z/GP0RNaMYQADAwODv7//JSYGxkAGBoafSMK/Gf8zhgYG+pxFV8+EzZ3+/j77/zMwJjAwMPxjYGD4/5+BMTUgwGcnyQG0fuOW4vUbtxSPJhUaAwCz8idCJS/GkgAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/calendars.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBDQUxFTkRBUgoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouY2FsZW5kYXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzI1MjcyODsKICAgIHBhZGRpbmc6IDVweDsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7Cn0KCi5jYWxlbmRhciAuYnV0dG9uIHsKICAgIHBhZGRpbmc6IDhweDsKfQoKLmNhbGVuZGFyIC5jYWxlbmRhci1vZmYtZGF5IHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7CiAgICBjdXJzb3I6IGRlZmF1bHQ7Cn0KCi5jYWxlbmRhciAuY2FsZW5kYXItZGF5IHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyZjM3NDY7Cn0KCi5jYWxlbmRhciAuY2FsZW5kYXItZGF5OmhvdmVyIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6ICM0MTU5ODI7Cn0KCi5jYWxlbmRhciAuY2FsZW5kYXItZGF5LXNlbGVjdGVkIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6ICM0MTU5ODI7CiAgICBjb2xvcjogd2hpdGU7Cn0KCgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIENBTEVOREFSVklFVwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouY2FsZW5kYXItdmlldyB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4OwogICAgcGFkZGluZzogNXB4OwogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGJvcmRlci1yYWRpdXM6IDFweDsKfQoKLmNhbGVuZGFyLXZpZXcgLmNhbGVuZGFyIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIHBhZGRpbmc6IDBweDsKfQoKLmNhbGVuZGFyLXZpZXcgLmhib3ggewoJc3BhY2luZzogMDsKfQoKLmNhbGVuZGFyLXZpZXcgI3ByZXYtbW9udGggewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2xlZnRfYXJyb3cucG5nIjsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBib3JkZXI6IG5vbmU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4Owp9CgouY2FsZW5kYXItdmlldyAjbmV4dC1tb250aCB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvcmlnaHRfYXJyb3cucG5nIjsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBib3JkZXI6IG5vbmU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4Owp9CgouY2FsZW5kYXItdmlldyAjY3VycmVudC1tb250aCB7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9CgouY2FsZW5kYXItdmlldyAjY3VycmVudC15ZWFyIHsKICAgIHRleHQtYWxpZ246IHJpZ2h0OwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKCWJvcmRlcjogbm9uZTsKCXBhZGRpbmctdG9wOiAxcHg7CgliYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4Owp9Ci5jYWxlbmRhci12aWV3ICNjdXJyZW50LXllYXIgLmJ1dHRvbiB7CgliYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4OwoJYm9yZGVyOiBub25lOwp9Cg"},{ name : "haxeui-core/styles/dark/listview.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBMSVNUVklFVwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoubGlzdHZpZXcgewogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGJvcmRlci1yYWRpdXM6IDFweDsKICAgIHBhZGRpbmc6IDFweDsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwogICAgYmFja2dyb3VuZC1jb2xvcjogIzI1MjcyODsKfQoKCi5saXN0dmlldyAubGlzdHZpZXctY29udGVudHMgewogICAgc3BhY2luZzogMDsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogMHB4Owp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlciB7CiAgICBjdXJzb3I6IHBvaW50ZXI7ICAgIAp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlciAubGFiZWwgewogICAgY29sb3I6ICNiNGI0YjQ7Cn0KCi5saXN0dmlldyAuZXZlbiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMjUyNzI4Owp9CgoubGlzdHZpZXcgLmV2ZW46aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJmMzc0NjsKfQoKLmxpc3R2aWV3IC5vZGQgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJhMmMyZDsKfQoKLmxpc3R2aWV3IC5vZGQ6aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJmMzc0NjsKfQoKLmxpc3R2aWV3IC5pdGVtcmVuZGVyZXIgewogICAgaGVpZ2h0OiBhdXRvOwogICAgcGFkZGluZzogNXB4Owp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlcjpzZWxlY3RlZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjNDE1OTgyOwogICAgY29sb3I6IHdoaXRlOwp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlcjpzZWxlY3RlZCAubGFiZWwgewogICAgY29sb3I6IHdoaXRlOwp9CgoubGlzdHZpZXcgLml0ZW1yZW5kZXJlcjpkaXNhYmxlZCB7CiAgICBjb2xvcjogIzU5NTk1OTsKfQoKLmxpc3R2aWV3IC5pdGVtcmVuZGVyZXI6ZGlzYWJsZWQgLmxhYmVsIHsKICAgIGNvbG9yOiAjNTk1OTU5Owp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIExJU1QgVklFVyAtIExFRlQgTUVOVSBBTFRFUk5BVEUKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KCi5saXN0dmlldy5sZWZ0LW1lbnUgewogICAgYm9yZGVyOiBub25lOwogICAgcGFkZGluZzogMHB4OwogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIGJhY2tncm91bmQtY29sb3I6ICMzRDNGNDE7CiAgICBtb2RlOiBtb2JpbGU7CiAgICBib3JkZXItcmlnaHQ6IDFweCBzb2xpZCAjMTgxYTFiOwp9CgoubGlzdHZpZXcubGVmdC1tZW51IC52ZXJ0aWNhbC1zY3JvbGwgLmRlaW5jLCAubGlzdHZpZXcubGVmdC1tZW51IC52ZXJ0aWNhbC1zY3JvbGwgLmluYyB7CiAgICBoaWRkZW46IHRydWU7Cn0KCi5saXN0dmlldy5sZWZ0LW1lbnUgLnZlcnRpY2FsLXNjcm9sbCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBub25lOwogICAgd2lkdGg6IDlweDsKICAgIHBhZGRpbmc6IDJweDsKfQoKLmxpc3R2aWV3LmxlZnQtbWVudSAudmVydGljYWwtc2Nyb2xsIC50aHVtYiB7CiAgICBiYWNrZ3JvdW5kLW9wYWNpdHk6IC4zOwogICAgd2lkdGg6IDVweDsKICAgIGJvcmRlci1yYWRpdXM6IDRweDsKfQoKLmxpc3R2aWV3LmxlZnQtbWVudSAubGlzdHZpZXctY29udGVudHMgewp9CiAgICAgICAgCi5saXN0dmlldy5sZWZ0LW1lbnUgLmV2ZW4gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzNEM0Y0MTsKICAgIGJvcmRlci1yaWdodDogMXB4IHNvbGlkICMxODFhMWI7CiAgICBib3JkZXItYm90dG9tOiAxcHggc29saWQgIzE4MWExYjsKICAgIAogICAgcGFkZGluZy10b3A6IDhweDsKICAgIHBhZGRpbmctYm90dG9tOiA4cHg7Cn0KCi5saXN0dmlldy5sZWZ0LW1lbnUgLmV2ZW46aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzQzNDY0NzsKICAgIGJvcmRlci1yaWdodDogMXB4IHNvbGlkICMxODFhMWI7CiAgICAKICAgIHBhZGRpbmctdG9wOiA4cHg7CiAgICBwYWRkaW5nLWJvdHRvbTogOHB4Owp9CgoubGlzdHZpZXcubGVmdC1tZW51IC5vZGQgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzNEM0Y0MTsKICAgIGJvcmRlci1yaWdodDogMXB4IHNvbGlkICMxODFhMWI7CiAgICBib3JkZXItYm90dG9tOiAxcHggc29saWQgIzE4MWExYjsKICAgIAogICAgcGFkZGluZy10b3A6IDhweDsKICAgIHBhZGRpbmctYm90dG9tOiA4cHg7Cn0KCi5saXN0dmlldy5sZWZ0LW1lbnUgLm9kZDpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjNDM0NjQ3OwogICAgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgIzE4MWExYjsKICAgIAogICAgcGFkZGluZy10b3A6IDhweDsKICAgIHBhZGRpbmctYm90dG9tOiA4cHg7Cn0KCi5saXN0dmlldy5sZWZ0LW1lbnUgLml0ZW1yZW5kZXJlcjpzZWxlY3RlZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmMyZjMwOwogICAgY29sb3I6IHdoaXRlOwogICAgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgIzJjMmYzMDsKfQoKCi5saXN0dmlldy5sZWZ0LW1lbnUgLml0ZW1yZW5kZXJlcjpzZWxlY3RlZCAubGFiZWwgewogICAgY29sb3I6IHdoaXRlOwp9CiAgICAKLmxpc3R2aWV3LmxlZnQtbWVudSAudmVydGljYWwtc2Nyb2xsIHsKICAgIG9wYWNpdHk6IC41OwogICAgd2lkdGg6IDhweDsKICAgIHBhZGRpbmc6IDJweDsKICAgIGJhY2tncm91bmQtY29sb3I6IG5vbmU7CiAgICBib3JkZXI6IG5vbmU7Cn0K"},{ name : "haxeui-core/styles/default/sliders.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTTElERVJTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5ob3Jpem9udGFsLXNsaWRlciB7CiAgICBwYWRkaW5nLWxlZnQ6IDVweDsKICAgIHBhZGRpbmctcmlnaHQ6IDVweDsKICAgIHBhZGRpbmctdG9wOiAwcHg7CiAgICBwYWRkaW5nLWJvdHRvbTogMHB4OwogICAgaGVpZ2h0OiBhdXRvOwogICAgaW5pdGlhbC13aWR0aDogMTUwcHg7Cn0KCi5ob3Jpem9udGFsLXNsaWRlciAuc2xpZGVyLXZhbHVlIHsKICAgIHdpZHRoOiAxMDAlOwogICAgaGVpZ2h0OiA4cHg7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgouaG9yaXpvbnRhbC1zbGlkZXIud2l0aC1jZW50ZXIgLnJhbmdlLXZhbHVlIHsKICAgIGJvcmRlci1yYWRpdXM6IDBweDsKfQoKLmhvcml6b250YWwtc2xpZGVyIC5taW5vci10aWNrIHsKICAgIG1hcmdpbi10b3A6IDEwcHg7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjY2NjY2NjOwogICAgd2lkdGg6IDFweDsKICAgIGhlaWdodDogNHB4OwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLmhvcml6b250YWwtc2xpZGVyIC5tYWpvci10aWNrIHsKICAgIG1hcmdpbi10b3A6IDEycHg7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjY2NjY2NjOwogICAgd2lkdGg6IDFweDsKICAgIGhlaWdodDogOHB4OwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLmhvcml6b250YWwtc2xpZGVyIC5idXR0b24gewogICAgd2lkdGg6IDExcHg7CiAgICBoZWlnaHQ6IDIwcHg7CiAgICBib3JkZXItcmFkaXVzOiAycHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgZmlsdGVyOiBub25lOwp9CiAgICAKLnZlcnRpY2FsLXNsaWRlciB7CiAgICBwYWRkaW5nLXRvcDogNXB4OwogICAgcGFkZGluZy1ib3R0b206IDVweDsKICAgIHBhZGRpbmctbGVmdDogMHB4OwogICAgcGFkZGluZy1yaWdodDogMHB4OwogICAgd2lkdGg6IGF1dG87CiAgICBpbml0aWFsLWhlaWdodDogMTUwcHg7Cn0KCi52ZXJ0aWNhbC1zbGlkZXIgLnNsaWRlci12YWx1ZSB7CiAgICBoZWlnaHQ6IDEwMCU7CiAgICB3aWR0aDogOHB4OwogICAgYm9yZGVyLXJhZGl1czogMnB4OwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgoudmVydGljYWwtc2xpZGVyLndpdGgtY2VudGVyIC5yYW5nZS12YWx1ZSB7CiAgICBib3JkZXItcmFkaXVzOiAwcHg7Cn0KCi52ZXJ0aWNhbC1zbGlkZXIgLm1pbm9yLXRpY2sgewogICAgbWFyZ2luLWxlZnQ6IDEwcHg7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjY2NjY2NjOwogICAgd2lkdGg6IDRweDsKICAgIGhlaWdodDogMXB4OwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwp9CgoudmVydGljYWwtc2xpZGVyIC5tYWpvci10aWNrIHsKICAgIG1hcmdpbi1sZWZ0OiAxMnB4OwogICAgYmFja2dyb3VuZC1jb2xvcjogI2NjY2NjYzsKICAgIHdpZHRoOiA4cHg7CiAgICBoZWlnaHQ6IDFweDsKICAgIGhvcml6b250YWwtYWxpZ246IGNlbnRlcjsKfQoKLnZlcnRpY2FsLXNsaWRlciAuYnV0dG9uIHsKICAgIHdpZHRoOiAyMHB4OwogICAgaGVpZ2h0OiAxMXB4OwogICAgYm9yZGVyLXJhZGl1czogMnB4OwogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgZmlsdGVyOiBub25lOwp9Cgo"},{ name : "haxeui-core/styles/dark/tabs.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBUQUJCQVIgKFRPUCkKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnRhYmJhciB7CiAgICBwYWRkaW5nLWxlZnQ6IDBweDsKICAgIHBhZGRpbmctcmlnaHQ6IDBweDsKICAgIGhlaWdodDogYXV0bzsKICAgIHdpZHRoOiBhdXRvOwogICAgYm9yZGVyLWJvdHRvbS13aWR0aDogMXB4OwogICAgYm9yZGVyLWJvdHRvbS1jb2xvcjogIzE4MWExYjsKICAgIGJvcmRlci10b3Atd2lkdGg6IDBweDsKICAgIGNsaXA6IHRydWU7Cn0KCi50YWJiYXIgPiAudGFiYmFyLWNvbnRlbnRzIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJvcmRlci1ib3R0b20td2lkdGg6IDFweDsKICAgIGJvcmRlci1ib3R0b20tY29sb3I6ICMxODFhMWI7CiAgICBzcGFjaW5nOiAwOwp9CgoudGFiYmFyLWJ1dHRvbiB7CiAgICBib3JkZXItcmFkaXVzOiAwcHg7CiAgICBiYWNrZ3JvdW5kOiAjMzEzMzM1ICMzMTMzMzUgdmVydGljYWw7CiAgICBwYWRkaW5nOiA2cHggOHB4OwogICAgdmVydGljYWwtYWxpZ246IGJvdHRvbTsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAwcHg7CiAgICBjb2xvcjogI2I0YjRiNDsKfQoKLnRhYmJhci1idXR0b24uZmlyc3QgewogICAgYm9yZGVyLWxlZnQtd2lkdGg6IDFweDsKfQoKLnRhYmJhci1idXR0b246aG92ZXIgewogICAgYmFja2dyb3VuZDogIzM5M2IzYyAjMzkzYjNjIHZlcnRpY2FsOwp9CgoudGFiYmFyLWJ1dHRvbjpkb3duIHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7Cn0KCi50YWJiYXItYnV0dG9uLXNlbGVjdGVkIHsKICAgIGJvcmRlci1yYWRpdXM6IDBweDsKCiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAxcHg7CiAgICBib3JkZXItYm90dG9tLWNvbG9yOiAjM0QzRjQxOwogICAgYmFja2dyb3VuZC1jb2xvcjogIzNEM0Y0MTsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAwcHg7CiAgICBjb2xvcjogI2Q0ZDRkNDsKfQoKCi50YWJiYXItYnV0dG9uLXNlbGVjdGVkLmZpcnN0IHsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAxcHg7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogVEFCQkFSIChCT1RUT00pCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi50YWJiYXI6Ym90dG9tIHsKICAgIHBhZGRpbmctbGVmdDogMHB4OwogICAgcGFkZGluZy1yaWdodDogMHB4OwogICAgaGVpZ2h0OiBhdXRvOwogICAgd2lkdGg6IGF1dG87CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAwcHg7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiAjMTgxYTFiOwogICAgY2xpcDogdHJ1ZTsKfQoKLnRhYmJhcjpib3R0b20gLnRhYmJhci1jb250ZW50cyB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAwcHg7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiAjMTgxYTFiOwogICAgc3BhY2luZzogMDsKfQoKLnRhYmJhci1idXR0b246Ym90dG9tIHsKICAgIHZlcnRpY2FsLWFsaWduOiB0b3A7CiAgICBib3JkZXItbGVmdC13aWR0aDogMHB4Owp9CgoudGFiYmFyLWJ1dHRvbi5maXJzdCB7CiAgICBib3JkZXItbGVmdC13aWR0aDogMXB4Owp9CgoudGFiYmFyLWJ1dHRvbi1zZWxlY3RlZDpib3R0b20gewogICAgYm9yZGVyLXJhZGl1czogMHB4OwoKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBib3JkZXItdG9wLXdpZHRoOiAxcHg7CiAgICBib3JkZXItdG9wLWNvbG9yOiAjM0QzRjQxOwogICAgYmFja2dyb3VuZC1jb2xvcjogIzNEM0Y0MTsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAwcHg7Cn0KCi50YWJiYXItYnV0dG9uLXNlbGVjdGVkLmZpcnN0IHsKICAgIGJvcmRlci1sZWZ0LXdpZHRoOiAxcHg7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogVEFCVklFVwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoKLnRhYnZpZXcgPiAudGFidmlldy1jb250ZW50IHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjM0QzRjQxOwp9CgoKLnRhYmJhci1zY3JvbGwtbGVmdCB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvbGVmdF9hcnJvdy5wbmciOwogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIHBhZGRpbmc6IDVweDsKfQoKLnRhYmJhci1zY3JvbGwtcmlnaHQgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL3JpZ2h0X2Fycm93LnBuZyI7CiAgICBib3JkZXItcmFkaXVzOiAwOwogICAgcGFkZGluZzogNXB4Owp9CgoudGFiYmFyLWJ1dHRvbiAudGFiLWNsb3NlLWJ1dHRvbiB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL3RpbnktY2xvc2UtYnV0dG9uLnBuZyI7Cn0K"},{ name : "haxeui-core/styles/default/accordion.css", data : "LmFjY29yZGlvbiB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjYWJhYmFiOwogICAgc3BhY2luZzogMDsKICAgIHBhZGRpbmc6IDFweDsKICAgIHBhZGRpbmctYm90dG9tOiAwcHg7CiAgICBjbGlwOiB0cnVlOwp9CgouYWNjb3JkaW9uLWJ1dHRvbiB7CiAgICBib3JkZXItcmFkaXVzOiAwOwogICAgYm9yZGVyOiAwcHggc29saWQgI2FiYWJhYjsKICAgIHdpZHRoOiAxMDAlOwogICAgdGV4dC1hbGlnbjogbGVmdDsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvd19zcXVhcmUucG5nIjsKICAgIGljb24tcG9zaXRpb246IGxlZnQ7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItY29sb3I6ICNhYmFiYWI7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAxcHg7Cn0KCi5hY2NvcmRpb24tYnV0dG9uOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2Rvd25fYXJyb3dfc3F1YXJlLnBuZyI7Cn0KCi5hY2NvcmRpb24tcGFnZSB7CiAgICB3aWR0aDogMTAwJTsKICAgIGNsaXA6IHRydWU7CiAgICB3aWR0aDogMTAwJTsKICAgIGJvcmRlci1jb2xvcjogI2FiYWJhYjsKICAgIGJvcmRlci1ib3R0b20td2lkdGg6IDFweDsKICAgIG9wYWNpdHk6IDE7CiAgICBwYWRkaW5nOiA1cHg7Cn0KCi5hY2NvcmRpb24tcGFnZTpleHBhbmRlZCB7CiAgICBhbmltYXRpb246IGFjY29yZGlvbkFuaW1hdGVFeHBhbmQgMC4zcyBlYXNlIDBzIDE7Cn0KCi5hY2NvcmRpb24tcGFnZTpjb2xsYXBzZWQgewogICAgYW5pbWF0aW9uOiBhY2NvcmRpb25BbmltYXRlQ29sbHBhc2UgMC4zcyBlYXNlIDBzIDE7Cn0KCkBrZXlmcmFtZXMgYWNjb3JkaW9uQW5pbWF0ZUV4cGFuZCB7CiAgICAwJSB7CiAgICAgICAgb3BhY2l0eTogMDsKICAgICAgICBoZWlnaHQ6IDAlOwogICAgfQogICAgMTAwJSB7CiAgICAgICAgb3BhY2l0eTogMTsKICAgICAgICBoZWlnaHQ6IDEwMCU7CiAgICB9Cn0KCkBrZXlmcmFtZXMgYWNjb3JkaW9uQW5pbWF0ZUNvbGxwYXNlIHsKICAgIDAlIHsKICAgICAgICBvcGFjaXR5OiAxOwogICAgICAgIGhlaWdodDogMTAwJTsKICAgIH0KICAgIDEwMCUgewogICAgICAgIG9wYWNpdHk6IDA7CiAgICAgICAgaGVpZ2h0OiAwJTsKICAgIH0KfQoKLmFjY29yZGlvbi1wYWdlIC5zY3JvbGx2aWV3IHsKICAgIGJvcmRlcjogbm9uZTsKICAgIHBhZGRpbmctdG9wOiAwOwogICAgcGFkZGluZy1yaWdodDogMDsKICAgIHBhZGRpbmctbGVmdDogMDsKICAgIHBhZGRpbmctYm90dG9tOiAwOwp9Cg"},{ name : "haxeui-core/locale/it/dialog.properties", data : "ZGlhbG9nLnNhdmU9U2FsdmEKZGlhbG9nLnllcz1Tw6wKZGlhbG9nLm5vPU5vCmRpYWxvZy5jbG9zZT1DaGl1ZGkKZGlhbG9nLm9rPU9LCmRpYWxvZy5jYW5jZWw9QW5udWxsYQpkaWFsb2cuYXBwbHk9QXBwbGljYQo"},{ name : "haxeui-core/styles/dark/checkboxes.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBDSEVDS0JPWAoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouY2hlY2tib3ggewogICAgd2lkdGg6IGF1dG87CiAgICBoZWlnaHQ6IGF1dG87CiAgICBob3Jpem9udGFsLXNwYWNpbmc6IDRweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIGNvbG9yOiAjYjRiNGI0Owp9CgouY2hlY2tib3g6aG92ZXIgewp9CgouY2hlY2tib3g6ZGlzYWJsZWQgewogICAgY3Vyc29yOiBkZWZhdWx0OwogICAgY29sb3I6ICM1OTU5NTk7Cn0KCi5jaGVja2JveC12YWx1ZSB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjMTgxYTFiOwogICAgYmFja2dyb3VuZC1jb2xvcjogIzI1MjcyODsKICAgIHdpZHRoOiAxNnB4OwogICAgaGVpZ2h0OiAxNnB4OwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIGljb246IG5vbmU7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjIsIDIsIDIsIDEsIDMsIHRydWUpOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgouY2hlY2tib3gtdmFsdWU6aG92ZXIgewogICAgYm9yZGVyOiAxcHggc29saWQgIzQxNTk4MjsKfQoKLmNoZWNrYm94LXZhbHVlOnNlbGVjdGVkIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9jaGVjay5wbmciOwp9CgouY2hlY2tib3gtdmFsdWU6ZGlzYWJsZWQgewogICAgYmFja2dyb3VuZDogIzJjMmYzMCAjMmMyZjMwIHZlcnRpY2FsOwogICAgY3Vyc29yOiBkZWZhdWx0Owp9CgouY2hlY2tib3gtbGFiZWwgewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLmNoZWNrYm94LWljb24gewogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIG9wYWNpdHk6IDE7Cn0KCi5jaGVja2JveC1pY29uOmRpc2FibGVkIHsKICAgIGN1cnNvcjogZGVmYXVsdDsKICAgIG9wYWNpdHk6IDAuNTsKfQo"},{ name : "haxeui-core/styles/default/tableview.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBIRUFERVIKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmhlYWRlciB7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKICAgIHNwYWNpbmc6IDA7Cn0KCi5oZWFkZXIgLmNvbHVtbiB7CiAgICBib3JkZXItcmFkaXVzOiAwOwogICAgaWNvbi1wb3NpdGlvbjogZmFyLXJpZ2h0OwogICAgYm9yZGVyLWxlZnQtd2lkdGg6IDA7CiAgICB0ZXh0LWFsaWduOiBsZWZ0Owp9CgouaGVhZGVyIC5jb2x1bW4ubGFzdCB7CiAgICBib3JkZXItcmlnaHQtd2lkdGg6IDA7Cn0KCi8qCi5oZWFkZXIuc2Nyb2xsaW5nIC5jb2x1bW4ubGFzdCB7CiAgICBib3JkZXItcmlnaHQtd2lkdGg6IDFweDsKfQoqLwoKLmNvbHVtbi5zb3J0YWJsZSB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc29ydGFibGVfYXJyb3dzLnBuZyI7CiAgICBpY29uLXBvc2l0aW9uOiBmYXItcmlnaHQ7Cn0KCi5jb2x1bW4uc29ydC1hc2MgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3NvcnRhYmxlX2FzYy5wbmciOwp9CgouY29sdW1uLnNvcnQtZGVzYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc29ydGFibGVfZGVzYy5wbmciOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIFRBQkxFVklFVwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoudGFibGV2aWV3IHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7CiAgICBwYWRkaW5nOiAxcHg7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKICAgIGJhY2tncm91bmQtY29sb3I6ICNGRkZGRkY7CiAgICBzcGFjaW5nOiAwOwp9CgoudGFibGV2aWV3IC50YWJsZXZpZXctY29udGVudHMgewogICAgc3BhY2luZzogMDsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogMHB4Owp9CgoudGFibGV2aWV3IC5ldmVuIHsKICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgoudGFibGV2aWV3IC5vZGQgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2Y4ZjhmODsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLnRhYmxldmlldyAuY29tcG91bmRpdGVtcmVuZGVyZXIgLml0ZW1yZW5kZXJlciB7CiAgICBoZWlnaHQ6IGF1dG87CiAgICBwYWRkaW5nOiA1cHg7Cn0KCi50YWJsZXZpZXcgLmV2ZW46aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI2Q5ZTVmMjsKfQoKLnRhYmxldmlldyAub2RkOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNkOWU1ZjI7Cn0KCi50YWJsZXZpZXcgLmNvbXBvdW5kaXRlbXJlbmRlcmVyIC5sYWJlbCB7CiAgICBjb2xvcjogYmxhY2s7Cn0KCi50YWJsZXZpZXcgLmNvbXBvdW5kaXRlbXJlbmRlcmVyOnNlbGVjdGVkIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNhN2M0ZTI7CiAgICBjb2xvcjogd2hpdGU7Cn0KCi50YWJsZXZpZXcgLmNvbXBvdW5kaXRlbXJlbmRlcmVyOnNlbGVjdGVkIC5sYWJlbCB7CiAgICBjb2xvcjogd2hpdGU7Cn0K"},{ name : "haxeui-core/locale/de/dialog.properties", data : "ZGlhbG9nLnNhdmU9U3BlaWNoZXJuCmRpYWxvZy55ZXM9SmEKZGlhbG9nLm5vPU5laW4KZGlhbG9nLmNsb3NlPVNjaGxpZXNzZW4KZGlhbG9nLm9rPU9LCmRpYWxvZy5jYW5jZWw9QWJicmVjaGVuCmRpYWxvZy5hcHBseT1BbndlbmRlbgo"},{ name : "haxeui-core/styles/default/progressbars.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBQUk9HUkVTUwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwpAa2V5ZnJhbWVzIGluZGV0ZXJtaW5hdGUgewogICAgMCUgewogICAgICAgIHN0YXJ0OiAwOwogICAgICAgIGVuZDogMjU7CiAgICB9CiAgICA1MCUgewogICAgICAgIHN0YXJ0OiA3NTsKICAgICAgICBlbmQ6IDEwMDsKICAgIH0KICAgIDEwMCUgewogICAgICAgIHN0YXJ0OiAwOwogICAgICAgIGVuZDogMjU7CiAgICB9Cn0KCi5wcm9ncmVzczppbmRldGVybWluYXRlIHsKICAgIGFuaW1hdGlvbjogaW5kZXRlcm1pbmF0ZSAxcyBlYXNlIDBzIGluZmluaXRlOwp9CgoucHJvZ3Jlc3MtdmFsdWUgewogICAgYm9yZGVyOiBub25lOwogICAgYm9yZGVyLXJhZGl1czogMXB4Owp9CgouaG9yaXpvbnRhbC1wcm9ncmVzcyB7CiAgICBiYWNrZ3JvdW5kOiAjRjFGMUYxICNGRkZGRkYgdmVydGljYWw7CiAgICBpbml0aWFsLXdpZHRoOiAxNTBweDsKICAgIGluaXRpYWwtaGVpZ2h0OiA4cHg7Cn0KCi5ob3Jpem9udGFsLXByb2dyZXNzIC5wcm9ncmVzcy12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjOThjNGU2ICM1NDliZGUgdmVydGljYWw7CiAgICBoZWlnaHQ6IDEwMCU7Cn0KCi52ZXJ0aWNhbC1wcm9ncmVzcyB7CiAgICBiYWNrZ3JvdW5kOiAjRjFGMUYxICNGRkZGRkYgaG9yaXpvbnRhbDsKICAgIGluaXRpYWwtd2lkdGg6IDhweDsKICAgIGluaXRpYWwtaGVpZ2h0OiAxNTBweDsKfQoKLnZlcnRpY2FsLXByb2dyZXNzIC5wcm9ncmVzcy12YWx1ZSB7CiAgICBiYWNrZ3JvdW5kOiAjOThjNGU2ICM1NDliZGUgaG9yaXpvbnRhbDsKICAgIHdpZHRoOiAxMDAlOwp9Cgo"},{ name : "haxeui-core/styles/default/tiny-close-button.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAABhWlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV9TpVUrCnYQcchQXbQgKuIoVSyChdJWaNXB5NIvaNKQpLg4Cq4FBz8Wqw4uzro6uAqC4AeIm5uToouU+L+k0CLWg+N+vLv3uHsHCLUSU82OCUDVLCMRjYjpzKroe0UX/OjHGHokZuqx5GIKbcfXPTx8vQvzrPbn/hy9StZkgEcknmO6YRFvEM9sWjrnfeIgK0gK8TnxuEEXJH7kuuzyG+e8wwLPDBqpxDxxkFjMt7DcwqxgqMTTxCFF1ShfSLuscN7irJYqrHFP/sJAVltJcp3mMKJYQgxxiJBRQRElWAjTqpFiIkH7kTb+IccfJ5dMriIYORZQhgrJ8YP/we9uzdzUpJsUiACdL7b9MQL4doF61ba/j227fgJ4n4Errekv14DZT9KrTS10BPRtAxfXTU3eAy53gMEnXTIkR/LSFHI54P2MvikDDNwC3Wtub419nD4AKepq+QY4OARG85S93ubd/tbe/j3T6O8HZkByogoVjmQAAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAADdcAAA3XAUIom3gAAAAHdElNRQflCQgQLBKUV9OZAAAA9klEQVQY012PTU4CQRCFv6qhh7gWdy6N0XtwAhPwEqzMzIJZ9QYIybAh3sEEPAEXgURPQGCv89PlwjQitavUq/e+J36+vA1qU5X6xWfZgbMZT5c3ztmiTdqxmjIB+mbp2pdl75+oY2ugn7TJRMbT1+vUhZVhjxifTW2DtNu0IbgVwoPAh1ANBMCXZS8eMHaAItwLsq1qHc6K0VH+os6cgejk83wPoFHYTb/EzE6PZkhVudOuETwE9/7LJFuMHcJdx8lbLCjnfDHuu75qLwuqWbqITlWdPPk838+K0VGkej45pzLXJmkKYBPbRSafZQfVeghsNGjxAx6fgSyXIE/yAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/down_arrow_circled.png", data : "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"},{ name : "haxeui-core/styles/default/textinputs.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBURVhUIEZJRUxECioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi50ZXh0ZmllbGQgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIGNvbG9yOiAjNDQ0NDQ0OwogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHBhZGRpbmc6IDVweCA1cHg7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjODg4ODg4LCAwLjIsIDEsIDEsIDEsIDMsIHRydWUpOwogICAgaW5pdGlhbC13aWR0aDogMTUwcHg7CiAgICBoZWlnaHQ6IGF1dG87CiAgICBzcGFjaW5nOiA1cHg7CiAgICBpY29uLXBvc2l0aW9uOiByaWdodDsKICAgIGNvbnRlbnQtdHlwZTogYXV0bzsKfQoKLnRleHRmaWVsZDphY3RpdmUgewogICAgYm9yZGVyOiAxcHggc29saWQgIzIxNkFBRTsKfQoKLnRleHRmaWVsZDplbXB0eSB7CiAgICBjb2xvcjogI0EwQTBBMDsKfQoKLnRleHRmaWVsZDpkaXNhYmxlZCB7CiAgICBjb2xvcjogIzkwOTA5MDsKICAgIGJhY2tncm91bmQ6ICNENEQ0RDQgI0NDQ0NDQyB2ZXJ0aWNhbDsKfQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBURVhUIEFSRUEKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnRleHRhcmVhIHsKICAgIGNvbG9yOiAjNDQ0NDQ0OwogICAgYm9yZGVyOiAxcHggc29saWQgI0FCQUJBQjsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHBhZGRpbmc6IDFweDsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICM4ODg4ODgsIDAuMiwgMSwgMSwgMSwgMywgdHJ1ZSk7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIGluaXRpYWwtd2lkdGg6IDE1MHB4OwogICAgaW5pdGlhbC1oZWlnaHQ6IDEwMHB4OwogICAgY29udGVudC10eXBlOiBhdXRvOwp9CgoudGV4dGFyZWE6YWN0aXZlIHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMyMTZBQUU7Cn0KCi50ZXh0YXJlYTplbXB0eSB7CiAgICBjb2xvcjogI0EwQTBBMDsKfQoKLnRleHRhcmVhOmRpc2FibGVkIHsKICAgIGNvbG9yOiAjOTA5MDkwOwogICAgYmFja2dyb3VuZDogI0Q0RDRENCAjQ0NDQ0NDIHZlcnRpY2FsOwp9"},{ name : "haxeui-core/styles/default/up_down_arrows.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAJCAIAAABxOqH0AAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAeklEQVQImWN8K6PCwMDAwMDQHhFQuWIDhM0EF2JgYOiMCkKIQoQgoDcujIGBgZkhI+X///9MTEyMjIwMDAxMTEynjPQY4eYiAxaIFjhgZmZmYGBg3nD/+XF9bQifiYmJgYGhYP5yJgYGhuJFqyBKIEIIl0E4EJKBgQEAK1sc1cc2psYAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/steppers.css", data : "Lm51bWJlcnN0ZXBwZXIgewogICAgcGFkZGluZzogMXB4OwogICAgc3BhY2luZzogMDsKfQoKLnN0ZXBwZXIgewogICAgc3BhY2luZzogMDsKfQoKLnN0ZXBwZXItYnV0dG9uIHsKICAgIHBhZGRpbmc6IDNweDsKICAgIHBhZGRpbmctdG9wOiA0cHg7CiAgICBwYWRkaW5nLWJvdHRvbTogNHB4OwogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6ICNFNkU2RTY7CiAgICBvcGFjaXR5OiAxOwp9Cgouc3RlcHBlci1idXR0b246aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0YxRjFGMTsKfQoKLnN0ZXBwZXItYnV0dG9uOmRvd24gewogICAgYmFja2dyb3VuZC1jb2xvcjogI0MyQzJDMjsKfQoKLnN0ZXBwZXItYnV0dG9uOmRpc2FibGVkIHsKICAgIG9wYWNpdHk6IDAuNTsKICAgIGJhY2tncm91bmQtY29sb3I6ICNDQ0NDQ0M7Cn0KCi5zdGVwcGVyLWluYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvdXBfYXJyb3cucG5nIjsKfQoKLnN0ZXBwZXItZGVpbmMgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2Rvd25fYXJyb3cucG5nIjsKfQoKLnN0ZXBwZXItaW5jOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3VwX2Fycm93X3doaXRlLnBuZyI7Cn0KCi5zdGVwcGVyLWRlaW5jOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2Rvd25fYXJyb3dfd2hpdGUucG5nIjsKfQoKLnN0ZXBwZXItdGV4dGZpZWxkLCAuc3RlcHBlci10ZXh0ZmllbGQ6YWN0aXZlIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogNHB4OwogICAgcGFkZGluZy10b3A6IDVweDsKICAgIHBhZGRpbmctYm90dG9tOiAzcHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgZmlsdGVyOiBkcm9wLXNoYWRvdygxLCA0NSwgIzg4ODg4OCwgMC4yLCAxLCAxLCAxLCAzLCB0cnVlKTsKICAgIGJhY2tncm91bmQtY29sb3I6IG5vbmU7Cn0KCi5zdGVwcGVyLXN0ZXAgewogICAgaGVpZ2h0OiAxMDAlOwp9Cgouc3RlcHBlci1zdGVwIC5zdGVwcGVyLWluYywgLnN0ZXBwZXItc3RlcCAuc3RlcHBlci1kZWluYyB7CiAgICBoZWlnaHQ6IDUwJTsKfQoKLm51bWJlci1zdGVwcGVyIHsKICAgIGluaXRpYWwtd2lkdGg6IDYwcHg7Cn0"},{ name : "haxeui-core/styles/default/dialogs/cross-circle-small.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAABFFBMVEUAAABSUlJ7e4CdnZ1AQEAREREzMzM/Pz8lJSVRUVGmprI6Oj0LCwtqampycnILCwtVVVU6OjpFRUUmJiZVVVVRUVFISEgNDQ1UVFSqqqyfn6K/v76zs7LIyMjHx8dRUVNQUFH////c3NzQ0NHm5uba2uvq6urW1tbeVlbNRUWiExPu7u7i4uLf39/Nzc3XUFCuISGwEhKsERHW1uTQ0NvAwMHTqKi9l6DEmpm5kZXGc3Pyamq2ZGTBYWHpYGCuXl+8Xl2iV12pTlCjSk3RSUm9QkKtNTWpMzOIGRrUERHQERHFERG4ERG2ERGdERGUEBD39/fY2NjJydDDw8PDPT3JOzu4Li62Li7BKiqrGhqxGRm0FxcilCapAAAAIXRSTlMAPq6ibVFHGAkH3JKHfHh0Y2FcXFVNQh0V19fU1NLShoYJuWjGAAAA5UlEQVQY0yXI1XbDMBBF0ZExzFSuZNWt7RjDzEzl0P//R6zkPMyafYFVQJlEIoMKcCuIYk8qpepzDAWvzvK02pxMmtUin2UL4s3OuNtqdbUO4RGAHDX7Nv7ww3b/KypD7qGuYYw1dn7rjzlIkbbt4E9qErLdt60UCMp0/K9byjvZ6s70RwDBmv25nu+i551mFQGSSu+wZqbq+tyrJEG6azi+XVc1jGPjXgL5RRnqZLNcbgx9+P0qA0hcebRbLRar3ajMSQAQSHOl2mA+H9RKXDoAbBHDoTe/UFhkZuXFeCQSF/PsvwDvMCJpV4jhMQAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/default/dialogs/information.png", data : "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"},{ name : "haxeui-core/styles/dark/up_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAK0lEQVQImWN8K6PCwMDAwMAg9Pj2O1lVCJsJLgQnoaJwDpzN+P//fwYMAADCtw5xBtAKnQAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/option.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5QEaCgw0CA+AtQAAAINJREFUGNN9zDEKwlAQRdE781egfdYQV6FgM0WWYpNNSPYRm2ktsgfb9LYSsE7+WAQE4ccDr7rwBMDdqyB1CEcAgkElt2Y2irtXoelBsOfXJLHUGqSuEAF2SLrq97Yg4KT8F0owbHe5q0pugalQX3nWi5rZKLHUAjfgvU76PKdD05yfH881KnTRsBd3AAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/switches.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTV0lUQ0ggKERFRkFVTFQpCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5zd2l0Y2ggewogICAgd2lkdGg6IGF1dG87CiAgICBoZWlnaHQ6IGF1dG87CiAgICBob3Jpem9udGFsLXNwYWNpbmc6IDVweDsKfQoKLnN3aXRjaC1sYWJlbCB7CiAgICBjb2xvcjogYmxhY2s7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9Cgouc3dpdGNoLWJ1dHRvbi1zdWIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBib3JkZXItcmFkaXVzOiAycHg7CiAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICBwYWRkaW5nOiAwcHg7CiAgICBpbml0aWFsLXdpZHRoOiA0MHB4OwogICAgaW5pdGlhbC1oZWlnaHQ6IDIwcHg7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjODg4ODg4LCAwLjMsIDEsIDEsIDEsIDMsIHRydWUpOwp9Cgouc3dpdGNoLWJ1dHRvbi1zdWIgLmJ1dHRvbiB7CiAgICBoZWlnaHQ6IDEwMCU7CiAgICB3aWR0aDogNTAlOwogICAgYm9yZGVyLXJhZGl1czogMnB4OwogICAgZmlsdGVyOiBub25lOwp9Cgouc3dpdGNoLWJ1dHRvbi1zdWItZXh0cmEgewogICAgaGVpZ2h0OiAwOwogICAgd2lkdGg6IDA7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBub25lOwogICAgYm9yZGVyOiBub25lOwogICAgZmlsdGVyOiBub25lOwp9CgpAa2V5ZnJhbWVzIHN3aXRjaEFuaW1hdGVTZWxlY3RlZCB7CiAgICAwJSB7CiAgICAgICAgcG9zOiAwOwogICAgICAgIGJhY2tncm91bmQtY29sb3I6ICNGRkZGRkY7CiAgICB9CiAgICAxMDAlIHsKICAgICAgICBwb3M6IDEwMDsKICAgICAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjOThjNGU2OwogICAgfQp9Cgouc3dpdGNoLWJ1dHRvbi1zdWI6c2VsZWN0ZWQgewogICAgYW5pbWF0aW9uOiBzd2l0Y2hBbmltYXRlU2VsZWN0ZWQgMC4ycyBlYXNlIDBzIDE7Cn0KCi5zd2l0Y2gtYnV0dG9uLXN1Yjp1bnNlbGVjdGVkIHsKICAgIGFuaW1hdGlvbjogc3dpdGNoQW5pbWF0ZVNlbGVjdGVkIDAuMnMgZWFzZSAwcyAxIHJldmVyc2UgYmFja3dhcmRzOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIFNXSVRDSCAoQ0lSQ0xFKQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouY2lyY2xlLXN3aXRjaCAuc3dpdGNoLWJ1dHRvbi1zdWIgewogICAgYm9yZGVyOiBub25lOwogICAgZmlsdGVyOiBub25lOwogICAgYmFja2dyb3VuZC1jb2xvcjogbm9uZTsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIHBhZGRpbmc6IDBweDsKICAgIGluaXRpYWwtaGVpZ2h0OiAyMHB4OwogICAgaW5pdGlhbC13aWR0aDogNDBweDsKfQoKLmNpcmNsZS1zd2l0Y2ggLnN3aXRjaC1idXR0b24tc3ViLWV4dHJhIHsKICAgIGhlaWdodDogMTRweDsKICAgIHdpZHRoOiAxMDAlOwogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgYm9yZGVyLXJhZGl1czogMTBweDsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICM4ODg4ODgsIDAuMywgMSwgMSwgMSwgMywgdHJ1ZSk7Cn0KCi5jaXJjbGUtc3dpdGNoIC5zd2l0Y2gtYnV0dG9uLXN1YiAuYnV0dG9uIHsKICAgIHdpZHRoOiAyMHB4OwogICAgaGVpZ2h0OiAyMHB4OwogICAgYm9yZGVyLXJhZGl1czogNTBweDsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICMwMDAwMDAsIDAuMiwgMCwgMCwgMCwgMywgZmFsc2UpOwp9CgpAa2V5ZnJhbWVzIHN3aXRjaEFuaW1hdGVTZWxlY3RlZENpcmNsZSB7CiAgICAwJSB7CiAgICAgICAgcG9zOiAwOwogICAgfQogICAgMTAwJSB7CiAgICAgICAgcG9zOiAxMDA7CiAgICB9Cn0KCi5jaXJjbGUtc3dpdGNoIC5zd2l0Y2gtYnV0dG9uLXN1YjpzZWxlY3RlZCB7CiAgICBhbmltYXRpb246IHN3aXRjaEFuaW1hdGVTZWxlY3RlZENpcmNsZSAwLjJzIGVhc2UgMHMgMTsKfQogCi5jaXJjbGUtc3dpdGNoIC5zd2l0Y2gtYnV0dG9uLXN1Yjp1bnNlbGVjdGVkIHsKICAgIGFuaW1hdGlvbjogc3dpdGNoQW5pbWF0ZVNlbGVjdGVkQ2lyY2xlIDAuMnMgZWFzZSAwcyAxIHJldmVyc2UgYmFja3dhcmRzOwp9CgoKQGtleWZyYW1lcyBzd2l0Y2hBbmltYXRlRXh0cmFTZWxlY3RlZENpcmNsZSB7CiAgICAwJSB7CiAgICAgICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIH0KICAgIDEwMCUgewogICAgICAgIGJhY2tncm91bmQtY29sb3I6ICM5OGM0ZTY7CiAgICB9Cn0KCi5jaXJjbGUtc3dpdGNoIC5zd2l0Y2gtYnV0dG9uLXN1Yi1leHRyYTpzZWxlY3RlZCB7CiAgICBhbmltYXRpb246IHN3aXRjaEFuaW1hdGVFeHRyYVNlbGVjdGVkQ2lyY2xlIDAuMnMgZWFzZSAwcyAxOwp9CgouY2lyY2xlLXN3aXRjaCAuc3dpdGNoLWJ1dHRvbi1zdWItZXh0cmE6dW5zZWxlY3RlZCB7CiAgICBhbmltYXRpb246IHN3aXRjaEFuaW1hdGVFeHRyYVNlbGVjdGVkQ2lyY2xlIDAuMnMgZWFzZSAwcyAxIHJldmVyc2UgYmFja3dhcmRzOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIFNXSVRDSCAoUElMTCkKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnBpbGwtc3dpdGNoIC5zd2l0Y2gtYnV0dG9uLXN1YiB7CiAgICBib3JkZXItcmFkaXVzOiAyMHB4OwogICAgaW5pdGlhbC13aWR0aDogNDBweDsKICAgIGluaXRpYWwtaGVpZ2h0OiAyMHB4OwogICAgcGFkZGluZzogMHB4OwogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIGJvcmRlcjogMXB4IHNvbGlkICNBQkFCQUI7CiAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjODg4ODg4LCAwLjMsIDEsIDEsIDEsIDMsIHRydWUpOwp9CgoucGlsbC1zd2l0Y2ggLnN3aXRjaC1idXR0b24tc3ViIC5idXR0b24gewogICAgYm9yZGVyLXJhZGl1czogNTBweDsKICAgIHdpZHRoOiAyMHB4OwogICAgaGVpZ2h0OiAyMHB4OwogICAgZmlsdGVyOiBub25lOwp9CgoucGlsbC1zd2l0Y2ggLnN3aXRjaC1idXR0b24tc3ViLWV4dHJhIHsKICAgIGhlaWdodDogMDsKICAgIHdpZHRoOiAwOwogICAgYmFja2dyb3VuZC1jb2xvcjogbm9uZTsKICAgIGJvcmRlcjogbm9uZTsKICAgIGZpbHRlcjogbm9uZTsKfQoKQGtleWZyYW1lcyBzd2l0Y2hBbmltYXRlU2VsZWN0ZWRQaWxsIHsKICAgIDAlIHsKICAgICAgICBwb3M6IDA7CiAgICAgICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIH0KICAgIDEwMCUgewogICAgICAgIHBvczogMTAwOwogICAgICAgIGJhY2tncm91bmQtY29sb3I6ICM5OGM0ZTY7CiAgICB9Cn0KCi5waWxsLXN3aXRjaCAuc3dpdGNoLWJ1dHRvbi1zdWI6c2VsZWN0ZWQgewogICAgYW5pbWF0aW9uOiBzd2l0Y2hBbmltYXRlU2VsZWN0ZWRQaWxsIDAuMnMgZWFzZSAwcyAxOwp9CgoucGlsbC1zd2l0Y2ggLnN3aXRjaC1idXR0b24tc3ViOnVuc2VsZWN0ZWQgewogICAgYW5pbWF0aW9uOiBzd2l0Y2hBbmltYXRlU2VsZWN0ZWRQaWxsIDAuMnMgZWFzZSAwcyAxIHJldmVyc2UgYmFja3dhcmRzOwp9Cg"},{ name : "haxeui-core/styles/dark/dialogs.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBESUFMT0dTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5kaWFsb2cgewogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGZpbHRlcjogZHJvcC1zaGFkb3coMSwgNDUsICMwMDAwMDAsIDAuMiwgMzAsIDIsIDEsIDMsIGZhbHNlKTsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwogICAgYmFja2dyb3VuZC1jb2xvcjogIzJjMmYzMDsKICAgIHBhZGRpbmc6IDFweDsKfQoKLmRpYWxvZy1jb250YWluZXIgewogICAgc3BhY2luZzogMDsKfQoKLmRpYWxvZy10aXRsZSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjM2QzZjQxOwogICAgcGFkZGluZzogNXB4OwogICAgYm9yZGVyLWJvdHRvbS13aWR0aDogMXB4OwogICAgYm9yZGVyLWJvdHRvbS1jb2xvcjogIzE4MWExYjsKfQoKLmRpYWxvZy10aXRsZS1sYWJlbCB7CiAgICB3aWR0aDogMTAwJTsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBjb2xvcjogI2Q0ZDRkNDsKICAgIHZlcnRpY2FsLWFsaWduOiAiY2VudGVyIjsKfQoKLmRpYWxvZy1jb250ZW50IHsKICAgIHBhZGRpbmc6IDVweDsKfQoKLmRpYWxvZy1mb290ZXItY29udGFpbmVyIHsKICAgIGJvcmRlci10b3Atd2lkdGg6IDFweDsKICAgIGJvcmRlci10b3AtY29sb3I6ICMxODFhMWI7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjM2QzZjQxOwp9CgouZGlhbG9nLWZvb3RlciB7CiAgICBwYWRkaW5nOiA1cHg7CiAgICBob3Jpem9udGFsLWFsaWduOiByaWdodDsKfQoKLmRpYWxvZy1jbG9zZS1idXR0b24gewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9zbWFsbC1jbG9zZS1idXR0b24ucG5nIjsKICAgIHZlcnRpY2FsLWFsaWduOiAiY2VudGVyIjsKICAgIGN1cnNvcjogInBvaW50ZXIiOwp9CgouZGlhbG9nICNpY29uSW1hZ2UuaW5mbyB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2RpYWxvZ3MvaW5mb3JtYXRpb24ucG5nIjsKfQoKLmRpYWxvZyAjaWNvbkltYWdlLnF1ZXN0aW9uIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvZGlhbG9ncy9xdWVzdGlvbi5wbmciOwp9CgouZGlhbG9nICNpY29uSW1hZ2Uud2FybmluZyB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2RpYWxvZ3MvZXhjbGFtYXRpb24ucG5nIjsKfQoKLmRpYWxvZyAjaWNvbkltYWdlLmVycm9yIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvZGlhbG9ncy9jcm9zcy1jaXJjbGUucG5nIjsKfQoKLm1lc3NhZ2Vib3ggewogICAgaW5pdGlhbC13aWR0aDogMzAwcHg7Cn0"},{ name : "haxeui-core/styles/dark/right_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAOElEQVQImWPYsmXLWxkVCGJiYGA4PmMCAwMDAwMDE4SC8Bm3bNnCAANMcJZlRgETnAWVgbAYGBgAg4cO3PCuD3sAAAAASUVORK5CYII"},{ name : "styles/main.css", data : ""},{ name : "haxeui-core/styles/default/down_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAJElEQVQImWP8//8/AwZgeieriib0TlaVCUIhCzEwMDAhc+DSAPKbCiUI9YmvAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/transparent_px.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAADElEQVQImWN4K6MCAAMnAS7qrFRjAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/sizer_gripper_vertical.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAKCAIAAAAcmWhZAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAH0lEQVQImWN8K6PCAANMDAwMk5KjJyVHQzlwwEg7ZQCDgwyl+MMKdgAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/down_arrow.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAIAAADNpLIqAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAJElEQVQImWPcsmULAwZgsswoQBOyzChgglDIQgwMDEzIHLg0AIkLCIq+gFfgAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/dark/sidebars.css", data : "LnNpZGViYXItbW9kYWwtYmFja2dyb3VuZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBibGFjazsKICAgIG9wYWNpdHk6IDAuNjA7Cn0KCi5zaWRlYmFyIHsKICAgIG1hcmdpbjogNTBweDsKICAgIGJhY2tncm91bmQtY29sb3I6ICMzZDNmNDE7CiAgICBwYWRkaW5nOiA1cHg7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjMDAwMDAwLCAwLjEsIDMwLCAyLCAxLCAzLCBmYWxzZSk7Cn0KICAgIAouc2lkZWJhcjpsZWZ0IHsKICAgIGJvcmRlci1yaWdodDogMXB4IHNvbGlkICMxODFhMWI7Cn0KCi5zaWRlYmFyOnJpZ2h0IHsKICAgIGJvcmRlci1sZWZ0OiAxcHggc29saWQgIzE4MWExYjsKfQoKLnNpZGViYXI6dG9wIHsKICAgIGJvcmRlci1ib3R0b206IDFweCBzb2xpZCAjMTgxYTFiOwp9Cgouc2lkZWJhcjpib3R0b20gewogICAgYm9yZGVyLXRvcDogMXB4IHNvbGlkICMxODFhMWI7Cn0KCi5zaWRlYmFyOmxlZnQgI2Nsb3NlU2lkZUJhciB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2xlZnRfYXJyb3dfY2lyY2xlZC5wbmcgIjsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLnNpZGViYXI6cmlnaHQgI2Nsb3NlU2lkZUJhciB7CiAgICByZXNvdXJjZTogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL3JpZ2h0X2Fycm93X2NpcmNsZWQucG5nICI7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi5zaWRlYmFyOnRvcCAjY2xvc2VTaWRlQmFyIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvdXBfYXJyb3dfY2lyY2xlZC5wbmcgIjsKICAgIGN1cnNvcjogcG9pbnRlcjsKfQoKLnNpZGViYXI6Ym90dG9tICNjbG9zZVNpZGVCYXIgewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGFyay9kb3duX2Fycm93X2NpcmNsZWQucG5nICI7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0"},{ name : "haxeui-core/styles/default/left_arrow_white.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAHCAIAAACgB3uHAAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVQImWN8K6PCwMDAwMAg9Pg2E5zFwMDABGcxMDAw/v//nwEGmN7JqiI4DAwMcD7UAAgfAMkKDTd2MVgoAAAAAElFTkSuQmCC"},{ name : "haxeui-core/styles/default/rules.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBSVUxFCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5ydWxlIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNEREREREQ7Cn0KCi5ob3Jpem9udGFsLXJ1bGUgewogICAgaGVpZ2h0OiAxcHg7CiAgICB3aWR0aDogMTAwJTsKICAgIGhvcml6b250YWwtYWxpZ246ICJjZW50ZXIiOwp9CgoudmVydGljYWwtcnVsZSB7CiAgICBoZWlnaHQ6IDEwMCU7CiAgICB3aWR0aDogMXB4OwogICAgdmVydGljYWwtYWxpZ246ICJjZW50ZXIiOwp9"},{ name : "haxeui-core/styles/dark/menus.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBNRU5VQkFSCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5tZW51YmFyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMzRDNGNDE7CiAgICBwYWRkaW5nOiA1cHg7CiAgICBib3JkZXItYm90dG9tLXdpZHRoOiAxcHg7CiAgICBib3JkZXItYm90dG9tLWNvbG9yOiAjMTgxYTFiOwogICAgZmlsdGVyOiBkcm9wLXNoYWRvdygyLCA0NSwgIzAwMDAwMCwgMC4xNSwgNiwgMSwgMzAsIDM1LCBmYWxzZSk7Cn0KCi5tZW51YmFyLWJ1dHRvbiB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjM0QzRjQxOwogICAgYm9yZGVyOiBub25lOwogICAgY29sb3I6ICNiNGI0YjQ7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9CgoubWVudWJhci1idXR0b246aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzQxNTk4MjsKICAgIGNvbG9yOiB3aGl0ZTsKfQoKLm1lbnViYXItYnV0dG9uOmRvd24gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzM5M2IzYzsKICAgIGNvbG9yOiAjZDRkNGQ0OwogICAgYm9yZGVyOiAxcHggc29saWQgIzE4MWExYjsKICAgIGJvcmRlci1ib3R0b20td2lkdGg6IDBweDsKICAgIGJvcmRlci1ib3R0b20tc2l6ZTogMHB4Owp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIE1FTlUKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLm1lbnUgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzM5M2IzYzsKICAgIHBhZGRpbmc6IDFweDsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDIsIDQ1LCAjMDAwMDAwLCAwLjE1LCA2LCAxLCAzMCwgMzUsIGZhbHNlKTsKICAgIHNwYWNpbmc6IDA7CiAgICB3aWR0aDogMjAwcHg7Cn0KCi5tZW51LmV4cGFuZGVkIHsKICAgIGJvcmRlci10b3Atd2lkdGg6IDBweDsKICAgIGJvcmRlci10b3Atc2l6ZTogMHB4Owp9CgoubWVudS1maWxsZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzE4MWExYjsKICAgIGhlaWdodDogMXB4Owp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIE1FTlVJVEVNUwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoubWVudWl0ZW0gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzM5M2IzYzsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogNXB4OwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgoubWVudWl0ZW0tbGFiZWwsIC5tZW51aXRlbS1jaGVja2JveCwgLm1lbnVpdGVtLW9wdGlvbmJveCwgLm1lbnVpdGVtLXNob3J0Y3V0LWxhYmVsIHsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7Cn0KCi5tZW51aXRlbS1zaG9ydGN1dC1sYWJlbCB7CiAgICB0ZXh0LWFsaWduOiByaWdodDsKICAgIHZlcnRpY2FsLWFsaWduOiBjZW50ZXI7CiAgICBob3Jpem9udGFsLWFsaWduOiByaWdodDsKfQoKLm1lbnVpdGVtLWljb24gewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLm1lbnVpdGVtOmhvdmVyLCAubWVudWl0ZW06c2VsZWN0ZWQgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzQxNTk4MjsKfQoKLm1lbnVpdGVtIC5sYWJlbDpob3ZlciwgLm1lbnVpdGVtIC5sYWJlbDpzZWxlY3RlZCB7CiAgICBjb2xvcjogd2hpdGU7Cn0KCi5tZW51aXRlbS1leHBhbmRhYmxlIHsKICAgIHJlc291cmNlOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvcmlnaHRfYXJyb3cucG5nIjsKICAgIHZlcnRpY2FsLWFsaWduOiAiY2VudGVyIjsKfQoKLm1lbnVzZXBhcmF0b3IgewogICAgaGVpZ2h0OiAxcHg7CiAgICB3aWR0aDogMTAwJTsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7CiAgICBob3Jpem9udGFsLWFsaWduOiAiY2VudGVyIjsKfQo"},{ name : "haxeui-core/styles/native/main.css", data : "KiB7CiAgICBuYXRpdmU6IHRydWU7Cn0KCi5oc2xpZGVyOm5hdGl2ZSwgLnZzbGlkZXI6bmF0aXZlLCAuaHByb2dyZXNzOm5hdGl2ZSwgLnZwcm9ncmVzczpuYXRpdmUgewogICAgd2lkdGg6IGF1dG87CiAgICBoZWlnaHQ6IGF1dG87CiAgICBiYWNrZ3JvdW5kOiBub25lOwogICAgYm9yZGVyOiBub25lOwogICAgYm9yZGVyLXJhZGl1czogbm9uZTsKfQoKLmJ1dHRvbjpuYXRpdmUsIC5kcm9wZG93bjpuYXRpdmUgewogICAgYmFja2dyb3VuZDogbm9uZTsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJvcmRlci1yYWRpdXM6IG5vbmU7CiAgICBjb2xvcjogbm9uZTsKfQoKLnRleHRmaWVsZDpuYXRpdmUsIC50ZXh0YXJlYTpuYXRpdmUgewogICAgYmFja2dyb3VuZDogbm9uZTsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJvcmRlci1yYWRpdXM6IG5vbmU7CiAgICBjb2xvcjogbm9uZTsKICAgIGZpbHRlcjogbm9uZTsKfQoKLmRpYWxvZzpuYXRpdmUgewogICAgcGFkZGluZy10b3A6IDBweDsKfQ"},{ name : "haxeui-core/locale/fr/dialog.properties", data : "ZGlhbG9nLnNhdmU9U2F1dmVnYXJkZXIKZGlhbG9nLnllcz1PdWkKZGlhbG9nLm5vPU5vbgpkaWFsb2cuY2xvc2U9RmVybWVyCmRpYWxvZy5vaz1PSwpkaWFsb2cuY2FuY2VsPUFubnVsZXIKZGlhbG9nLmFwcGx5PUFwcGxpcXVlcgo"},{ name : "haxeui-core/styles/default/haxeui_small.png", data : "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"},{ name : "haxeui-core/styles/dark/tableview.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBIRUFERVIKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmNvbHVtbi5zb3J0YWJsZSB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc29ydGFibGVfYXJyb3dzLnBuZyI7CiAgICBpY29uLXBvc2l0aW9uOiBmYXItcmlnaHQ7Cn0KCi5jb2x1bW4uc29ydC1hc2MgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3NvcnRhYmxlX2FzYy5wbmciOwp9CgouY29sdW1uLnNvcnQtZGVzYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvc29ydGFibGVfZGVzYy5wbmciOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIFRBQkxFVklFVwoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwoudGFibGV2aWV3IHsKICAgIGJvcmRlcjogMXB4IHNvbGlkICMxODFhMWI7CiAgICBib3JkZXItcmFkaXVzOiAxcHg7CiAgICBwYWRkaW5nOiAxcHg7CiAgICB3aWR0aDogYXV0bzsKICAgIGhlaWdodDogYXV0bzsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7CiAgICBzcGFjaW5nOiAwOwp9CgoudGFibGV2aWV3IC50YWJsZXZpZXctY29udGVudHMgewogICAgc3BhY2luZzogMDsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogMHB4Owp9CgoudGFibGV2aWV3IC5ldmVuIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi50YWJsZXZpZXcgLm9kZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmEyYzJkOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgoudGFibGV2aWV3IC5jb21wb3VuZGl0ZW1yZW5kZXJlciAuaXRlbXJlbmRlcmVyIHsKICAgIGhlaWdodDogYXV0bzsKICAgIHBhZGRpbmc6IDVweDsKfQoKLnRhYmxldmlldyAuZXZlbjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMmYzNzQ2Owp9CgoudGFibGV2aWV3IC5vZGQ6aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzJmMzc0NjsKfQoKLnRhYmxldmlldyAuY29tcG91bmRpdGVtcmVuZGVyZXIgLmxhYmVsIHsKICAgIGNvbG9yOiAjYjRiNGI0Owp9CgoudGFibGV2aWV3IC5jb21wb3VuZGl0ZW1yZW5kZXJlcjpzZWxlY3RlZCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjNDE1OTgyOwogICAgY29sb3I6IHdoaXRlOwp9CgoudGFibGV2aWV3IC5jb21wb3VuZGl0ZW1yZW5kZXJlcjpzZWxlY3RlZCAubGFiZWwgewogICAgY29sb3I6IHdoaXRlOwp9CgoudGFibGV2aWV3IC5jb21wb3VuZGl0ZW1yZW5kZXJlcjpkaXNhYmxlZCB7CiAgICBjb2xvcjogIzU5NTk1OTsKfQoKLnRhYmxldmlldyAuY29tcG91bmRpdGVtcmVuZGVyZXI6ZGlzYWJsZWQgLmxhYmVsIHsKICAgIGNvbG9yOiAjNTk1OTU5Owp9Cg"},{ name : "haxeui-core/styles/default/sortable_desc.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAJCAIAAABxOqH0AAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA0UlEQVQIHQHGADn/Ae0cJAAAAAAAAIdYUHmosAAAAAAAAAIAAAAAAACHWFAAAACJWlIAAAAAAAACAAAAh1hQAgICAgICAAAAjV5WAAAAAe0cJAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAANannwAAAAAAAAAAAAAAACpZYQIAAAAqWWEAAAAAAAAAAAAqWWEAAAACAAAAAAAAKllhAAAAKllhAAAAAAAAmeIQ3V5WWXgAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/dialogs/exclamation.png", data : "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAB3VBMVEUAAACVfwD9+7zFrAHGrQGeiAC6owDUxDzr5oDd213v5oft44HZzE/Qwzbr4Ha6pxTo3Gy8qBTk11+WgAC+qhPVwjW+qRHTwCu/qQ7SvSHRuxehiwHQuA/MswHCqgaulwDDqwPGrQG0nAHIrwG3oAHKsQG7owHMswGVfwC+pgGahADMswHBqQGmjwDErAGymgHHrgG2ngHJsAG5oQHLsgHp5XD065Xe22rm1znk0iDz6pTi23Ph1EHdzSHx6JHe0kfYyynu44PZz0vUxzDZyUzBqQy/qAjt3SXn2irp2yfa1Dbk2S3S0D/h1y/d1jLu3WbX0znV0Tvt3ST15Xb043Lw32vv3mjOzkPw4z/v4Tnu3ioiIhoAAADv4TTv3y7++rj8+LX89q379av48aL58Z737JP38o787o716Yr46YLs6YLz5oD453p2dnaXknR4d3BwcHCopWt6eGhoaGh+e2FgYGDi3l6GgVxXV1ff2k3c1k3u40nVz0nT0ULi2j3Bvjbk2TOenC+GhSqVkSNtbSNfXhpIRxUuLg4eHQcdHAcWFgf37pjt4XPf33Dk4Wbr5GLZ0lzh11fl4FXt41OIglHV1FDo30fSyUbX1ETRyETd10A4ODZkYSzp2yglJSNztjb6AAAAR3RSTlMAzPoVDQgF0P7+7eTe3tzc1tPPzMnGw7+8ubKyq6uqoaCVkoiCenNtZmRgX1VORz05LishH/75+fj49fX09PDu7uro6NS0tIfvrv4AAAGdSURBVDjLrZFFWwJhFEZ1DOzu7u7ubtFPRRAkLLq7u8Hu9rc6MIAIDBs9q3ufc3Zvwn+TXF2dHDfoLCjojOeTqiCoKilO0Jp3dJTXiu6HKiAWC6oYQg2ac074/NOcZjQ/UA5xcDjOcfkAStCYSd+HoWc2xvZ9pcc4oUAgxJ2U9sXyqfUZDLxILBbh2fP1qTGCnuJTPEEqk0kJ+LPinmifUjfDBkCuUMgB4GXUpUQFXZgzAgAqtVoFAIGB6YpaqWaCBwB4eP/60D+/3kzWRG7WvnQOwK3e7vXaD2AuMe0RKy2PXGgNWKzV5bJiYR5HV35v1pKVZvAJi9NpwfpIz24J94NladpdHyaHw+Q/XtLLBsOCpqyrHT9KLleJXJrsph/fXzL8thGJpqQ/FDQs3G0j2DweW+A0LjYEfW/RtXkLwU2huLcCGIt6AyvVzj5tBiBTKOTgbZ6rRTbrzr9fCyIhkyVrIfK7/StVTpHWg+iYTF3o+Zyu9G3WkUtcRSO3Aw4Kx4hEIolEolKpNBrtEAY2ewjjhXDQlhiHtoS/8w0/HYkkEMHbQgAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/frames.css", data : "LmZyYW1lIHsKICAgIHBhZGRpbmctbGVmdDogMTBweDsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwp9CgouZnJhbWUtY29udGVudHMgewogICAgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgIzI1MjcyODsKICAgIGJvcmRlci1sZWZ0OiAxcHggc29saWQgIzI1MjcyODsKICAgIGJvcmRlci1ib3R0b206IDFweCBzb2xpZCAjMjUyNzI4OwogICAgcGFkZGluZzogMTBweDsKICAgIHBhZGRpbmctdG9wOiAxNXB4Owp9CgouZnJhbWUtdGl0bGUgewogICAgY29sb3I6ICNiNGI0YjQ7Cn0KCi5mcmFtZS1sZWZ0LWxpbmUsIC5mcmFtZS1yaWdodC1saW5lIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7CiAgICBoZWlnaHQ6IDFweDsKfQo"},{ name : "haxeui-core/styles/dark/up_down_arrows.png", data : "iVBORw0KGgoAAAANSUhEUgAAAAcAAAAJCAIAAABxOqH0AAAABnRSTlMA7QAcACSX3bo6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAARElEQVQImWN8K6PCwMDAwMBwfMYEy4wCCJsJLgQnoaJwDpzNuGXLFgYMwAg3F0UUq1omuL1wYJlRwAShkIUQLoNw4NIA3UcXw9uo6KsAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/default/frames.css", data : "LmZyYW1lIHsKICAgIHBhZGRpbmctbGVmdDogMTBweDsKICAgIHdpZHRoOiBhdXRvOwogICAgaGVpZ2h0OiBhdXRvOwp9CgouZnJhbWUtY29udGVudHMgewogICAgYm9yZGVyLXJpZ2h0OiAxcHggc29saWQgI0RERERERDsKICAgIGJvcmRlci1sZWZ0OiAxcHggc29saWQgI0RERERERDsKICAgIGJvcmRlci1ib3R0b206IDFweCBzb2xpZCAjREREREREOwogICAgcGFkZGluZzogMTBweDsKICAgIHBhZGRpbmctdG9wOiAxNXB4Owp9CgouZnJhbWUtdGl0bGUgewogICAgY29sb3I6ICMyMjIyMjI7Cn0KCi5mcmFtZS1sZWZ0LWxpbmUsIC5mcmFtZS1yaWdodC1saW5lIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNEREREREQ7CiAgICBoZWlnaHQ6IDFweDsKfQo"},{ name : "haxeui-core/styles/dark/left_arrow_circled.png", data : "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAACtklEQVRIiaWVy04UQRSGv1MzAz0jYRBQYOVlAeJKQDCGGGOiYjTRV/ABXBgSyJCJpqILyCwgLnRhND6DJkbRrTFKGNSFtxjvFwRvkaBTtHSXi2EUZqaHTvhXXVWnvv90V/U5wioaGxurM8YcEJE2a20TgIjMiMgza+3tVCr1s9J+CVoYHh7uArSI9AGxgDAXGFdK6cHBwalQBqOjo3HXdc8DxyslUCQfuGKMOaG1NoEGmUym2ff9a0B3SHCxJjzPO5pOp2cKE6rwoLV2fN+/ugY4QE8kErmutU6UGDiOcwHoWQO8oK54PH6uMBCATCazw/f97HLDYs3Pz/Prd46NGxoRWfVorLW2e2hoKKsAPM87Wwn+9ds37ty9x2R2ijdv34V5CwFOA8jIyEgSmAWqguCT2Qd4ngdA+7Y2tm7ZHMbkT3V19UYF9AXBv3//sQLe0tzEls2bwsABYq7r7o8CrWEyr6qqor6+nvcfPpbEJhJxGhsaSuatta1Ra21L8aF5nkd26j8cwHVdHj95Gpjunt7d1NbWFhu0KBGxxcEiglKRQFj5+NI7IiI2KiLT1q70UErRvbOT+xOTLC4uAvlPtL29razxukSCmpqacgbTUWvti3JZ1SWT7OrZ+c/EdV0+fZqmq7OjbLYBeqGAcfJVMdAkGo0CMPvlKy9fvQ4LX8jlcrfUUj0fD4oqNnGc6rAGN7XWc9GlwSngCAF/c10yyd49veRyhvXr68LAfaXUGQrAVCr1CLhSaYfjOGHhiMilQgP6l7Ex5gRwPxShsrKxWOxkYbC8HxjP844BE2uA34tEIof7+/tzJQYA6XR6xhizF7hMvg2GlS8iF40x+wYGBmaXL1Rq+h3km/4hAooh+et9Y6npPywXsGrn0FrXxuPxg9baVqB5afqztfb5wsLCba31XKX9fwFEFAnZCIfj5AAAAABJRU5ErkJggg"},{ name : "haxeui-core/styles/dark/down_arrow_circled.png", data : "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"},{ name : "haxeui-core/locale/es/dialog.properties", data : "ZGlhbG9nLnNhdmU9R3VhcmRhcgpkaWFsb2cueWVzPVNpCmRpYWxvZy5ubz1ObwpkaWFsb2cuY2xvc2U9Q2VycmFyCmRpYWxvZy5vaz1PSwpkaWFsb2cuY2FuY2VsPUNhbmNlbGFyCmRpYWxvZy5hcHBseT1BcGxpY2FyCgo"},{ name : "haxeui-core/styles/default/propertygrids.css", data : "LnByb3BlcnR5LWdyaWQgewp9CgoucHJvcGVydHktZ3JpZCAuc2Nyb2xsdmlldy1jb250ZW50cyB7CiAgICBwYWRkaW5nOiAwOwogICAgd2lkdGg6IDEwMCU7CiAgICBzcGFjaW5nOiAwOwp9CgoucHJvcGVydHktZ3JvdXAgewogICAgd2lkdGg6IDEwMCU7CiAgICBzcGFjaW5nOiAwOwp9CgoucHJvcGVydHktZ3JvdXAtaGVhZGVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNFREVERUQ7CiAgICBwb2ludGVyLWV2ZW50czogdHJ1ZTsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogNXB4OwogICAgYm9yZGVyLWNvbG9yOiAjQUJBQkFCOwogICAgYm9yZGVyLWJvdHRvbS13aWR0aDogMXB4OwogICAgYm9yZGVyLWJvdHRvbS1zaXplOiAxcHg7CiAgICBjdXJzb3I6IHBvaW50ZXI7Cn0KCi5wcm9wZXJ0eS1ncm91cC1oZWFkZXIuc2Nyb2xsaW5nIHsKICAgIGJvcmRlci1yaWdodC13aWR0aDogMXB4OwogICAgYm9yZGVyLXJpZ2h0LXNpemU6IDFweDsKfQoKLnByb3BlcnR5LWdyb3VwLWhlYWRlcjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRjVGNUY1Owp9CgoucHJvcGVydHktZ3JvdXAtaGVhZGVyLWljb24gewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLnByb3BlcnR5LWdyb3VwLWhlYWRlcjpleHBhbmRlZCAucHJvcGVydHktZ3JvdXAtaGVhZGVyLWljb24gewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9kb3duX2Fycm93X3NxdWFyZS5wbmciOwp9CgoucHJvcGVydHktZ3JvdXAtaGVhZGVyOmNvbGxhcHNlZCAucHJvcGVydHktZ3JvdXAtaGVhZGVyLWljb24gewogICAgcmVzb3VyY2U6ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9yaWdodF9hcnJvd19zcXVhcmUucG5nIjsKfQoKLnByb3BlcnR5LWdyb3VwLWhlYWRlci1sYWJlbCB7Cn0KCi5wcm9wZXJ0eS1ncm91cC1jb250ZW50cyB7CiAgICB3aWR0aDogMTAwJTsKICAgIHNwYWNpbmc6IDE7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjQUJBQkFCOwogICAgcGFkZGluZy1ib3R0b206IDFweDsKfQoKLnByb3BlcnR5LWdyb3VwLmxhc3QgLnByb3BlcnR5LWdyb3VwLWNvbnRlbnRzLnNjcm9sbGluZyB7CiAgICBwYWRkaW5nLWJvdHRvbTogMHB4Owp9CgoucHJvcGVydHktZ3JvdXAtY29udGVudHMuc2Nyb2xsaW5nIHsKICAgIHBhZGRpbmctcmlnaHQ6IDFweDsKfQoKLnByb3BlcnR5LWdyb3VwLWl0ZW0tbGFiZWwtY29udGFpbmVyIHsKICAgIHdpZHRoOiA1MCU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKICAgIGhlaWdodDogMTAwJTsKICAgIHBhZGRpbmctbGVmdDogNXB4Owp9CgoucHJvcGVydHktZ3JvdXAtaXRlbS1lZGl0b3ItY29udGFpbmVyIHsKICAgIHdpZHRoOiA1MCU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB3aGl0ZTsKfSAgICAgICAgCgoucHJvcGVydHktZ3JvdXAtaXRlbS1sYWJlbCB7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwp9CgoucHJvcGVydHktZ3JvdXAtaXRlbS1lZGl0b3IgewogICAgd2lkdGg6IDEwMCU7Cn0KCi5wcm9wZXJ0eS1ncm91cCAudGV4dGZpZWxkIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIGZpbHRlcjogbm9uZTsKICAgIGJvcmRlci1yYWRpdXM6IDA7Cn0KCi5wcm9wZXJ0eS1ncm91cCAuY2hlY2tib3ggewogICAgcGFkZGluZzogNXB4OwogICAgcGFkZGluZy1sZWZ0OiA0cHg7Cn0KCi5wcm9wZXJ0eS1ncm91cCAubnVtYmVyLXN0ZXBwZXIgewogICAgcGFkZGluZzogMDsKfQoKLnByb3BlcnR5LWdyb3VwIC5kcm9wZG93biB7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItcmFkaXVzOiBub25lOwp9Cg"},{ name : "haxeui-core/styles/default/checkboxes.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBDSEVDS0JPWAoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwouY2hlY2tib3ggewogICAgd2lkdGg6IGF1dG87CiAgICBoZWlnaHQ6IGF1dG87CiAgICBob3Jpem9udGFsLXNwYWNpbmc6IDRweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIGNvbG9yOiAjMDAwMDAwOwp9CgouY2hlY2tib3g6aG92ZXIgewp9CgouY2hlY2tib3g6ZGlzYWJsZWQgewogICAgY3Vyc29yOiBkZWZhdWx0OwogICAgY29sb3I6ICM5MDkwOTA7Cn0KCi5jaGVja2JveC12YWx1ZSB7CiAgICBib3JkZXI6IDFweCBzb2xpZCAjQUJBQkFCOwogICAgYmFja2dyb3VuZC1jb2xvcjogI0ZGRkZGRjsKICAgIHdpZHRoOiAxNnB4OwogICAgaGVpZ2h0OiAxNnB4OwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGJvcmRlci1yYWRpdXM6IDJweDsKICAgIGljb246IG5vbmU7CiAgICBmaWx0ZXI6IGRyb3Atc2hhZG93KDEsIDQ1LCAjODg4ODg4LCAwLjIsIDIsIDIsIDEsIDMsIHRydWUpOwogICAgY3Vyc29yOiBwb2ludGVyOwp9CgouY2hlY2tib3gtdmFsdWU6aG92ZXIgewogICAgYm9yZGVyOiAxcHggc29saWQgIzIxNkFBRTsKfQoKLmNoZWNrYm94LXZhbHVlOnNlbGVjdGVkIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9jaGVjay5wbmciOwp9CgouY2hlY2tib3gtdmFsdWU6ZGlzYWJsZWQgewogICAgYmFja2dyb3VuZDogI0Q0RDRENCAjQ0NDQ0NDIHZlcnRpY2FsOwogICAgY3Vyc29yOiBkZWZhdWx0Owp9CgouY2hlY2tib3gtbGFiZWwgewogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKfQoKLmNoZWNrYm94LWljb24gewogICAgaG9yaXpvbnRhbC1hbGlnbjogY2VudGVyOwogICAgdmVydGljYWwtYWxpZ246IGNlbnRlcjsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIG9wYWNpdHk6IDE7Cn0KCi5jaGVja2JveC1pY29uOmRpc2FibGVkIHsKICAgIGN1cnNvcjogZGVmYXVsdDsKICAgIG9wYWNpdHk6IDAuNTsKfQo"},{ name : "haxeui-core/styles/default/scrollbars.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBTQ1JPTEwKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLnNjcm9sbCB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBub25lOwogICAgcGFkZGluZzogMHB4OwogICAgYmFja2dyb3VuZC1jb2xvcjogI0U5RTlFOTsKfQoKLnNjcm9sbCAuYnV0dG9uIHsKICAgIHdpZHRoOiA3cHg7CiAgICBoZWlnaHQ6IDdweDsKICAgIGJhY2tncm91bmQtY29sb3I6ICNDNkM2QzY7CiAgICBib3JkZXItcmFkaXVzOiAwOwogICAgYm9yZGVyOiBub25lOwogICAgb3BhY2l0eTogLjg7CiAgICBmaWx0ZXI6IG5vbmU7Cn0KCi5zY3JvbGwgLmJ1dHRvbjpob3ZlciB7CiAgICBvcGFjaXR5OiAxOwp9CgoudmVydGljYWwtc2Nyb2xsIHsKICAgIHdpZHRoOiA4cHg7CiAgICBwYWRkaW5nLWxlZnQ6IDFweDsKICAgIGJvcmRlci1sZWZ0OiAxcHggc29saWQgI2FiYWJhYjsKfQoKLmhvcml6b250YWwtc2Nyb2xsIHsKICAgIGhlaWdodDogOHB4OwogICAgcGFkZGluZy10b3A6IDFweDsKICAgIGJvcmRlci10b3A6IDFweCBzb2xpZCAjYWJhYmFiOwp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIENMQVNTSUMgVkFSSUFOVFMKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8KLmNsYXNzaWMtc2Nyb2xscyAuc2Nyb2xsLAouc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRTlFOUU5OwogICAgYm9yZGVyOm5vbmU7CiAgICBwYWRkaW5nOiAwOwp9CgouY2xhc3NpYy1zY3JvbGxzIC5zY3JvbGwgLmJ1dHRvbiwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLmJ1dHRvbnsKICAgIGJvcmRlci1yYWRpdXM6IDA7CiAgICBib3JkZXI6IG5vbmU7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjRTlFOUU5OwogICAgcGFkZGluZzogMDsKICAgIGZpbHRlcjogbm9uZTsKICAgIGhpZGRlbjogZmFsc2U7CiAgICB3aWR0aDogMTdweDsKICAgIGhlaWdodDogMTdweDsKICAgIG9wYWNpdHk6IDE7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnNjcm9sbCAuYnV0dG9uOmhvdmVyLAouc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuYnV0dG9uOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNEN0Q3RDc7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnNjcm9sbCAuYnV0dG9uOmRvd24sCi5zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5idXR0b246ZG93biB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjNTI1MjUyOwogICAgZmlsdGVyOiBub25lOwp9CgouY2xhc3NpYy1zY3JvbGxzIC5zY3JvbGwgLnRodW1iLAouc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAudGh1bWIgewogICAgYmFja2dyb3VuZC1jb2xvcjogI0M2QzZDNjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuc2Nyb2xsIC50aHVtYjpob3ZlciwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLnRodW1iOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNBQUFBQUE7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnNjcm9sbCAudGh1bWI6ZG93biwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLnRodW1iOmRvd24gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzUyNTI1MjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuc2Nyb2xsIC50aHVtYjpkaXNhYmxlZCwKLnNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLnRodW1iOmRpc2FibGVkIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICNEREREREQ7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnZlcnRpY2FsLXNjcm9sbCwKLnZlcnRpY2FsLXNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgewogICAgd2lkdGg6IDE3cHg7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLnZlcnRpY2FsLXNjcm9sbCAuZGVpbmMsCi52ZXJ0aWNhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5kZWluYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvdXBfYXJyb3cucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAudmVydGljYWwtc2Nyb2xsIC5kZWluYzpkb3duLAoudmVydGljYWwtc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuZGVpbmM6ZG93biB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvdXBfYXJyb3dfd2hpdGUucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAudmVydGljYWwtc2Nyb2xsIC5pbmMsCi52ZXJ0aWNhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5pbmMgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L2Rvd25fYXJyb3cucG5nIjsKfQoKLmNsYXNzaWMtc2Nyb2xscyAudmVydGljYWwtc2Nyb2xsIC5pbmM6ZG93biwKLnZlcnRpY2FsLXNjcm9sbC5jbGFzc2ljLXNjcm9sbHMgLmluYzpkb3duIHsKICAgIGljb246ICJoYXhldWktY29yZS9zdHlsZXMvZGVmYXVsdC9kb3duX2Fycm93X3doaXRlLnBuZyI7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLmhvcml6b250YWwtc2Nyb2xsLAouaG9yaXpvbnRhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIHsKICAgIGhlaWdodDogMTdweDsKfQoKLmNsYXNzaWMtc2Nyb2xscyAuaG9yaXpvbnRhbC1zY3JvbGwgLmRlaW5jLAouaG9yaXpvbnRhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5kZWluYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvbGVmdF9hcnJvdy5wbmciOwp9CgouY2xhc3NpYy1zY3JvbGxzIC5ob3Jpem9udGFsLXNjcm9sbCAuZGVpbmM6ZG93biwKLmhvcml6b250YWwtc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuZGVpbmM6ZG93biB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RlZmF1bHQvbGVmdF9hcnJvd193aGl0ZS5wbmciOwp9CgouY2xhc3NpYy1zY3JvbGxzIC5ob3Jpem9udGFsLXNjcm9sbCAuaW5jLAouaG9yaXpvbnRhbC1zY3JvbGwuY2xhc3NpYy1zY3JvbGxzIC5pbmMgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3JpZ2h0X2Fycm93LnBuZyI7Cn0KCi5jbGFzc2ljLXNjcm9sbHMgLmhvcml6b250YWwtc2Nyb2xsIC5pbmM6ZG93biwKLmhvcml6b250YWwtc2Nyb2xsLmNsYXNzaWMtc2Nyb2xscyAuaW5jOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kZWZhdWx0L3JpZ2h0X2Fycm93X3doaXRlLnBuZyI7Cn0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogTU9CSUxFIFZBUklBTlRTCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5zY3JvbGw6bW9iaWxlIC5pbmMsIC5zY3JvbGw6bW9iaWxlIC5kZWluYyB7CiAgICBoaWRkZW46IHRydWU7Cn0KCi5ob3Jpem9udGFsLXNjcm9sbDptb2JpbGUgewogICAgb3BhY2l0eTogLjU7CiAgICBoZWlnaHQ6IDhweDsKICAgIHBhZGRpbmc6IDJweDsKICAgIGJhY2tncm91bmQtY29sb3I6IG5vbmU7CiAgICBib3JkZXI6IG5vbmU7Cn0KCi5ob3Jpem9udGFsLXNjcm9sbDptb2JpbGUgLnRodW1iIHsKICAgIGhlaWdodDogNHB4OwogICAgYm9yZGVyLXJhZGl1czogNHB4Owp9CgoudmVydGljYWwtc2Nyb2xsOm1vYmlsZSB7CiAgICBvcGFjaXR5OiAuNTsKICAgIHdpZHRoOiA4cHg7CiAgICBwYWRkaW5nOiAycHg7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBub25lOwogICAgYm9yZGVyOiBub25lOwp9CgoudmVydGljYWwtc2Nyb2xsOm1vYmlsZSAudGh1bWIgewogICAgd2lkdGg6IDRweDsKICAgIGJvcmRlci1yYWRpdXM6IDRweDsKfQo"},{ name : "haxeui-core/styles/default/collapsed.png", data : "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH5AoNCwocG2BobAAAAHlJREFUOMtjYBi+YP36bcrEqGPCLfP36Pr1W4zJN4CBQZyB6f/B9Zs2eZJrAAMDAwM3w3/GDRs2bI4i1wAGBgYGtv+MDEs2bNpSTq4BeAELEWp+Mf5nSAzw91lGjgFfGRj/hwb4+20nxwUvGf4xegcG+p6laUIaBgAAk1kg6zuyVSkAAAAASUVORK5CYII"},{ name : "haxeui-core/styles/dark/rules.css", data : "LyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBSVUxFCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiovCi5ydWxlIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyNTI3Mjg7Cn0K"},{ name : "haxeui-core/styles/dark/steppers.css", data : "Lm51bWJlcnN0ZXBwZXIgewogICAgcGFkZGluZzogMXB4OwogICAgc3BhY2luZzogMDsKfQoKLnN0ZXBwZXIgewogICAgc3BhY2luZzogMDsKfQoKLnN0ZXBwZXItYnV0dG9uIHsKICAgIHBhZGRpbmc6IDNweDsKICAgIHBhZGRpbmctdG9wOiA0cHg7CiAgICBwYWRkaW5nLWJvdHRvbTogNHB4OwogICAgYm9yZGVyLXJhZGl1czogMDsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyYzJmMzA7CiAgICBvcGFjaXR5OiAxOwp9Cgouc3RlcHBlci1idXR0b246aG92ZXIgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzQ1NDg0YTsKfQoKLnN0ZXBwZXItYnV0dG9uOmRvd24gewogICAgYmFja2dyb3VuZC1jb2xvcjogIzQ1NDg0YTsKfQoKLnN0ZXBwZXItYnV0dG9uOmRpc2FibGVkIHsKICAgIG9wYWNpdHk6IDAuNTsKICAgIGJhY2tncm91bmQtY29sb3I6ICMzMzM3Mzg7Cn0KCi5zdGVwcGVyLWluYyB7CiAgICBpY29uOiAiaGF4ZXVpLWNvcmUvc3R5bGVzL2RhcmsvdXBfYXJyb3cucG5nIjsKfQoKLnN0ZXBwZXItZGVpbmMgewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2Rvd25fYXJyb3cucG5nIjsKfQoKLnN0ZXBwZXItaW5jOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL3VwX2Fycm93X3doaXRlLnBuZyI7Cn0KCi5zdGVwcGVyLWRlaW5jOmRvd24gewogICAgaWNvbjogImhheGV1aS1jb3JlL3N0eWxlcy9kYXJrL2Rvd25fYXJyb3dfd2hpdGUucG5nIjsKfQoKLnN0ZXBwZXItdGV4dGZpZWxkLCAuc3RlcHBlci10ZXh0ZmllbGQ6YWN0aXZlIHsKICAgIGJvcmRlcjogbm9uZTsKICAgIHdpZHRoOiAxMDAlOwogICAgcGFkZGluZzogNHB4OwogICAgcGFkZGluZy10b3A6IDVweDsKICAgIHBhZGRpbmctYm90dG9tOiAzcHg7CiAgICB2ZXJ0aWNhbC1hbGlnbjogY2VudGVyOwogICAgZmlsdGVyOiBub25lOwogICAgYmFja2dyb3VuZC1jb2xvcjogIzI1MjcyODsKfQoKLnN0ZXBwZXItdGV4dGZpZWxkOmRpc2FibGVkIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMyYzJmMzA7Cn0KCi5zdGVwcGVyLXN0ZXAgewogICAgaGVpZ2h0OiAxMDAlOwp9Cgouc3RlcHBlci1zdGVwIC5zdGVwcGVyLWluYywgLnN0ZXBwZXItc3RlcCAuc3RlcHBlci1kZWluYyB7CiAgICBoZWlnaHQ6IDUwJTsKfQoKLm51bWJlci1zdGVwcGVyIHsKICAgIGluaXRpYWwtd2lkdGg6IDYwcHg7Cn0"}];
 haxe_ds_ObjectMap.count = 0;
 haxe_ui_validation_ValidationManager.get_instance().registerEvent("ValidationStop",haxe_ui_backend_html5_HtmlUtils.onValidationStop);
 js_Boot.__toStr = ({ }).toString;
+DateTools.DAY_SHORT_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+DateTools.DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+DateTools.MONTH_SHORT_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+DateTools.MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 haxe_ui_core_ComponentEvents.INTERACTIVE_EVENTS = ["mousemove","mouseover","mouseout","mousedown","mouseup","mousewheel","click","doubleclick","keydown","keyup"];
 haxe_ui_core_ComponentBounds.__meta__ = { fields : { percentWidth : { clonable : null, bindable : null}, percentHeight : { clonable : null, bindable : null}, width : { bindable : null}, height : { bindable : null}}};
 haxe_ui_backend_ComponentImpl.elementToComponent = new haxe_ds_ObjectMap();
 haxe_ui_backend_ComponentImpl._stylesAdded = false;
 haxe_ui_core_Component.__meta__ = { fields : { styleNames : { clonable : null}, styleString : { clonable : null}}};
+Xml.Element = 0;
+Xml.PCData = 1;
+Xml.CData = 2;
+Xml.Comment = 3;
+Xml.DocType = 4;
+Xml.ProcessingInstruction = 5;
+Xml.Document = 6;
+haxe_ui_events_UIEvent.READY = "ready";
+haxe_ui_events_UIEvent.DESTROY = "destroy";
+haxe_ui_events_UIEvent.RESIZE = "resize";
+haxe_ui_events_UIEvent.CHANGE = "change";
+haxe_ui_events_UIEvent.BEFORE_CHANGE = "beforeChange";
+haxe_ui_events_UIEvent.MOVE = "move";
+haxe_ui_events_UIEvent.INITIALIZE = "initialize";
+haxe_ui_events_UIEvent.RENDERER_CREATED = "rendererCreated";
+haxe_ui_events_UIEvent.RENDERER_DESTROYED = "rendererDestroyed";
+haxe_ui_events_UIEvent.HIDDEN = "hidden";
+haxe_ui_events_UIEvent.SHOWN = "shown";
+haxe_ui_events_UIEvent.ENABLED = "enabled";
+haxe_ui_events_UIEvent.DISABLED = "disabled";
+haxe_ui_events_UIEvent.BEFORE_CLOSE = "beforeClose";
+haxe_ui_events_UIEvent.CLOSE = "close";
+haxe_ui_events_UIEvent.PROPERTY_CHANGE = "propertyChange";
+haxe_ui_events_UIEvent.COMPONENT_ADDED = "componentAdded";
+haxe_ui_events_UIEvent.COMPONENT_REMOVED = "componentRemoved";
+haxe_ui_events_UIEvent.DRAG_START = "dragStart";
+haxe_ui_events_UIEvent.DRAG_END = "dragEnd";
+core_dashboards_DashboardInstanceEvent.FILTER_CHANGED = "filterChanged";
+core_data_FieldType.Unknown = 0;
+core_data_FieldType.String = 1;
+core_data_FieldType.Number = 2;
+core_data_FieldType.Boolean = 3;
+core_data_DatabaseEvent.Initialized = "initialized";
+core_graphs_BarGraph.LETTERS = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","X","Y","Z"];
 haxe_crypto_Base64.CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 haxe_crypto_Base64.BYTES = haxe_io_Bytes.ofString(haxe_crypto_Base64.CHARS);
 haxe_ui_backend_BackendImpl.id = "html5";
@@ -26401,42 +30397,21 @@ haxe_ui_backend_html5_EventMapper.TOUCH_TO_MOUSE = (function($this) {
 haxe_ui_backend_html5_HtmlUtils._dpi = 0;
 haxe_ui_backend_html5_util_FontDetect._initialized = false;
 haxe_ui_backend_html5_util_FontDetect._aFallbackFonts = ["serif","sans-serif","monospace","cursive","fantasy"];
+haxe_ui_components_CalendarEvent.DATE_CHANGE = "datechange";
+haxe_ui_components_CalendarDropDownHandler.DATE_FORMAT = "%d/%m/%Y";
+haxe_ui_components_DropDownBuilder.HANDLER_MAP = new haxe_ds_StringMap();
+haxe_ui_containers_CalendarView.MONTH_NAMES = ["January","Febuary","March","April","May","June","July","August","September","October","November","December"];
+haxe_ui_containers_CalendarView.DATE_FORMAT = "%Y-%m-%d";
 haxe_ui_containers_ScrollViewEvents.INERTIAL_TIME_CONSTANT = 325;
 haxe_ui_core_ItemRenderer.__meta__ = { fields : { allowHover : { clonable : null}}};
-haxe_ui_containers_dialogs_DialogButton.SAVE = "{{dialog.save}}";
-haxe_ui_containers_dialogs_DialogButton.YES = "{{dialog.yes}}";
-haxe_ui_containers_dialogs_DialogButton.NO = "{{dialog.no}}";
-haxe_ui_containers_dialogs_DialogButton.CLOSE = "{{dialog.close}}";
-haxe_ui_containers_dialogs_DialogButton.OK = "{{dialog.ok}}";
-haxe_ui_containers_dialogs_DialogButton.CANCEL = "{{dialog.cancel}}";
-haxe_ui_containers_dialogs_DialogButton.APPLY = "{{dialog.apply}}";
-haxe_ui_events_UIEvent.READY = "ready";
-haxe_ui_events_UIEvent.DESTROY = "destroy";
-haxe_ui_events_UIEvent.RESIZE = "resize";
-haxe_ui_events_UIEvent.CHANGE = "change";
-haxe_ui_events_UIEvent.BEFORE_CHANGE = "beforeChange";
-haxe_ui_events_UIEvent.MOVE = "move";
-haxe_ui_events_UIEvent.INITIALIZE = "initialize";
-haxe_ui_events_UIEvent.RENDERER_CREATED = "rendererCreated";
-haxe_ui_events_UIEvent.RENDERER_DESTROYED = "rendererDestroyed";
-haxe_ui_events_UIEvent.HIDDEN = "hidden";
-haxe_ui_events_UIEvent.SHOWN = "shown";
-haxe_ui_events_UIEvent.ENABLED = "enabled";
-haxe_ui_events_UIEvent.DISABLED = "disabled";
-haxe_ui_events_UIEvent.BEFORE_CLOSE = "beforeClose";
-haxe_ui_events_UIEvent.CLOSE = "close";
-haxe_ui_events_UIEvent.PROPERTY_CHANGE = "propertyChange";
-haxe_ui_events_UIEvent.COMPONENT_ADDED = "componentAdded";
-haxe_ui_events_UIEvent.COMPONENT_REMOVED = "componentRemoved";
-haxe_ui_events_UIEvent.DRAG_START = "dragStart";
-haxe_ui_events_UIEvent.DRAG_END = "dragEnd";
-haxe_ui_containers_dialogs_DialogEvent.DIALOG_CLOSED = "dialogClosed";
-haxe_ui_containers_dialogs_MessageBoxType.TYPE_INFO = "info";
-haxe_ui_containers_dialogs_MessageBoxType.TYPE_QUESTION = "question";
-haxe_ui_containers_dialogs_MessageBoxType.TYPE_WARNING = "warning";
-haxe_ui_containers_dialogs_MessageBoxType.TYPE_ERROR = "error";
-haxe_ui_containers_dialogs_MessageBoxType.TYPE_YESNO = "yesno";
-haxe_ui_containers_menus_MenuEvent.MENU_SELECTED = "menuselected";
+haxe_ui_core_ComponentFieldMap.MAP = (function($this) {
+	var $r;
+	var _g = new haxe_ds_StringMap();
+	_g.h["group"] = "componentGroup";
+	_g.h["contentLayout"] = "contentLayoutName";
+	$r = _g;
+	return $r;
+}(this));
 haxe_ui_core_Platform.METRIC_VSCROLL_WIDTH = "patform.metrics.vscroll.width";
 haxe_ui_core_Platform.METRIC_HSCROLL_HEIGHT = "patform.metrics.hscroll.height";
 haxe_ui_data_DataSource.regexAlpha = new EReg("[^a-zA-Z]","g");
@@ -26470,6 +30445,7 @@ haxe_ui_events_ValidationEvent.START = "ValidationStart";
 haxe_ui_events_ValidationEvent.STOP = "ValidationStop";
 haxe_ui_locale_LocaleEvent.LOCALE_CHANGED = "localeChanged";
 haxe_ui_locale_LocaleManager._registeredComponents = new haxe_ds_ObjectMap();
+haxe_ui_parsers_ui_ComponentParser._nextId = 0;
 haxe_ui_styles_Parser.cssKeyframesRegex = new EReg("@keyframes\\s*(\\w+?)\\s*\\{([\\s\\S]*?\\}\\s*?)\\}","gi");
 haxe_ui_styles_Parser.cssKeyframeSelectorRegex = new EReg("([\\w%]+)\\s*\\{\\s*([\\s\\S]*?)\\s*\\}","gi");
 haxe_ui_styles_Parser.combinedCSSMediaRegex = new EReg("((\\s*?(?:/\\*[\\s\\S]*?\\*/)?\\s*?@media[\\s\\S]*?)\\{([\\s\\S]*?)\\}\\s*?\\})|(([\\s\\S]*?)\\{([\\s\\S]*?)\\})","gi");
@@ -26514,5 +30490,16 @@ haxe_ui_util_MathUtil.MAX_INT = 2147483647;
 haxe_ui_util_MathUtil.MIN_INT = -2147483648;
 haxe_ui_util_StyleUtil.style2ComponentEReg = new EReg("-(\\w)","g");
 haxe_ui_util_StyleUtil.component2StyleEReg = new EReg("([A-Z])","g");
+haxe_xml_Parser.escapes = (function($this) {
+	var $r;
+	var h = new haxe_ds_StringMap();
+	h.h["lt"] = "<";
+	h.h["gt"] = ">";
+	h.h["amp"] = "&";
+	h.h["quot"] = "\"";
+	h.h["apos"] = "'";
+	$r = h;
+	return $r;
+}(this));
 Main.main();
 })(typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);

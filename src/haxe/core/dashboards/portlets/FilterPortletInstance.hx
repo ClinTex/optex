@@ -1,4 +1,4 @@
-package components.portlets;
+package core.dashboards.portlets;
 
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.components.DropDown;
@@ -27,5 +27,12 @@ class FilterPortletInstance extends PortletInstance {
         dd.dataSource = ds;
 
         addComponent(dd);
+
+        dd.onChange = function(_) {
+            trace("filter changed");
+            if (dashboardInstance != null) {
+                dashboardInstance.onFilterChanged();
+            }
+        }
     }
 }

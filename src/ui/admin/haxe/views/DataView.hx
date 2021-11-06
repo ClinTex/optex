@@ -29,67 +29,7 @@ class DataView extends VBox {
     private inline function num(i:Dynamic) {
         return Syntax.code("Number({0})", i);
     }
-
-    @:bind(test1, MouseEvent.CLICK)
-    private function onTest1(_) {
-        var selectedItem = databaseSelector.selectedItem;
-        if (selectedItem == null) {
-            return;
-        }
-        var databaseName = selectedItem.db.name;
-
-        var selectedItem = tableSelector.selectedItem;
-        if (selectedItem == null) {
-            return;
-        }
-        var tableRows = selectedItem.table.getRowCount();
-        var tableName = selectedItem.table.name;
-
-        var selectedItem = testFieldsList.selectedItem;
-        if (selectedItem == null) {
-            return;
-        }
-        var fieldName = selectedItem.text;
-
-        trace("test1");
-        var start = Platform.instance.perf();
-        var params = [["fieldName", fieldName]];
-        //CoreData.test1(databaseName, tableName, fieldName).then(function(r) {
-        CoreData.applyTableTransform(databaseName, tableName, "count-unique", params).then(function(r) {
-            var graphData:Array<Dynamic> = [];
-            for (d in r.data) {
-                var group = d[0];
-                var value = Std.parseInt(d[1]);
-                graphData.push({
-                    group: group,
-                    value: value
-                });
-            }
-            testbargraph1.data = graphData;
-            var end = Platform.instance.perf();
-            testPerf.text = "" + tableRows + " records in " + (end - start) + "ms";
-            trace(r);
-        });
-    }
-
-    @:bind(testRefreshFields, MouseEvent.CLICK)
-    private function ontestRefreshFields(_) {
-        var selectedItem = tableSelector.selectedItem;
-        if (selectedItem == null) {
-            return;
-        }
-
-        var table:Table = selectedItem.table;
-        var ds = new ArrayDataSource<Dynamic>();
-        for (f in table.fieldDefinitions) {
-            ds.add({
-                text: f.fieldName
-            });
-        }
-        testFieldsList.dataSource = ds;
-        
-    }
-
+    
     public function new() {
         super();
         instance = this;

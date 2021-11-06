@@ -1,10 +1,8 @@
 package;
 
-import components.Portlet;
+import core.dashboards.Portlet;
 import haxe.ui.containers.HBox;
 import haxe.ui.core.ComponentClassMap;
-import core.data.CoreData.FieldType;
-import core.data.Table;
 import core.data.DatabaseManager;
 import views.DataView;
 import haxe.ui.containers.menus.Menu.MenuEvent;

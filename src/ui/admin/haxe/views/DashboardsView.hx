@@ -1,7 +1,5 @@
 package views;
 
-import haxe.ui.RuntimeComponentBuilder;
-import components.Portlet;
 import haxe.ui.events.UIEvent;
 import core.data.DatabaseManager;
 import haxe.ui.data.ArrayDataSource;
@@ -68,12 +66,7 @@ class DashboardsView extends VBox {
 
         var dashboard:Dashboard = selectedItem.dashboard;
         layoutDataField.text = dashboard.layoutData;
-
-        var portlet = new Portlet();
-
-        var c = RuntimeComponentBuilder.fromString(dashboard.layoutData);
-        previewTab.removeAllComponents();
-        previewTab.addComponent(c);
+        dashboardPreviewInstance.buildDashboard(dashboard);
     }
 
     @:bind(mainTabs, UIEvent.CHANGE)
@@ -85,9 +78,6 @@ class DashboardsView extends VBox {
 
         var dashboard:Dashboard = selectedItem.dashboard;
         dashboard.layoutData = layoutDataField.text;
-
-        var c = RuntimeComponentBuilder.fromString(dashboard.layoutData);
-        previewTab.removeAllComponents();
-        previewTab.addComponent(c);
+        dashboardPreviewInstance.buildDashboard(dashboard);
     }
 }

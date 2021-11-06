@@ -4624,49 +4624,40 @@ var MainView = function() {
 	var c7 = new views_DashboardsView();
 	c7.set_id("dashboardsView");
 	c5.addComponent(c7);
-	var c8 = new views_PortletsView();
-	c8.set_id("portletsView");
+	var c8 = new views_SettingsView();
+	c8.set_id("settingsView");
 	c5.addComponent(c8);
-	var c9 = new views_SettingsView();
-	c9.set_id("settingsView");
-	c5.addComponent(c9);
 	c4.addComponent(c5);
 	c3.addComponent(c4);
-	var c10 = new haxe_ui_containers_VerticalButtonBar();
-	c10.set_percentHeight(100.);
-	c10.set_styleNames("right-menu with-bottom-button");
-	c10.set_styleString("margin-top: -1px");
-	c10.set_selectedIndex(0);
+	var c9 = new haxe_ui_containers_VerticalButtonBar();
+	c9.set_percentHeight(100.);
+	c9.set_styleNames("right-menu with-bottom-button");
+	c9.set_styleString("margin-top: -1px");
+	c9.set_selectedIndex(0);
+	var c10 = new haxe_ui_components_Button();
+	c10.set_text("Data");
+	c10.userData = "dataView";
+	c10.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-server-48.png"));
+	c9.addComponent(c10);
 	var c11 = new haxe_ui_components_Button();
-	c11.set_text("Data");
-	c11.userData = "dataView";
-	c11.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-server-48.png"));
-	c10.addComponent(c11);
-	var c12 = new haxe_ui_components_Button();
-	c12.set_text("Dashboards");
-	c12.userData = "dashboardsView";
-	c12.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-dashboard-48.png"));
-	c10.addComponent(c12);
+	c11.set_text("Dashboards");
+	c11.userData = "dashboardsView";
+	c11.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-dashboard-48.png"));
+	c9.addComponent(c11);
+	var c12 = new haxe_ui_components_Spacer();
+	c12.set_percentHeight(100.);
+	c9.addComponent(c12);
 	var c13 = new haxe_ui_components_Button();
-	c13.set_text("Portlets");
-	c13.userData = "portletsView";
-	c13.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-laptop-48.png"));
-	c10.addComponent(c13);
-	var c14 = new haxe_ui_components_Spacer();
-	c14.set_percentHeight(100.);
-	c10.addComponent(c14);
-	var c15 = new haxe_ui_components_Button();
-	c15.set_text("Settings");
-	c15.userData = "settingsView";
-	c15.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-wrench-48.png"));
-	c10.addComponent(c15);
-	c3.addComponent(c10);
+	c13.set_text("Settings");
+	c13.userData = "settingsView";
+	c13.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-wrench-48.png"));
+	c9.addComponent(c13);
+	c3.addComponent(c9);
 	this.addComponent(c3);
-	c10.registerEvent("change",function(event) {
-		var __this__ = c10;
-		var settingsView = c9;
+	c9.registerEvent("change",function(event) {
+		var __this__ = c9;
+		var settingsView = c8;
 		var removeCurrentDatabase = c2;
-		var portletsView = c8;
 		var mainStack = c5;
 		var mainMenu = c0;
 		var mainContent = c4;
@@ -4680,9 +4671,8 @@ var MainView = function() {
 	this.set_styleNames("default-background");
 	this.set_styleString("padding:0px;spacing:0px;");
 	this.bindingRoot = true;
-	this.settingsView = c9;
+	this.settingsView = c8;
 	this.removeCurrentDatabase = c2;
-	this.portletsView = c8;
 	this.mainStack = c5;
 	this.mainMenu = c0;
 	this.mainContent = c4;
@@ -4691,9 +4681,9 @@ var MainView = function() {
 	this.adminMenu = c1;
 	haxe_ui_core_ComponentClassMap.get_instance().registerClassName("vbox",haxe_ui_containers_VBox.__name__);
 	haxe_ui_core_ComponentClassMap.get_instance().registerClassName("hbox",haxe_ui_containers_HBox.__name__);
-	haxe_ui_core_ComponentClassMap.get_instance().registerClassName("portlet",components_Portlet.__name__);
+	haxe_ui_core_ComponentClassMap.get_instance().registerClassName("portlet",core_dashboards_Portlet.__name__);
 	core_data_DatabaseManager.get_instance().init().then(function(r) {
-		console.log("haxe/MainView.hx:23:","database manager ready");
+		console.log("haxe/MainView.hx:21:","database manager ready");
 	});
 	var c = this.mainMenu;
 	if(c != null) {
@@ -4732,7 +4722,6 @@ MainView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	}
 	,settingsView: null
 	,removeCurrentDatabase: null
-	,portletsView: null
 	,mainStack: null
 	,mainMenu: null
 	,mainContent: null
@@ -5321,82 +5310,6 @@ components_FileSelector.prototype = $extend(haxe_ui_containers_HBox.prototype,{
 	}
 	,__class__: components_FileSelector
 });
-var components_Portlet = function() {
-	this._border = true;
-	haxe_ui_containers_Box.call(this);
-};
-$hxClasses["components.Portlet"] = components_Portlet;
-components_Portlet.__name__ = "components.Portlet";
-components_Portlet.__super__ = haxe_ui_containers_Box;
-components_Portlet.prototype = $extend(haxe_ui_containers_Box.prototype,{
-	_instance: null
-	,onReady: function() {
-		haxe_ui_containers_Box.prototype.onReady.call(this);
-		console.log("haxe/components/Portlet.hx:15:",this._border);
-		if(this._border == false) {
-			this.addClass("no-border");
-		}
-		this.addComponent(this._instance);
-	}
-	,_type: null
-	,get_type: function() {
-		return this._type;
-	}
-	,set_type: function(value) {
-		if(value == this._type) {
-			return value;
-		}
-		this._type = value;
-		switch(this._type) {
-		case "chart-bar":
-			this._instance = new components_portlets_BarGraphPortletInstance();
-			this._instance.set_percentWidth(100);
-			this._instance.set_percentHeight(100);
-			break;
-		case "filter":
-			this._instance = new components_portlets_FilterPortletInstance();
-			break;
-		case "table":
-			this._instance = new components_portlets_TableDataPortletInstance();
-			this._instance.set_percentWidth(100);
-			this._instance.set_percentHeight(100);
-			break;
-		}
-		return value;
-	}
-	,_border: null
-	,get_border: function() {
-		return this._border;
-	}
-	,set_border: function(value) {
-		if(value == this._border) {
-			return value;
-		}
-		this._border = value;
-		return value;
-	}
-	,registerBehaviours: function() {
-		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new components_Portlet();
-	}
-	,__class__: components_Portlet
-	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{set_border:"set_border",get_border:"get_border",set_type:"set_type",get_type:"get_type"})
-});
 var components_WorkingIndicator = function() {
 	this._overlay = null;
 	haxe_ui_containers_VBox.call(this);
@@ -5541,167 +5454,6 @@ components_WorkingIndicator.prototype = $extend(haxe_ui_containers_VBox.prototyp
 	,__class__: components_WorkingIndicator
 	,__properties__: $extend(haxe_ui_containers_VBox.prototype.__properties__,{set_message:"set_message",get_message:"get_message"})
 });
-var components_portlets_PortletInstance = function() {
-	haxe_ui_containers_Box.call(this);
-};
-$hxClasses["components.portlets.PortletInstance"] = components_portlets_PortletInstance;
-components_portlets_PortletInstance.__name__ = "components.portlets.PortletInstance";
-components_portlets_PortletInstance.__super__ = haxe_ui_containers_Box;
-components_portlets_PortletInstance.prototype = $extend(haxe_ui_containers_Box.prototype,{
-	registerBehaviours: function() {
-		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new components_portlets_PortletInstance();
-	}
-	,__class__: components_portlets_PortletInstance
-});
-var components_portlets_BarGraphPortletInstance = function() {
-	components_portlets_PortletInstance.call(this);
-	this._bar = new graphs_BarGraph();
-	this._bar.set_percentWidth(100);
-	this._bar.set_percentHeight(100);
-	this._bar.createRandomData();
-	this.addComponent(this._bar);
-};
-$hxClasses["components.portlets.BarGraphPortletInstance"] = components_portlets_BarGraphPortletInstance;
-components_portlets_BarGraphPortletInstance.__name__ = "components.portlets.BarGraphPortletInstance";
-components_portlets_BarGraphPortletInstance.__super__ = components_portlets_PortletInstance;
-components_portlets_BarGraphPortletInstance.prototype = $extend(components_portlets_PortletInstance.prototype,{
-	_bar: null
-	,registerBehaviours: function() {
-		components_portlets_PortletInstance.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = components_portlets_PortletInstance.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new components_portlets_BarGraphPortletInstance();
-	}
-	,__class__: components_portlets_BarGraphPortletInstance
-});
-var components_portlets_FilterPortletInstance = function() {
-	components_portlets_PortletInstance.call(this);
-	var dd = new haxe_ui_components_DropDown();
-	var ds = new haxe_ui_data_ArrayDataSource();
-	ds.add({ text : "Filter Item 1"});
-	ds.add({ text : "Filter Item 2"});
-	ds.add({ text : "Filter Item 3"});
-	ds.add({ text : "Filter Item 4"});
-	ds.add({ text : "Filter Item 5"});
-	dd.set_dataSource(ds);
-	this.addComponent(dd);
-};
-$hxClasses["components.portlets.FilterPortletInstance"] = components_portlets_FilterPortletInstance;
-components_portlets_FilterPortletInstance.__name__ = "components.portlets.FilterPortletInstance";
-components_portlets_FilterPortletInstance.__super__ = components_portlets_PortletInstance;
-components_portlets_FilterPortletInstance.prototype = $extend(components_portlets_PortletInstance.prototype,{
-	registerBehaviours: function() {
-		components_portlets_PortletInstance.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = components_portlets_PortletInstance.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new components_portlets_FilterPortletInstance();
-	}
-	,__class__: components_portlets_FilterPortletInstance
-});
-var components_portlets_TableDataPortletInstance = function() {
-	components_portlets_PortletInstance.call(this);
-	var table = new haxe_ui_containers_TableView();
-	table.set_percentWidth(100);
-	table.set_percentHeight(100);
-	this.addComponent(table);
-	var header = new haxe_ui_containers_Header();
-	header.set_percentWidth(100);
-	var col = new haxe_ui_components_Column();
-	col.set_id("fieldA");
-	col.set_width(100);
-	col.set_text("Field A");
-	header.addComponent(col);
-	var col = new haxe_ui_components_Column();
-	col.set_id("fieldB");
-	col.set_width(100);
-	col.set_text("Field B");
-	header.addComponent(col);
-	var col = new haxe_ui_components_Column();
-	col.set_id("fieldC");
-	col.set_width(100);
-	col.set_text("Field C");
-	header.addComponent(col);
-	var col = new haxe_ui_components_Column();
-	col.set_id("fieldD");
-	col.set_percentWidth(100);
-	col.set_text("Field D");
-	header.addComponent(col);
-	table.addComponent(header);
-	var ds = new haxe_ui_data_ArrayDataSource();
-	var _g = 0;
-	while(_g < 20) {
-		var i = _g++;
-		ds.add({ fieldA : "Item " + (i + 1) + "A", fieldB : "Item " + (i + 1) + "B", fieldC : "Item " + (i + 1) + "C", fieldD : "Item " + (i + 1) + "D"});
-	}
-	table.set_dataSource(ds);
-};
-$hxClasses["components.portlets.TableDataPortletInstance"] = components_portlets_TableDataPortletInstance;
-components_portlets_TableDataPortletInstance.__name__ = "components.portlets.TableDataPortletInstance";
-components_portlets_TableDataPortletInstance.__super__ = components_portlets_PortletInstance;
-components_portlets_TableDataPortletInstance.prototype = $extend(components_portlets_PortletInstance.prototype,{
-	registerBehaviours: function() {
-		components_portlets_PortletInstance.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = components_portlets_PortletInstance.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new components_portlets_TableDataPortletInstance();
-	}
-	,__class__: components_portlets_TableDataPortletInstance
-});
 var core_Event = function(type) {
 	this.type = type;
 };
@@ -5745,6 +5497,398 @@ core_EventDispatcher.prototype = {
 	}
 	,__class__: core_EventDispatcher
 };
+var haxe_ui_backend_EventBase = function() { };
+$hxClasses["haxe.ui.backend.EventBase"] = haxe_ui_backend_EventBase;
+haxe_ui_backend_EventBase.__name__ = "haxe.ui.backend.EventBase";
+haxe_ui_backend_EventBase.prototype = {
+	cancel: function() {
+	}
+	,postClone: function(event) {
+	}
+	,__class__: haxe_ui_backend_EventBase
+};
+var haxe_ui_backend_EventImpl = function() { };
+$hxClasses["haxe.ui.backend.EventImpl"] = haxe_ui_backend_EventImpl;
+haxe_ui_backend_EventImpl.__name__ = "haxe.ui.backend.EventImpl";
+haxe_ui_backend_EventImpl.__super__ = haxe_ui_backend_EventBase;
+haxe_ui_backend_EventImpl.prototype = $extend(haxe_ui_backend_EventBase.prototype,{
+	_originalEvent: null
+	,cancel: function() {
+		if(this._originalEvent != null) {
+			this._originalEvent.preventDefault();
+			this._originalEvent.stopImmediatePropagation();
+			this._originalEvent.stopPropagation();
+		}
+	}
+	,postClone: function(event) {
+		event._originalEvent = this._originalEvent;
+	}
+	,__class__: haxe_ui_backend_EventImpl
+});
+var haxe_ui_events_UIEvent = function(type,bubble,data) {
+	if(bubble == null) {
+		bubble = false;
+	}
+	this.type = type;
+	this.bubble = bubble;
+	this.data = data;
+	this.canceled = false;
+};
+$hxClasses["haxe.ui.events.UIEvent"] = haxe_ui_events_UIEvent;
+haxe_ui_events_UIEvent.__name__ = "haxe.ui.events.UIEvent";
+haxe_ui_events_UIEvent.__super__ = haxe_ui_backend_EventImpl;
+haxe_ui_events_UIEvent.prototype = $extend(haxe_ui_backend_EventImpl.prototype,{
+	bubble: null
+	,type: null
+	,target: null
+	,data: null
+	,canceled: null
+	,cancel: function() {
+		haxe_ui_backend_EventImpl.prototype.cancel.call(this);
+		this.canceled = true;
+	}
+	,clone: function() {
+		var c = new haxe_ui_events_UIEvent(this.type);
+		c.type = this.type;
+		c.bubble = this.bubble;
+		c.target = this.target;
+		c.data = this.data;
+		c.canceled = this.canceled;
+		this.postClone(c);
+		return c;
+	}
+	,__class__: haxe_ui_events_UIEvent
+});
+var core_dashboards_DashboardInstanceEvent = function(type,bubble,data) {
+	haxe_ui_events_UIEvent.call(this,type,bubble,data);
+};
+$hxClasses["core.dashboards.DashboardInstanceEvent"] = core_dashboards_DashboardInstanceEvent;
+core_dashboards_DashboardInstanceEvent.__name__ = "core.dashboards.DashboardInstanceEvent";
+core_dashboards_DashboardInstanceEvent.__super__ = haxe_ui_events_UIEvent;
+core_dashboards_DashboardInstanceEvent.prototype = $extend(haxe_ui_events_UIEvent.prototype,{
+	__class__: core_dashboards_DashboardInstanceEvent
+});
+var core_dashboards_DashboardInstance = function() {
+	this._container = new haxe_ui_containers_Box();
+	haxe_ui_containers_Box.call(this);
+	this._container.set_percentWidth(100);
+	this._container.set_percentHeight(100);
+	this.addComponent(this._container);
+};
+$hxClasses["core.dashboards.DashboardInstance"] = core_dashboards_DashboardInstance;
+core_dashboards_DashboardInstance.__name__ = "core.dashboards.DashboardInstance";
+core_dashboards_DashboardInstance.__super__ = haxe_ui_containers_Box;
+core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.prototype,{
+	_container: null
+	,buildDashboard: function(dashboard) {
+		var c = haxe_ui_RuntimeComponentBuilder.fromString(dashboard.layoutData);
+		this._container.removeAllComponents();
+		this._container.addComponent(c);
+	}
+	,portlets: null
+	,get_portlets: function() {
+		var list = this.findComponents(null,core_dashboards_Portlet);
+		return list;
+	}
+	,refreshAllPortlets: function() {
+		var _g = 0;
+		var _g1 = this.get_portlets();
+		while(_g < _g1.length) {
+			var p = _g1[_g];
+			++_g;
+			p.refresh();
+		}
+	}
+	,onFilterChanged: function() {
+		this.refreshAllPortlets();
+	}
+	,registerBehaviours: function() {
+		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_dashboards_DashboardInstance();
+	}
+	,__class__: core_dashboards_DashboardInstance
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{get_portlets:"get_portlets"})
+});
+var core_dashboards_Portlet = function() {
+	this._border = true;
+	haxe_ui_containers_Box.call(this);
+};
+$hxClasses["core.dashboards.Portlet"] = core_dashboards_Portlet;
+core_dashboards_Portlet.__name__ = "core.dashboards.Portlet";
+core_dashboards_Portlet.__super__ = haxe_ui_containers_Box;
+core_dashboards_Portlet.prototype = $extend(haxe_ui_containers_Box.prototype,{
+	_instance: null
+	,onReady: function() {
+		haxe_ui_containers_Box.prototype.onReady.call(this);
+		if(this._border == false) {
+			this.addClass("no-border");
+		}
+		this.addComponent(this._instance);
+	}
+	,_type: null
+	,get_type: function() {
+		return this._type;
+	}
+	,set_type: function(value) {
+		if(value == this._type) {
+			return value;
+		}
+		this._type = value;
+		switch(this._type) {
+		case "chart-bar":
+			this._instance = new core_dashboards_portlets_BarGraphPortletInstance();
+			this._instance.set_percentWidth(100);
+			this._instance.set_percentHeight(100);
+			break;
+		case "filter":
+			this._instance = new core_dashboards_portlets_FilterPortletInstance();
+			break;
+		case "table":
+			this._instance = new core_dashboards_portlets_TableDataPortletInstance();
+			this._instance.set_percentWidth(100);
+			this._instance.set_percentHeight(100);
+			break;
+		}
+		return value;
+	}
+	,_border: null
+	,get_border: function() {
+		return this._border;
+	}
+	,set_border: function(value) {
+		if(value == this._border) {
+			return value;
+		}
+		this._border = value;
+		return value;
+	}
+	,refresh: function() {
+		if(this._instance == null) {
+			return;
+		}
+		this._instance.refresh();
+	}
+	,registerBehaviours: function() {
+		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_dashboards_Portlet();
+	}
+	,__class__: core_dashboards_Portlet
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{set_border:"set_border",get_border:"get_border",set_type:"set_type",get_type:"get_type"})
+});
+var core_dashboards_portlets_PortletInstance = function() {
+	haxe_ui_containers_Box.call(this);
+};
+$hxClasses["core.dashboards.portlets.PortletInstance"] = core_dashboards_portlets_PortletInstance;
+core_dashboards_portlets_PortletInstance.__name__ = "core.dashboards.portlets.PortletInstance";
+core_dashboards_portlets_PortletInstance.__super__ = haxe_ui_containers_Box;
+core_dashboards_portlets_PortletInstance.prototype = $extend(haxe_ui_containers_Box.prototype,{
+	refresh: function() {
+	}
+	,dashboardInstance: null
+	,get_dashboardInstance: function() {
+		return this.findAncestor(null,core_dashboards_DashboardInstance);
+	}
+	,registerBehaviours: function() {
+		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_dashboards_portlets_PortletInstance();
+	}
+	,__class__: core_dashboards_portlets_PortletInstance
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{get_dashboardInstance:"get_dashboardInstance"})
+});
+var core_dashboards_portlets_BarGraphPortletInstance = function() {
+	core_dashboards_portlets_PortletInstance.call(this);
+	this._bar = new core_graphs_BarGraph();
+	this._bar.set_percentWidth(100);
+	this._bar.set_percentHeight(100);
+	this._bar.createRandomData();
+	this.addComponent(this._bar);
+};
+$hxClasses["core.dashboards.portlets.BarGraphPortletInstance"] = core_dashboards_portlets_BarGraphPortletInstance;
+core_dashboards_portlets_BarGraphPortletInstance.__name__ = "core.dashboards.portlets.BarGraphPortletInstance";
+core_dashboards_portlets_BarGraphPortletInstance.__super__ = core_dashboards_portlets_PortletInstance;
+core_dashboards_portlets_BarGraphPortletInstance.prototype = $extend(core_dashboards_portlets_PortletInstance.prototype,{
+	_bar: null
+	,refresh: function() {
+		this._bar.createRandomData();
+	}
+	,registerBehaviours: function() {
+		core_dashboards_portlets_PortletInstance.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = core_dashboards_portlets_PortletInstance.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_dashboards_portlets_BarGraphPortletInstance();
+	}
+	,__class__: core_dashboards_portlets_BarGraphPortletInstance
+});
+var core_dashboards_portlets_FilterPortletInstance = function() {
+	var _gthis = this;
+	core_dashboards_portlets_PortletInstance.call(this);
+	var dd = new haxe_ui_components_DropDown();
+	var ds = new haxe_ui_data_ArrayDataSource();
+	ds.add({ text : "Filter Item 1"});
+	ds.add({ text : "Filter Item 2"});
+	ds.add({ text : "Filter Item 3"});
+	ds.add({ text : "Filter Item 4"});
+	ds.add({ text : "Filter Item 5"});
+	dd.set_dataSource(ds);
+	this.addComponent(dd);
+	dd.set_onChange(function(_) {
+		console.log("../../haxe/core/dashboards/portlets/FilterPortletInstance.hx:32:","filter changed");
+		if(_gthis.get_dashboardInstance() != null) {
+			_gthis.get_dashboardInstance().onFilterChanged();
+		}
+	});
+};
+$hxClasses["core.dashboards.portlets.FilterPortletInstance"] = core_dashboards_portlets_FilterPortletInstance;
+core_dashboards_portlets_FilterPortletInstance.__name__ = "core.dashboards.portlets.FilterPortletInstance";
+core_dashboards_portlets_FilterPortletInstance.__super__ = core_dashboards_portlets_PortletInstance;
+core_dashboards_portlets_FilterPortletInstance.prototype = $extend(core_dashboards_portlets_PortletInstance.prototype,{
+	registerBehaviours: function() {
+		core_dashboards_portlets_PortletInstance.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = core_dashboards_portlets_PortletInstance.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_dashboards_portlets_FilterPortletInstance();
+	}
+	,__class__: core_dashboards_portlets_FilterPortletInstance
+});
+var core_dashboards_portlets_TableDataPortletInstance = function() {
+	var _gthis = this;
+	core_dashboards_portlets_PortletInstance.call(this);
+	var table = new haxe_ui_containers_TableView();
+	table.set_percentWidth(100);
+	table.set_percentHeight(100);
+	this.addComponent(table);
+	var header = new haxe_ui_containers_Header();
+	header.set_percentWidth(100);
+	var col = new haxe_ui_components_Column();
+	col.set_id("fieldA");
+	col.set_width(100);
+	col.set_text("Field A");
+	header.addComponent(col);
+	var col = new haxe_ui_components_Column();
+	col.set_id("fieldB");
+	col.set_width(100);
+	col.set_text("Field B");
+	header.addComponent(col);
+	var col = new haxe_ui_components_Column();
+	col.set_id("fieldC");
+	col.set_width(100);
+	col.set_text("Field C");
+	header.addComponent(col);
+	var col = new haxe_ui_components_Column();
+	col.set_id("fieldD");
+	col.set_percentWidth(100);
+	col.set_text("Field D");
+	header.addComponent(col);
+	table.addComponent(header);
+	var ds = new haxe_ui_data_ArrayDataSource();
+	var _g = 0;
+	while(_g < 20) {
+		var i = _g++;
+		ds.add({ fieldA : "Item " + (i + 1) + "A", fieldB : "Item " + (i + 1) + "B", fieldC : "Item " + (i + 1) + "C", fieldD : "Item " + (i + 1) + "D"});
+	}
+	table.set_dataSource(ds);
+	table.set_onChange(function(_) {
+		if(_gthis.get_dashboardInstance() != null) {
+			_gthis.get_dashboardInstance().onFilterChanged();
+		}
+	});
+};
+$hxClasses["core.dashboards.portlets.TableDataPortletInstance"] = core_dashboards_portlets_TableDataPortletInstance;
+core_dashboards_portlets_TableDataPortletInstance.__name__ = "core.dashboards.portlets.TableDataPortletInstance";
+core_dashboards_portlets_TableDataPortletInstance.__super__ = core_dashboards_portlets_PortletInstance;
+core_dashboards_portlets_TableDataPortletInstance.prototype = $extend(core_dashboards_portlets_PortletInstance.prototype,{
+	registerBehaviours: function() {
+		core_dashboards_portlets_PortletInstance.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = core_dashboards_portlets_PortletInstance.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_dashboards_portlets_TableDataPortletInstance();
+	}
+	,__class__: core_dashboards_portlets_TableDataPortletInstance
+});
 var core_data_FieldType = function() { };
 $hxClasses["core.data.FieldType"] = core_data_FieldType;
 core_data_FieldType.__name__ = "core.data.FieldType";
@@ -6022,7 +6166,10 @@ core_data_DatabaseManager.prototype = $extend(core_EventDispatcher.prototype,{
 			});
 		});
 	}
-	,listDatabases: function() {
+	,listDatabases: function(includeInternal) {
+		if(includeInternal == null) {
+			includeInternal = false;
+		}
 		return new Promise(function(resolve,reject) {
 			core_data.listDatabases().then(function(dbs) {
 				var list = [];
@@ -6030,6 +6177,9 @@ core_data_DatabaseManager.prototype = $extend(core_EventDispatcher.prototype,{
 				while(_g < dbs.length) {
 					var db = dbs[_g];
 					++_g;
+					if(includeInternal == false && StringTools.startsWith(db.databaseName,"__")) {
+						continue;
+					}
 					list.push(new core_data_Database(db.databaseName,db));
 				}
 				resolve(list);
@@ -6293,7 +6443,7 @@ core_data_parsers_CSVDataParser.prototype = $extend(core_data_parsers_DataParser
 	}
 	,__class__: core_data_parsers_CSVDataParser
 });
-var graphs_BarGraph = function() {
+var core_graphs_BarGraph = function() {
 	this._data = null;
 	this._margins = { top : 5, right : 2, bottom : 20, left : 30};
 	this.roundBarWidths = false;
@@ -6316,13 +6466,13 @@ var graphs_BarGraph = function() {
 	this._graph = null;
 	this._container = null;
 	haxe_ui_core_Component.call(this);
-	this.colorCalculator = new graphs_ValueBasedColourCalculator();
+	this.colorCalculator = new core_graphs_ValueBasedColourCalculator();
 	this.colorCalculator.set_scheme(this.scheme);
 };
-$hxClasses["graphs.BarGraph"] = graphs_BarGraph;
-graphs_BarGraph.__name__ = "graphs.BarGraph";
-graphs_BarGraph.__super__ = haxe_ui_core_Component;
-graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
+$hxClasses["core.graphs.BarGraph"] = core_graphs_BarGraph;
+core_graphs_BarGraph.__name__ = "core.graphs.BarGraph";
+core_graphs_BarGraph.__super__ = haxe_ui_core_Component;
+core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 	_container: null
 	,_graph: null
 	,_graphGraphics: null
@@ -6513,7 +6663,7 @@ graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 		var _g1 = count;
 		while(_g < _g1) {
 			var n = _g++;
-			randomData.push({ group : graphs_BarGraph.LETTERS[n], value : Std.random(100) + 10});
+			randomData.push({ group : core_graphs_BarGraph.LETTERS[n], value : Std.random(100) + 10});
 		}
 		this.set_data(randomData);
 	}
@@ -6534,18 +6684,18 @@ graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 		return c;
 	}
 	,self: function() {
-		return new graphs_BarGraph();
+		return new core_graphs_BarGraph();
 	}
-	,__class__: graphs_BarGraph
+	,__class__: core_graphs_BarGraph
 	,__properties__: $extend(haxe_ui_core_Component.prototype.__properties__,{set_data:"set_data",get_data:"get_data",set_margins:"set_margins",get_margins:"get_margins"})
 });
-var graphs_ColorCalculator = function() {
+var core_graphs_ColorCalculator = function() {
 	this._colorsReverse = null;
 	this._colors = null;
 };
-$hxClasses["graphs.ColorCalculator"] = graphs_ColorCalculator;
-graphs_ColorCalculator.__name__ = "graphs.ColorCalculator";
-graphs_ColorCalculator.prototype = {
+$hxClasses["core.graphs.ColorCalculator"] = core_graphs_ColorCalculator;
+core_graphs_ColorCalculator.__name__ = "core.graphs.ColorCalculator";
+core_graphs_ColorCalculator.prototype = {
 	_colors: null
 	,_colorsReverse: null
 	,_scheme: null
@@ -6564,16 +6714,16 @@ graphs_ColorCalculator.prototype = {
 	,get: function(data,index,graphInfo) {
 		return null;
 	}
-	,__class__: graphs_ColorCalculator
+	,__class__: core_graphs_ColorCalculator
 	,__properties__: {set_scheme:"set_scheme",get_scheme:"get_scheme"}
 };
-var graphs_ValueBasedColourCalculator = function() {
-	graphs_ColorCalculator.call(this);
+var core_graphs_ValueBasedColourCalculator = function() {
+	core_graphs_ColorCalculator.call(this);
 };
-$hxClasses["graphs.ValueBasedColourCalculator"] = graphs_ValueBasedColourCalculator;
-graphs_ValueBasedColourCalculator.__name__ = "graphs.ValueBasedColourCalculator";
-graphs_ValueBasedColourCalculator.__super__ = graphs_ColorCalculator;
-graphs_ValueBasedColourCalculator.prototype = $extend(graphs_ColorCalculator.prototype,{
+$hxClasses["core.graphs.ValueBasedColourCalculator"] = core_graphs_ValueBasedColourCalculator;
+core_graphs_ValueBasedColourCalculator.__name__ = "core.graphs.ValueBasedColourCalculator";
+core_graphs_ValueBasedColourCalculator.__super__ = core_graphs_ColorCalculator;
+core_graphs_ValueBasedColourCalculator.prototype = $extend(core_graphs_ColorCalculator.prototype,{
 	get: function(data,index,graphInfo) {
 		var max = graphInfo.valueMax;
 		var value = Reflect.field(data,graphInfo.valueField);
@@ -6584,7 +6734,7 @@ graphs_ValueBasedColourCalculator.prototype = $extend(graphs_ColorCalculator.pro
 		}
 		return this._colorsReverse[colIndex];
 	}
-	,__class__: graphs_ValueBasedColourCalculator
+	,__class__: core_graphs_ValueBasedColourCalculator
 });
 var haxe_IMap = function() { };
 $hxClasses["haxe.IMap"] = haxe_IMap;
@@ -8950,34 +9100,6 @@ haxe_ui_backend_DialogBase.prototype = $extend(haxe_ui_containers_Box.prototype,
 	}
 	,__class__: haxe_ui_backend_DialogBase
 	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{set_title:"set_title",get_title:"get_title",set_closable:"set_closable",get_closable:"get_closable",set_dialogParent:"set_dialogParent",get_dialogParent:"get_dialogParent"})
-});
-var haxe_ui_backend_EventBase = function() { };
-$hxClasses["haxe.ui.backend.EventBase"] = haxe_ui_backend_EventBase;
-haxe_ui_backend_EventBase.__name__ = "haxe.ui.backend.EventBase";
-haxe_ui_backend_EventBase.prototype = {
-	cancel: function() {
-	}
-	,postClone: function(event) {
-	}
-	,__class__: haxe_ui_backend_EventBase
-};
-var haxe_ui_backend_EventImpl = function() { };
-$hxClasses["haxe.ui.backend.EventImpl"] = haxe_ui_backend_EventImpl;
-haxe_ui_backend_EventImpl.__name__ = "haxe.ui.backend.EventImpl";
-haxe_ui_backend_EventImpl.__super__ = haxe_ui_backend_EventBase;
-haxe_ui_backend_EventImpl.prototype = $extend(haxe_ui_backend_EventBase.prototype,{
-	_originalEvent: null
-	,cancel: function() {
-		if(this._originalEvent != null) {
-			this._originalEvent.preventDefault();
-			this._originalEvent.stopImmediatePropagation();
-			this._originalEvent.stopPropagation();
-		}
-	}
-	,postClone: function(event) {
-		event._originalEvent = this._originalEvent;
-	}
-	,__class__: haxe_ui_backend_EventImpl
 });
 var haxe_ui_backend_ImageSurface = function() {
 };
@@ -12600,40 +12722,6 @@ haxe_ui_components_ButtonBuilder.prototype = $extend(haxe_ui_core_CompositeBuild
 		}
 	}
 	,__class__: haxe_ui_components_ButtonBuilder
-});
-var haxe_ui_events_UIEvent = function(type,bubble,data) {
-	if(bubble == null) {
-		bubble = false;
-	}
-	this.type = type;
-	this.bubble = bubble;
-	this.data = data;
-	this.canceled = false;
-};
-$hxClasses["haxe.ui.events.UIEvent"] = haxe_ui_events_UIEvent;
-haxe_ui_events_UIEvent.__name__ = "haxe.ui.events.UIEvent";
-haxe_ui_events_UIEvent.__super__ = haxe_ui_backend_EventImpl;
-haxe_ui_events_UIEvent.prototype = $extend(haxe_ui_backend_EventImpl.prototype,{
-	bubble: null
-	,type: null
-	,target: null
-	,data: null
-	,canceled: null
-	,cancel: function() {
-		haxe_ui_backend_EventImpl.prototype.cancel.call(this);
-		this.canceled = true;
-	}
-	,clone: function() {
-		var c = new haxe_ui_events_UIEvent(this.type);
-		c.type = this.type;
-		c.bubble = this.bubble;
-		c.target = this.target;
-		c.data = this.data;
-		c.canceled = this.canceled;
-		this.postClone(c);
-		return c;
-	}
-	,__class__: haxe_ui_events_UIEvent
 });
 var haxe_ui_components_CalendarEvent = function(type,bubble,data) {
 	haxe_ui_events_UIEvent.call(this,type,bubble,data);
@@ -35909,7 +35997,7 @@ sidebars_ImportDataSourceSidebar.prototype = $extend(haxe_ui_containers_SideBar.
 var views_DashboardsView = function() {
 	var _gthis = this;
 	haxe_ui_containers_VBox.call(this);
-	haxe_ui_Toolkit.styleSheet.parse("\n            #layoutDataField {\n                border: none;\n                filter: none;\n            }\n\n            #previewTab {\n                __padding: 20px;\n            }\n\n            #previewTab .hbox, #previewTab .vbox {\n                __spacing: 20px;\n            }\n        ","user");
+	haxe_ui_Toolkit.styleSheet.parse("\n            #layoutDataField {\n                border: none;\n                filter: none;\n            }\n        ","user");
 	var c0 = new haxe_ui_containers_HBox();
 	c0.set_percentWidth(100.);
 	c0.set_percentHeight(100.);
@@ -36001,42 +36089,48 @@ var views_DashboardsView = function() {
 	c16.set_percentWidth(100.);
 	c16.set_percentHeight(100.);
 	c16.set_text("Preview");
-	c15.addComponent(c16);
-	var c17 = new haxe_ui_containers_VBox();
+	var c17 = new core_dashboards_DashboardInstance();
+	c17.set_id("dashboardPreviewInstance");
 	c17.set_percentWidth(100.);
 	c17.set_percentHeight(100.);
-	c17.set_text("Designer");
-	c15.addComponent(c17);
+	c16.addComponent(c17);
+	c15.addComponent(c16);
 	var c18 = new haxe_ui_containers_VBox();
 	c18.set_percentWidth(100.);
 	c18.set_percentHeight(100.);
-	c18.set_text("Layout Data");
-	var c19 = new haxe_ui_components_TextArea();
-	c19.set_id("layoutDataField");
+	c18.set_text("Designer");
+	c15.addComponent(c18);
+	var c19 = new haxe_ui_containers_VBox();
 	c19.set_percentWidth(100.);
 	c19.set_percentHeight(100.);
-	c18.addComponent(c19);
-	var c20 = new haxe_ui_containers_HBox();
-	c20.set_horizontalAlign("right");
-	var c21 = new haxe_ui_components_Button();
-	c21.set_id("updateLayoutDataButton");
-	c21.set_text("Update");
-	c20.addComponent(c21);
-	c18.addComponent(c20);
-	c15.addComponent(c18);
+	c19.set_text("Layout Data");
+	var c20 = new haxe_ui_components_TextArea();
+	c20.set_id("layoutDataField");
+	c20.set_percentWidth(100.);
+	c20.set_percentHeight(100.);
+	c19.addComponent(c20);
+	var c21 = new haxe_ui_containers_HBox();
+	c21.set_horizontalAlign("right");
+	var c22 = new haxe_ui_components_Button();
+	c22.set_id("updateLayoutDataButton");
+	c22.set_text("Update");
+	c21.addComponent(c22);
+	c19.addComponent(c21);
+	c15.addComponent(c19);
 	c14.addComponent(c15);
 	c0.addComponent(c14);
 	this.addComponent(c0);
 	this.set_percentWidth(100.);
 	this.set_percentHeight(100.);
 	this.bindingRoot = true;
-	this.updateLayoutDataButton = c21;
+	this.updateLayoutDataButton = c22;
 	this.removeDashboardButton = c13;
 	this.previewTab = c16;
 	this.mainTabs = c15;
-	this.layoutDataField = c19;
+	this.layoutDataField = c20;
 	this.detailsContainer = c14;
 	this.dashboardSelector = c4;
+	this.dashboardPreviewInstance = c17;
 	this.addDashboardButton = c9;
 	core_data_DatabaseManager.get_instance().listen("initialized",function(_) {
 		_gthis.refreshDashboardSelector();
@@ -36099,7 +36193,7 @@ views_DashboardsView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 		var dashboard = selectedItem.dashboard;
 		dashboard.layoutData = this.layoutDataField.get_text();
 		dashboard.update().then(function(r) {
-			console.log("haxe/views/DashboardsView.hx:58:",r);
+			console.log("haxe/views/DashboardsView.hx:56:",r);
 		});
 	}
 	,onDashboardSelectorChanged: function(e) {
@@ -36109,10 +36203,7 @@ views_DashboardsView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 		}
 		var dashboard = selectedItem.dashboard;
 		this.layoutDataField.set_text(dashboard.layoutData);
-		var portlet = new components_Portlet();
-		var c = haxe_ui_RuntimeComponentBuilder.fromString(dashboard.layoutData);
-		this.previewTab.removeAllComponents();
-		this.previewTab.addComponent(c);
+		this.dashboardPreviewInstance.buildDashboard(dashboard);
 	}
 	,onMainTabsChange: function(e) {
 		var selectedItem = this.dashboardSelector.get_selectedItem();
@@ -36121,9 +36212,7 @@ views_DashboardsView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 		}
 		var dashboard = selectedItem.dashboard;
 		dashboard.layoutData = this.layoutDataField.get_text();
-		var c = haxe_ui_RuntimeComponentBuilder.fromString(dashboard.layoutData);
-		this.previewTab.removeAllComponents();
-		this.previewTab.addComponent(c);
+		this.dashboardPreviewInstance.buildDashboard(dashboard);
 	}
 	,registerBehaviours: function() {
 		haxe_ui_containers_VBox.prototype.registerBehaviours.call(this);
@@ -36151,6 +36240,7 @@ views_DashboardsView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,layoutDataField: null
 	,detailsContainer: null
 	,dashboardSelector: null
+	,dashboardPreviewInstance: null
 	,addDashboardButton: null
 	,__class__: views_DashboardsView
 });
@@ -36248,95 +36338,46 @@ var views_DataView = function() {
 	c16.set_percentWidth(100.);
 	c16.set_percentHeight(100.);
 	c16.set_styleString("padding: 10px;");
-	var c17 = new haxe_ui_containers_Frame();
-	c17.set_text("Test Graph");
-	c17.set_hidden(false);
-	var c18 = new haxe_ui_containers_HBox();
-	var c19 = new graphs_BarGraph();
-	c19.set_id("testbargraph1");
-	c19.set_width(400.);
-	c19.set_height(200.);
-	c19.sort = "desc";
-	c18.addComponent(c19);
-	var c20 = new haxe_ui_containers_VBox();
-	var c21 = new haxe_ui_containers_HBox();
-	var c22 = new haxe_ui_components_DropDown();
-	c22.set_id("testFieldsList");
-	c22.set_width(100.);
-	c21.addComponent(c22);
-	var c23 = new haxe_ui_components_Button();
-	c23.set_id("testRefreshFields");
-	c23.set_text("Refresh Fields");
-	c21.addComponent(c23);
-	c20.addComponent(c21);
-	var c24 = new haxe_ui_components_Button();
-	c24.set_id("test1");
-	c24.set_text("Refresh Data");
-	c20.addComponent(c24);
-	var c25 = new haxe_ui_components_Label();
-	c25.set_id("testPerf");
-	c25.set_text("");
-	c20.addComponent(c25);
-	c18.addComponent(c20);
-	c17.addComponent(c18);
+	var c17 = new haxe_ui_containers_TableView();
+	c17.set_id("dataSourceDataTable");
+	c17.set_percentWidth(100.);
+	c17.set_percentHeight(100.);
+	c17.set_virtual(true);
 	c16.addComponent(c17);
-	var c26 = new haxe_ui_containers_TableView();
-	c26.set_id("dataSourceDataTable");
-	c26.set_percentWidth(100.);
-	c26.set_percentHeight(100.);
-	c26.set_virtual(true);
-	c16.addComponent(c26);
-	var c27 = new haxe_ui_containers_HBox();
-	c27.set_percentWidth(100.);
-	c27.set_horizontalAlign("right");
-	var c28 = new haxe_ui_components_Label();
-	c28.set_percentWidth(100.);
-	c28.set_text("Showing 1 to 1000 of 10000");
-	c28.set_verticalAlign("center");
-	c27.addComponent(c28);
-	var c29 = new haxe_ui_components_Button();
-	c29.set_text("First");
-	c27.addComponent(c29);
-	var c30 = new haxe_ui_components_Button();
-	c30.set_text("Prev");
-	c27.addComponent(c30);
-	var c31 = new haxe_ui_components_Button();
-	c31.set_text("Next");
-	c27.addComponent(c31);
-	var c32 = new haxe_ui_components_Button();
-	c32.set_text("Last");
-	c27.addComponent(c32);
-	c16.addComponent(c27);
+	var c18 = new haxe_ui_containers_HBox();
+	c18.set_percentWidth(100.);
+	c18.set_horizontalAlign("right");
+	var c19 = new haxe_ui_components_Label();
+	c19.set_percentWidth(100.);
+	c19.set_text("Showing 1 to 1000 of 10000");
+	c19.set_verticalAlign("center");
+	c18.addComponent(c19);
+	var c20 = new haxe_ui_components_Button();
+	c20.set_text("First");
+	c18.addComponent(c20);
+	var c21 = new haxe_ui_components_Button();
+	c21.set_text("Prev");
+	c18.addComponent(c21);
+	var c22 = new haxe_ui_components_Button();
+	c22.set_text("Next");
+	c18.addComponent(c22);
+	var c23 = new haxe_ui_components_Button();
+	c23.set_text("Last");
+	c18.addComponent(c23);
+	c16.addComponent(c18);
 	c0.addComponent(c16);
 	this.addComponent(c0);
 	this.set_percentWidth(100.);
 	this.set_percentHeight(100.);
 	this.bindingRoot = true;
-	this.testbargraph1 = c19;
-	this.testRefreshFields = c23;
-	this.testPerf = c25;
-	this.testFieldsList = c22;
-	this.test1 = c24;
 	this.tableSelector = c5;
 	this.removeDataButton = c15;
 	this.detailsContainer = c16;
 	this.databaseSelector = c3;
-	this.dataSourceDataTable = c26;
+	this.dataSourceDataTable = c17;
 	this.addDataButton = c11;
 	views_DataView.instance = this;
 	this.refresh();
-	var c = this.test1;
-	if(c != null) {
-		c.registerEvent("click",$bind(this,this.onTest1));
-	} else {
-		console.log("haxe/ui/macros/Macros.hx:301:","WARNING: could not find component to regsiter event (" + "test1" + ")");
-	}
-	var c = this.testRefreshFields;
-	if(c != null) {
-		c.registerEvent("click",$bind(this,this.ontestRefreshFields));
-	} else {
-		console.log("haxe/ui/macros/Macros.hx:301:","WARNING: could not find component to regsiter event (" + "testRefreshFields" + ")");
-	}
 	var c = this.databaseSelector;
 	if(c != null) {
 		c.registerEvent("change",$bind(this,this.onDatabaseSelectorChanged));
@@ -36368,60 +36409,6 @@ views_DataView.__super__ = haxe_ui_containers_VBox;
 views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	num: function(i) {
 		return Number(i);
-	}
-	,onTest1: function(_) {
-		var _gthis = this;
-		var selectedItem = this.databaseSelector.get_selectedItem();
-		if(selectedItem == null) {
-			return;
-		}
-		var databaseName = selectedItem.db.name;
-		var selectedItem = this.tableSelector.get_selectedItem();
-		if(selectedItem == null) {
-			return;
-		}
-		var tableRows = selectedItem.table.getRowCount();
-		var tableName = selectedItem.table.name;
-		var selectedItem = this.testFieldsList.get_selectedItem();
-		if(selectedItem == null) {
-			return;
-		}
-		var fieldName = selectedItem.text;
-		console.log("haxe/views/DataView.hx:54:","test1");
-		var start = haxe_ui_core_Platform.get_instance().perf();
-		var params = [["fieldName",fieldName]];
-		core_data.applyTableTransform(databaseName,tableName,"count-unique",params).then(function(r) {
-			var graphData = [];
-			var _g = 0;
-			var _g1 = r.data;
-			while(_g < _g1.length) {
-				var d = _g1[_g];
-				++_g;
-				var group = d[0];
-				var value = Std.parseInt(d[1]);
-				graphData.push({ group : group, value : value});
-			}
-			_gthis.testbargraph1.set_data(graphData);
-			var end = haxe_ui_core_Platform.get_instance().perf();
-			_gthis.testPerf.set_text("" + tableRows + " records in " + (end - start) + "ms");
-			console.log("haxe/views/DataView.hx:71:",r);
-		});
-	}
-	,ontestRefreshFields: function(_) {
-		var selectedItem = this.tableSelector.get_selectedItem();
-		if(selectedItem == null) {
-			return;
-		}
-		var table = selectedItem.table;
-		var ds = new haxe_ui_data_ArrayDataSource();
-		var _g = 0;
-		var _g1 = table.get_fieldDefinitions();
-		while(_g < _g1.length) {
-			var f = _g1[_g];
-			++_g;
-			ds.add({ text : f.fieldName});
-		}
-		this.testFieldsList.set_dataSource(ds);
 	}
 	,_databaseToSelect: null
 	,_tableToSelect: null
@@ -36621,11 +36608,6 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,self: function() {
 		return new views_DataView();
 	}
-	,testbargraph1: null
-	,testRefreshFields: null
-	,testPerf: null
-	,testFieldsList: null
-	,test1: null
 	,tableSelector: null
 	,removeDataButton: null
 	,detailsContainer: null
@@ -36633,38 +36615,6 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,dataSourceDataTable: null
 	,addDataButton: null
 	,__class__: views_DataView
-});
-var views_PortletsView = function() {
-	haxe_ui_containers_VBox.call(this);
-	var c0 = new haxe_ui_components_Button();
-	c0.set_text("Portlets");
-	this.addComponent(c0);
-	this.bindingRoot = true;
-};
-$hxClasses["views.PortletsView"] = views_PortletsView;
-views_PortletsView.__name__ = "views.PortletsView";
-views_PortletsView.__super__ = haxe_ui_containers_VBox;
-views_PortletsView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
-	registerBehaviours: function() {
-		haxe_ui_containers_VBox.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_containers_VBox.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new views_PortletsView();
-	}
-	,__class__: views_PortletsView
 });
 var views_SettingsView = function() {
 	haxe_ui_containers_VBox.call(this);
@@ -36737,12 +36687,33 @@ Xml.Comment = 3;
 Xml.DocType = 4;
 Xml.ProcessingInstruction = 5;
 Xml.Document = 6;
+haxe_ui_events_UIEvent.READY = "ready";
+haxe_ui_events_UIEvent.DESTROY = "destroy";
+haxe_ui_events_UIEvent.RESIZE = "resize";
+haxe_ui_events_UIEvent.CHANGE = "change";
+haxe_ui_events_UIEvent.BEFORE_CHANGE = "beforeChange";
+haxe_ui_events_UIEvent.MOVE = "move";
+haxe_ui_events_UIEvent.INITIALIZE = "initialize";
+haxe_ui_events_UIEvent.RENDERER_CREATED = "rendererCreated";
+haxe_ui_events_UIEvent.RENDERER_DESTROYED = "rendererDestroyed";
+haxe_ui_events_UIEvent.HIDDEN = "hidden";
+haxe_ui_events_UIEvent.SHOWN = "shown";
+haxe_ui_events_UIEvent.ENABLED = "enabled";
+haxe_ui_events_UIEvent.DISABLED = "disabled";
+haxe_ui_events_UIEvent.BEFORE_CLOSE = "beforeClose";
+haxe_ui_events_UIEvent.CLOSE = "close";
+haxe_ui_events_UIEvent.PROPERTY_CHANGE = "propertyChange";
+haxe_ui_events_UIEvent.COMPONENT_ADDED = "componentAdded";
+haxe_ui_events_UIEvent.COMPONENT_REMOVED = "componentRemoved";
+haxe_ui_events_UIEvent.DRAG_START = "dragStart";
+haxe_ui_events_UIEvent.DRAG_END = "dragEnd";
+core_dashboards_DashboardInstanceEvent.FILTER_CHANGED = "filterChanged";
 core_data_FieldType.Unknown = 0;
 core_data_FieldType.String = 1;
 core_data_FieldType.Number = 2;
 core_data_FieldType.Boolean = 3;
 core_data_DatabaseEvent.Initialized = "initialized";
-graphs_BarGraph.LETTERS = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","X","Y","Z"];
+core_graphs_BarGraph.LETTERS = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","X","Y","Z"];
 haxe_crypto_Base64.CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 haxe_crypto_Base64.BYTES = haxe_io_Bytes.ofString(haxe_crypto_Base64.CHARS);
 haxe_ui_backend_BackendImpl.id = "html5";
@@ -36824,26 +36795,6 @@ haxe_ui_backend_html5_EventMapper.TOUCH_TO_MOUSE = (function($this) {
 haxe_ui_backend_html5_HtmlUtils._dpi = 0;
 haxe_ui_backend_html5_util_FontDetect._initialized = false;
 haxe_ui_backend_html5_util_FontDetect._aFallbackFonts = ["serif","sans-serif","monospace","cursive","fantasy"];
-haxe_ui_events_UIEvent.READY = "ready";
-haxe_ui_events_UIEvent.DESTROY = "destroy";
-haxe_ui_events_UIEvent.RESIZE = "resize";
-haxe_ui_events_UIEvent.CHANGE = "change";
-haxe_ui_events_UIEvent.BEFORE_CHANGE = "beforeChange";
-haxe_ui_events_UIEvent.MOVE = "move";
-haxe_ui_events_UIEvent.INITIALIZE = "initialize";
-haxe_ui_events_UIEvent.RENDERER_CREATED = "rendererCreated";
-haxe_ui_events_UIEvent.RENDERER_DESTROYED = "rendererDestroyed";
-haxe_ui_events_UIEvent.HIDDEN = "hidden";
-haxe_ui_events_UIEvent.SHOWN = "shown";
-haxe_ui_events_UIEvent.ENABLED = "enabled";
-haxe_ui_events_UIEvent.DISABLED = "disabled";
-haxe_ui_events_UIEvent.BEFORE_CLOSE = "beforeClose";
-haxe_ui_events_UIEvent.CLOSE = "close";
-haxe_ui_events_UIEvent.PROPERTY_CHANGE = "propertyChange";
-haxe_ui_events_UIEvent.COMPONENT_ADDED = "componentAdded";
-haxe_ui_events_UIEvent.COMPONENT_REMOVED = "componentRemoved";
-haxe_ui_events_UIEvent.DRAG_START = "dragStart";
-haxe_ui_events_UIEvent.DRAG_END = "dragEnd";
 haxe_ui_components_CalendarEvent.DATE_CHANGE = "datechange";
 haxe_ui_components_CalendarDropDownHandler.DATE_FORMAT = "%d/%m/%Y";
 haxe_ui_components_DropDownBuilder.HANDLER_MAP = new haxe_ds_StringMap();

@@ -1,6 +1,6 @@
-package graphs;
+package core.graphs;
 
-import graphs.ColorCalculator.ValueBasedColourCalculator;
+import core.graphs.ColorCalculator.ValueBasedColourCalculator;
 import core.d3.D3;
 import haxe.ui.core.Component;
 import js.Browser;

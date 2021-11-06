@@ -1,4 +1,4 @@
-package components.portlets;
+package core.dashboards.portlets;
 
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.components.Column;
@@ -53,5 +53,11 @@ class TableDataPortletInstance extends PortletInstance {
             });
         }
         table.dataSource = ds;
+
+        table.onChange = function(_) {
+            if (dashboardInstance != null) {
+                dashboardInstance.onFilterChanged();
+            }
+        }
     }
 }

@@ -4,7 +4,5 @@
     </resources>
     <components>
         <class package="core.dashboards" />
-        <class package="components" />
-        <class package="views" />
     </components>
 </module>

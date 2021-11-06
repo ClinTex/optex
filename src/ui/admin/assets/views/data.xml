@@ -22,21 +22,6 @@
         </vbox>    
 
         <vbox id="detailsContainer" width="100%" height="100%" style="padding: 10px;">
-
-            <frame text="Test Graph" hidden="false">
-                <hbox>
-                    <bar-graph width="400" height="200" id="testbargraph1" sort="desc" />
-                    <vbox>
-                        <hbox>
-                            <dropdown id="testFieldsList" width="100" />
-                            <button id="testRefreshFields" text="Refresh Fields" />
-                        </hbox>    
-                        <button text="Refresh Data" id="test1" />
-                        <label text="" id="testPerf" />
-                    </vbox>
-                </hbox>    
-            </frame>
-
             <tableview id="dataSourceDataTable" width="100%" height="100%" virtual="true" />
 
             <hbox width="100%" horizontalAlign="right">

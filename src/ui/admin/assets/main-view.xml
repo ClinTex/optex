@@ -44,7 +44,9 @@
             <stack id="mainStack" width="100%" height="100%">
                 <data-view id="dataView" />
                 <dashboards-view id="dashboardsView" />
+                <!--
                 <portlets-view id="portletsView" />
+                -->
                 <settings-view id="settingsView" />
             </stack>
         </vbox>
@@ -52,7 +54,9 @@
         <button-bar direction="vertical" height="100%" selectedIndex="0" styleName="right-menu with-bottom-button" style="margin-top: -1px" onchange="mainStack.selectedId = this.selectedButton.userData">
             <button text="Data" userData="dataView" icon="icons/icons8-server-48.png" />
             <button text="Dashboards" userData="dashboardsView" icon="icons/icons8-dashboard-48.png" />
+            <!--
             <button text="Portlets" userData="portletsView" icon="icons/icons8-laptop-48.png" />
+            -->
             <spacer height="100%" />
             <button text="Settings" userData="settingsView" icon="icons/icons8-wrench-48.png" />
         </button-bar>

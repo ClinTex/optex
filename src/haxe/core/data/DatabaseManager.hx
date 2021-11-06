@@ -7,6 +7,8 @@ import core.data.CoreData.FieldType;
 import core.EventDispatcher;
 import core.EventDispatcher.Event;
 
+using StringTools;
+
 enum DatabaseBatchOperationType {
     CreateDatabase;
     CreateTable;
@@ -175,11 +177,14 @@ class DatabaseManager extends EventDispatcher<DatabaseEvent> {
         });
     }
 
-    public function listDatabases():Promise<Array<Database>> {
+    public function listDatabases(includeInternal:Bool = false):Promise<Array<Database>> {
         return new Promise((resolve, reject) -> {
             CoreData.listDatabases().then(function(dbs:Array<DatabaseInfo>) {
                 var list = [];
                 for (db in dbs) {
+                    if (includeInternal == false && db.databaseName.startsWith("__")) {
+                        continue;
+                    }
                     list.push(new Database(db.databaseName, db));
                 }
                 resolve(list);

@@ -1,4 +1,4 @@
-package graphs;
+package core.graphs;
 
 import core.d3.D3;
 import haxe.ui.util.StringUtil;

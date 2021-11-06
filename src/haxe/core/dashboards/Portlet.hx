@@ -1,9 +1,9 @@
-package components;
+package core.dashboards;
 
-import components.portlets.TableDataPortletInstance;
-import components.portlets.FilterPortletInstance;
-import components.portlets.BarGraphPortletInstance;
-import components.portlets.PortletInstance;
+import core.dashboards.portlets.TableDataPortletInstance;
+import core.dashboards.portlets.FilterPortletInstance;
+import core.dashboards.portlets.BarGraphPortletInstance;
+import core.dashboards.portlets.PortletInstance;
 import haxe.ui.containers.Box;
 
 class Portlet extends Box {
@@ -12,7 +12,6 @@ class Portlet extends Box {
     public override function onReady() {
         super.onReady();
 
-        trace(_border);
         if (_border == false) {
             addClass("no-border");
         }
@@ -60,5 +59,13 @@ class Portlet extends Box {
         _border = value;
 
         return value;
+    }
+
+    public function refresh() {
+        if (_instance == null) {
+            return;
+        }
+
+        _instance.refresh();
     }
 }

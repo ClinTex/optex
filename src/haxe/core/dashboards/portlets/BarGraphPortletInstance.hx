@@ -1,6 +1,6 @@
-package components.portlets;
+package core.dashboards.portlets;
 
-import graphs.BarGraph;
+import core.graphs.BarGraph;
 
 class BarGraphPortletInstance extends PortletInstance {
     private var _bar:BarGraph;
@@ -13,5 +13,9 @@ class BarGraphPortletInstance extends PortletInstance {
         _bar.percentHeight = 100;
         _bar.createRandomData();
         addComponent(_bar);
+    }
+
+    public override function refresh() {
+        _bar.createRandomData();
     }
 }

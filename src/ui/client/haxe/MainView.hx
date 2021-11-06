@@ -1,39 +1,58 @@
 package;
 
+import core.dashboards.Portlet;
+import haxe.ui.containers.HBox;
+import haxe.ui.core.ComponentClassMap;
+import haxe.ui.events.UIEvent;
+import core.data.Dashboard;
+import haxe.ui.components.Button;
+import core.data.DashboardManager;
+import core.data.DatabaseManager;
 import haxe.ui.containers.VBox;
-import haxe.ui.events.MouseEvent;
-import haxe.ui.containers.dialogs.Dialog.DialogEvent;
-import haxe.ui.containers.dialogs.Dialog.DialogButton;
-import haxe.ui.containers.dialogs.Dialogs;
-import haxe.ui.containers.dialogs.MessageBox.MessageBoxType;
-import haxe.ui.data.ArrayDataSource;
-import haxe.ui.util.Timer;
 
 @:build(haxe.ui.ComponentBuilder.build("assets/main-view.xml"))
 class MainView extends VBox {
     public function new() {
         super();
-        refreshContacts();
-        var timer = new Timer(100, function() {
-            trace("refreshing");
-            refreshContacts();
+
+        ComponentClassMap.instance.registerClassName("vbox", Type.getClassName(VBox));
+        ComponentClassMap.instance.registerClassName("hbox", Type.getClassName(HBox));
+        ComponentClassMap.instance.registerClassName("portlet", Type.getClassName(Portlet));
+
+        DatabaseManager.instance.init().then(function(r) {
+            trace("database manager ready");
+        });
+        
+        DatabaseManager.instance.listen(DatabaseEvent.Initialized, function(_) {
+            refreshDashboardSelector();
         });
     }
 
-    private function refreshContacts() {
-        var ds = new ArrayDataSource<Dynamic>();
+    public function refreshDashboardSelector() {
+        DashboardManager.instance.listDashboards().then(function(dashboards) {
+            dashboardSelector.removeAllComponents();
 
-        CoreData.listContacts().then(function(r) {
-            for (c in r) {
-                ds.add({
-                    firstName: c.firstName,
-                    lastName: c.lastName,
-                    emailAddress: c.emailAddress,
-                });
+            for (d in dashboards) {
+                var button = new Button();
+                button.text = d.name;
+                button.icon = "icons/icons8-dashboard-48.png";
+                button.userData = d;
+                dashboardSelector.addComponent(button);
             }
             
-            table.selectedIndex = -1;
-            table.dataSource = ds;
+            dashboardSelector.registerInternalEvents(true);
+            dashboardSelector.selectedIndex = -1;
+            dashboardSelector.selectedIndex = 0;
         });
+    }
+
+    @:bind(dashboardSelector, UIEvent.CHANGE)
+    private function onDashboardSelectorChange(_) {
+        var selectedButton = dashboardSelector.selectedButton;
+        if (selectedButton == null) {
+            return;
+        }
+        var dashboard:Dashboard = cast(selectedButton.userData, Dashboard);
+        dashboardInstance.buildDashboard(dashboard);
     }
 }

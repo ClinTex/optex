@@ -1,4 +1,5 @@
 -cp haxe
+-cp ../../haxe
 --main Main
 
 -lib haxeui-core
