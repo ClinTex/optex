@@ -7,7 +7,6 @@ import Nat   "mo:base/Nat";
 import Types      "../types";
 import DBMS       "DBMS";
 import Transforms "Transforms";
-import Debug "mo:base/Debug";
 
 actor Data {
     let DatabaseManager = DBMS.DatabaseManager();
