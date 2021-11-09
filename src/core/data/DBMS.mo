@@ -230,7 +230,7 @@ module {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     public class Table(tableName:Text) {
         var name:Text = tableName;
-        var schema:TableSchema = TableSchema();
+        public var schema:TableSchema = TableSchema();
         public var data:[[Text]] = [];
 
         //public var data2:Buffer.Buffer<Buffer.Buffer<Text>> = Buffer.Buffer(0);

@@ -78,6 +78,10 @@ module {
     public let GroupTableByField = func(table:DBMS.Table, parameters:[[Text]]):DBMS.TableFragment {
         var data:[[Text]] = [];
         var fieldDefinitions:[DBMS.TableFragmentField] = [];
+        for (fd in table.schema.fieldDefinitions.vals()) {
+            fieldDefinitions := Array.append(fieldDefinitions, [{ fieldName = fd.fieldName; fieldType = fd.fieldType; }]);
+        };
+
         var count = 0;
         var fieldName = extractParameterValue("fieldName", parameters);
         var fieldIndex = table.getSchema().fieldIndex(fieldName);

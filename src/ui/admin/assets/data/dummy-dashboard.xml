@@ -1,0 +1,46 @@
+<vbox width="100%" height="100%" style="spacing: 20px;">
+    <hbox width="100%" height="70%" style="spacing: 20px;">
+        <portlet width="50%" height="100%" type="chart-bar" title="DR 2.1 - Completed Visits">
+            <data>
+                <source database="ClintexPrimaryData"
+                        table="ICP 1 Data - Patient Visits"
+                        transform="group-by('Investigator Site')"
+                        axisX="Investigator Site"
+                        axisY="Number Completed Visits" />
+            </data>
+        </portlet>
+        <portlet width="50%" height="100%" type="chart-bar" title="DR 2.2 - Actual vs Completed Visits">
+            <data>
+                <source database="ClintexPrimaryData"
+                        table="ICP 1 Data - Patient Visits"
+                        transform="group-by('Investigator Site')"
+                        axisX="Investigator Site"
+                        axisY="Actual Number of Visits" />
+            </data>
+        </portlet>
+
+        <vbox width="200" style="spacing:20px">
+            <portlet width="100%" type="filter-expandable" title="Site Id" titleAlign="right">
+                <data>
+                    <source database="ClintexPrimaryData"
+                            table="ICP 1 Data - Patient Visits"
+                            transform="unique('Investigator Site')" />
+                </data>            
+            </portlet>
+            <portlet width="100%" type="filter-expandable" title="Subject Id" titleAlign="right">
+                <data>
+                    <source database="ClintexPrimaryData"
+                            table="ICP 1 Data - Patient Visits"
+                            transform="unique('Patient Number')" />
+                </data>            
+            </portlet>
+        </vbox>
+    </hbox>
+
+    <portlet width="100%" height="30%" type="table" border="false">
+            <data>
+                <source database="ClintexPrimaryData"
+                        table="ICP 1 Data - Patient Visits" />
+            </data>
+    </portlet>
+</vbox>

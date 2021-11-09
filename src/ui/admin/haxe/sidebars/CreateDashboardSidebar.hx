@@ -1,5 +1,6 @@
 package sidebars;
 
+import haxe.ui.ToolkitAssets;
 import core.data.DashboardManager;
 import core.data.Dashboard;
 import components.WorkingIndicator;
@@ -34,19 +35,7 @@ class CreateDashboardSidebar extends SideBar {
         var dashboardName = dashboardNameField.text;
         var dashboard = new Dashboard(dashboardName);
 
-        var layoutData = "";
-        layoutData += "<vbox width='100%'>\n";
-        layoutData += "    <hbox width='100%'>\n";
-        layoutData += "        <portlet id='portletA' type='chart-bar'>\n";
-        layoutData += "            <data>\n";
-        layoutData += "            </data>\n";
-        layoutData += "        </portlet>\n";
-        layoutData += "        <portlet id='portletB' type='chart-bar'>\n";
-        layoutData += "            <data>\n";
-        layoutData += "            </data>\n";
-        layoutData += "        </portlet>\n";
-        layoutData += "    </hbox>\n";
-        layoutData += "</vbox>\n";
+        var layoutData = ToolkitAssets.instance.getText("data/dummy-dashboard.xml");
         dashboard.layoutData = layoutData;
 
         _working = new WorkingIndicator();

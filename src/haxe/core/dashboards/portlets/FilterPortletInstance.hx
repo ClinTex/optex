@@ -29,7 +29,6 @@ class FilterPortletInstance extends PortletInstance {
         addComponent(dd);
 
         dd.onChange = function(_) {
-            trace("filter changed");
             if (dashboardInstance != null) {
                 dashboardInstance.onFilterChanged();
             }

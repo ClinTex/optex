@@ -33,9 +33,13 @@ class MainView extends VBox {
             dashboardSelector.removeAllComponents();
 
             for (d in dashboards) {
+                var icon = d.icon;
+                if (icon == null) {
+                    icon = "icons/icons8-dashboard-48.png";
+                }
                 var button = new Button();
                 button.text = d.name;
-                button.icon = "icons/icons8-dashboard-48.png";
+                button.icon = icon;
                 button.userData = d;
                 dashboardSelector.addComponent(button);
             }

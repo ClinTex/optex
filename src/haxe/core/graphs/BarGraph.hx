@@ -186,15 +186,17 @@ class BarGraph extends Component {
         if (width > 0 && height > 0 && _graph != null) {
             var cx = width - margins.left - margins.right;
             var cy = height - margins.top - margins.bottom;
-            
-            _graph
-                .attr("width", cx + margins.left + margins.right)
-                .attr("height", cy + margins.top + margins.bottom);
+
+            if (cx > 0 && cy > 0) {
+                _graph
+                    .attr("width", cx + margins.left + margins.right)
+                    .attr("height", cy + margins.top + margins.bottom);
+                    
+                _graphGraphics
+                    .attr("transform", "translate(" + margins.left + "," + margins.top + ")");
                 
-            _graphGraphics
-                .attr("transform", "translate(" + margins.left + "," + margins.top + ")");
-            
-            refreshData();
+                refreshData();
+            }
         }
         return b;
     }

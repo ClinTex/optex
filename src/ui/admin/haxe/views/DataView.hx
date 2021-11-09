@@ -26,10 +26,29 @@ using StringTools;
 class DataView extends VBox {
     public static var instance:DataView;
 
+    @:bind(test, MouseEvent.CLICK)
+    private function onTest(e:UIEvent) {
+        if (tableSelector.selectedItem == null) {
+            return;
+        }
+
+        /*
+        CoreData.applyTableTransform(_database.name, tableSelector.selectedItem.table.name, "group-by", [["fieldName", "Investigator Site"]]).then(function(r) {
+            trace(r);
+        });
+        */
+        /*
+        CoreData.applyTableTransform("", "", "count-unique", [["fieldName", "Investigator Site"]]).then(function(r) {
+            trace(r);
+        });
+        */
+    }
+
+
     private inline function num(i:Dynamic) {
         return Syntax.code("Number({0})", i);
     }
-    
+
     public function new() {
         super();
         instance = this;

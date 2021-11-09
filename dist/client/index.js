@@ -22278,14 +22278,14 @@ haxe_ui_containers_VBox.prototype = $extend(haxe_ui_containers_Box.prototype,{
 var MainView = function() {
 	var _gthis = this;
 	haxe_ui_containers_VBox.call(this);
-	haxe_ui_Toolkit.styleSheet.parse("\n        .portlet {\n            filter: drop-shadow(2, 45, #000000, 0.15, 6, 1, 30, 35, false);\n            border: 1px solid #181a1b;\n            border-radius: 6px;\n            padding: 10px;\n        }\n\n        .portlet.no-border {\n            filter: none;\n            border: none;\n            border-radius: 0;\n            padding: 0;\n        }\n    ","user");
+	haxe_ui_Toolkit.styleSheet.parse("\n        .portlet {\n            filter: drop-shadow(2, 45, #000000, 0.15, 6, 1, 30, 35, false);\n            border: 1px solid #181a1b;\n            border-radius: 6px;\n            padding: 10px;\n        }\n\n        .portlet.no-border {\n            filter: none;\n            border: none;\n            border-radius: 0;\n            padding: 0;\n        }\n\n        .button-bar .button {\n            __border-bottom: none;\n        }\n    ","user");
 	var c0 = new haxe_ui_containers_HBox();
 	c0.set_percentWidth(100.);
 	c0.set_percentHeight(100.);
 	var c1 = new haxe_ui_containers_VerticalButtonBar();
 	c1.set_id("dashboardSelector");
 	c1.set_percentHeight(100.);
-	c1.set_styleNames("left-menu with-bottom-button");
+	c1.set_styleNames("left-menu");
 	c1.set_styleString("margin-top: -1px");
 	c1.set_selectedIndex(0);
 	c0.addComponent(c1);
@@ -22340,19 +22340,17 @@ MainView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 				button.userData = d;
 				_gthis.dashboardSelector.addComponent(button);
 			}
-			console.log("haxe/MainView.hx:43:","bob");
+			_gthis.dashboardSelector.registerInternalEvents(null,true);
 			_gthis.dashboardSelector.set_selectedIndex(-1);
 			_gthis.dashboardSelector.set_selectedIndex(0);
 		});
 	}
 	,onDashboardSelectorChange: function(_) {
 		var selectedButton = this.dashboardSelector.get_selectedButton();
-		console.log("haxe/MainView.hx:52:",selectedButton);
 		if(selectedButton == null) {
 			return;
 		}
 		var dashboard = js_Boot.__cast(selectedButton.userData , core_data_Dashboard);
-		console.log("haxe/MainView.hx:57:",dashboard.layoutData);
 		this.dashboardInstance.buildDashboard(dashboard);
 	}
 	,registerBehaviours: function() {

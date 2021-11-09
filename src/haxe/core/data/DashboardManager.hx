@@ -25,6 +25,7 @@ class DashboardManager {
                 for (r in fragment.data) {
                     var dashboard = new Dashboard(r[0]);
                     dashboard.layoutData = r[1];
+                    dashboard.icon = r[2];
                     dashboards.push(dashboard);
                 }
                 resolve(dashboards);

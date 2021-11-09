@@ -14,6 +14,7 @@ class DashboardInstance extends Box {
 
     public function new() {
         super();
+        addClass("default-background-solid");
 
         _container.percentWidth = 100;
         _container.percentHeight = 100;

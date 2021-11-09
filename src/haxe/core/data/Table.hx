@@ -15,6 +15,8 @@ class Table {
     private var _fieldDefs:Array<TableFieldInfo> = [];
     private var _dataToAdd:Array<Array<Any>> = [];
 
+    private var _tableFragment:TableFragment = null;
+
     public function new(name:String, database:Database = null, info:TableInfo = null) {
         this.name = name;
         this.database = database;
@@ -26,21 +28,44 @@ class Table {
 
     public var fieldDefinitions(get, set):Array<TableFieldInfo>;
     private function get_fieldDefinitions():Array<TableFieldInfo> {
+        if (_tableFragment != null) {
+            return _tableFragment.fieldDefinitions;
+        }
         return _fieldDefs;
     }
     private function set_fieldDefinitions(value:Array<TableFieldInfo>):Array<TableFieldInfo> {
+        if (_tableFragment != null) {
+            throw "cant set field definitions on a table fragment";
+        }
         _fieldDefs = value;
         return value;
     }
 
     public function defineField(fieldName:String, fieldType:Int) {
+        if (_tableFragment != null) {
+            throw "cant set field definitions on a table fragment";
+        }
         _fieldDefs.push({
             fieldName: fieldName,
             fieldType: fieldType
         });
     }
 
+    public function getFieldIndex(fieldName:String):Int {
+        var n = 0;
+        for (fd in fieldDefinitions) {
+            if (fd.fieldName == fieldName) {
+                return n;
+            }
+            n++;
+        }
+        return -1;
+    }
+
     public function addData(values:Array<Any>) {
+        if (_tableFragment != null) {
+            throw "cant add data to a table fragment";
+        }
         _dataToAdd.push(values);
         return this;
     }
@@ -58,11 +83,36 @@ class Table {
         return 0;
     }
 
-    public function getRows(start:Int, end:Int):Promise<TableFragment> {
+    public function getRows(start:Int = 0, end:Int = 0xFFFFFF):Promise<TableFragment> {
         return new Promise((resolve, reject) -> {
-            CoreData.getTableData(database.name, name, start, end).then(function(f) {
-                resolve(f);
-            });
+            if (_tableFragment != null) {
+                resolve(_tableFragment);
+            } else {
+                CoreData.getTableData(database.name, name, start, end).then(function(f) {
+                    resolve(f);
+                });
+            }
+        });
+    }
+
+    public function getTransformedRows(transformId:String = null, transformParams:Map<String, String> = null, start:Int = 0, end:Int = 0xFFFFFF):Promise<TableFragment> {
+        return new Promise((resolve, reject) -> {
+            if (transformId == null) {
+                getRows(start, end).then(function(r) {
+                    resolve(r);
+                });
+            } else {
+                var params = [];
+                if (transformParams != null) {
+                    for (key in transformParams.keys()) {
+                        var paramSet = [key, transformParams.get(key)];
+                        params.push(paramSet);
+                    }
+                }
+                CoreData.applyTableTransform(database.name, name, transformId, params).then(function(r) {
+                    resolve(r);
+                });
+            }
         });
     }
 
@@ -145,5 +195,11 @@ class Table {
             Logger.instance.log("batch commit of " + batch.length + " row(s) to '" + database.name + "." + name + "' complete");
             batchCommitData(batches, complete, onProgress, current + 1, max);
         });
+    }
+
+    public static function fromFragment(fragment:TableFragment):Table {
+        var table = new Table("#fragment", null);
+        table._tableFragment = fragment;
+        return table;
     }
 }
