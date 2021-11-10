@@ -6,6 +6,14 @@
             border-radius: 0;
             padding: 0;
         }
+
+        .button-bar .button:down {
+            background-color: #4e4e4e;
+
+            border-right: 1px solid #4e4e4e;
+            border-top:  1px solid #4e4e4e;
+            border-left:  1px solid #4e4e4e;
+        }
     </style>
     <!--
     <menu-bar id="mainMenu" width="100%">

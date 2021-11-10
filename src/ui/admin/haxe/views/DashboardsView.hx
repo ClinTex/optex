@@ -1,5 +1,8 @@
 package views;
 
+import haxe.ui.ToolkitAssets;
+import haxe.ui.ToolkitAssets;
+import haxe.ui.components.Button;
 import haxe.ui.events.UIEvent;
 import core.data.DatabaseManager;
 import haxe.ui.data.ArrayDataSource;
@@ -65,6 +68,7 @@ class DashboardsView extends VBox {
         }
 
         var dashboard:Dashboard = selectedItem.dashboard;
+        dashboard.layoutData = ToolkitAssets.instance.getText("data/dummy-dashboard.xml");
         layoutDataField.text = dashboard.layoutData;
         dashboardPreviewInstance.buildDashboard(dashboard);
     }

@@ -38,10 +38,12 @@ class Portlet extends VBox implements IDataComponent {
         }
 
         parseConfigData();
+        /*
         trace("_databaseName: " + _databaseName);
         trace("_tableName: " + _tableName);
         trace("_transformId: " + _transformId);
         trace("_transformArgs: " + _transformArgs);
+        */
         _instance.additionalConfigParams = _additionalConfigParams;
         refreshData();
 
@@ -75,7 +77,6 @@ class Portlet extends VBox implements IDataComponent {
     }
 
     private function parseConfigData() {
-        trace(_dataSource.size);
         for (i in 0..._dataSource.size) {
             var item = _dataSource.get(i);
             if (item.id == "source") {

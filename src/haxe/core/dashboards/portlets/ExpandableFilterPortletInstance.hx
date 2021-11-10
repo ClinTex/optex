@@ -21,14 +21,13 @@ class ExpandableFilterPortletInstance extends PortletInstance {
         addComponent(_filter);
 
         _list = new ListView();
+        _list.virtual = true;
         _list.percentWidth = 100;
         _list.height = 100;
         addComponent(_list);
     }
 
     public override function onDataRefreshed(fragment:TableFragment) {
-        trace(fragment);
-
         var ds = new ArrayDataSource<Dynamic>();
         var size = fragment.data.length;
         ds.add({

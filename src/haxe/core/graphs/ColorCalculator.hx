@@ -42,3 +42,20 @@ class ValueBasedColourCalculator extends ColorCalculator {
         return _colorsReverse[colIndex];
     }
 }
+
+class ThresholdBasedColourCalculator extends ColorCalculator {
+    private var threshold:Float = 50;
+    
+    public function new(threshold:Float) {
+        super();
+        this.threshold = threshold;
+    }
+    
+    public override function get(data:Dynamic, index:Int, graphInfo:Dynamic):String {
+        var v = D3.field(data, graphInfo.yAxisField);
+        if (v < threshold) {
+            return "#880000";
+        }
+        return "#008800";
+    }
+}
