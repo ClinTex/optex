@@ -25,10 +25,34 @@ typedef TableFieldInfo = {
 }
 
 class FieldType {
-    public static inline var Unknown = 0;
-    public static inline var String = 1;
-    public static inline var Number = 2;
-    public static inline var Boolean = 3;
+    public static inline var Unknown:Int = 0;
+    public static inline var String:Int = 1;
+    public static inline var Number:Int = 2;
+    public static inline var Boolean:Int = 3;
+
+    public static function toString(v:Int):String {
+        switch (v) {
+            case String:
+                return "string";
+            case Number:
+                return "number";
+            case Boolean:
+                return "boolean";
+        }
+        return "unknown";
+    }
+
+    public static function fromString(v:String):Int {
+        switch (v) {
+            case "string":
+                return String;
+            case "number":
+                return Number;
+            case "boolean":
+                return Boolean;
+        }
+        return Unknown;
+    }
 }
 
 typedef TableFragment = {

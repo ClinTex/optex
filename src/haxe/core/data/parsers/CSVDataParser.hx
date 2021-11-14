@@ -8,11 +8,19 @@ class CSVDataParser extends DataParser {
     private var _data:Dynamic;
     private var _firstLine:String = null;
     private var _lines:Array<String> = [];
+
+    private var _fieldDefs:Array<TableFieldInfo> = null;
+    private var _parsedData:Array<Array<Any>> = null;
+
     public function new() {
         super();
     }
 
     public override function getFieldDefinitions():Array<TableFieldInfo> {
+        if (_fieldDefs != null) {
+            return _fieldDefs;
+        }
+
         var fds = [];
         var parts = _firstLine.split(",");
         for (p in parts) {
@@ -28,10 +36,16 @@ class CSVDataParser extends DataParser {
                 fieldType: FieldType.String
             });
         }
+
+        _fieldDefs = fds;
         return fds;
     }
 
     public override function getData():Array<Array<Any>> {
+        if (_parsedData != null) {
+            return _parsedData;
+        }
+
         var d = [];
 
         for (l in _lines) {
@@ -50,6 +64,7 @@ class CSVDataParser extends DataParser {
             d.push(row);
         }
 
+        _parsedData = d;
         return d;
     }
 
@@ -70,6 +85,52 @@ class CSVDataParser extends DataParser {
                 _firstLine = line;
             } else {
                 _lines.push(line);
+            }
+        }
+
+        guessFieldTypes();
+    }
+
+    private function guessFieldTypes() {
+        var fieldDefs = getFieldDefinitions();
+        var parsedData = getData();
+
+        var boolFields:Map<String, Bool> = [];
+        var numberFields:Map<String, Bool> = [];
+        for (row in parsedData) {
+            var fieldIndex = 0;
+            for (fieldValue in row) {
+
+                var fieldName = fieldDefs[fieldIndex].fieldName;
+                var isBool = Std.string(fieldValue ) == "true" || Std.string(fieldValue ) == "false" || Std.string(fieldValue ) == "yes" || Std.string(fieldValue ) == "no";
+                var isNumber = !Math.isNaN(Std.parseFloat(fieldValue));
+
+                if (boolFields.exists(fieldName) == false) {
+                    boolFields.set(fieldName, isBool);
+                } else {
+                    var existing = boolFields.get(fieldName);
+                    boolFields.set(fieldName, existing && isBool);
+                }
+
+                if (numberFields.exists(fieldName) == false) {
+                    numberFields.set(fieldName, isNumber);
+                } else {
+                    var existing = numberFields.get(fieldName);
+                    numberFields.set(fieldName, existing && isNumber);
+                }
+
+                fieldIndex++;
+            }
+        }
+
+        for (fd in fieldDefs) {
+            fd.fieldType = FieldType.String;
+
+            if (boolFields.get(fd.fieldName) == true) {
+                fd.fieldType = FieldType.Boolean;
+            }
+            if (numberFields.get(fd.fieldName) == true) {
+                fd.fieldType = FieldType.Number;
             }
         }
     }

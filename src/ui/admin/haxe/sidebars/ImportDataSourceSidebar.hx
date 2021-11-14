@@ -132,7 +132,7 @@ class ImportDataSourceSidebar extends SideBar {
                 ds.add({
                     fieldEnabled: true,
                     fieldName: f.fieldName,
-                    fieldType: f.fieldType
+                    fieldType: FieldType.toString(f.fieldType)
                 });
             }
             importTableFields.dataSource = ds;
