@@ -5943,10 +5943,21 @@ core_dashboards_portlets_BarGraphPortletInstance.prototype = $extend(core_dashbo
 	,_fragment: null
 	,onDataRefreshed: function(fragment) {
 		this._fragment = fragment;
+		console.log("../../haxe/core/dashboards/portlets/BarGraphPortletInstance.hx:45:",fragment);
 		var table = core_data_Table.fromFragment(fragment);
 		var axisX = this.config("axisX");
 		var axisY = this.config("axisY");
 		var fieldIndexX = table.getFieldIndex(axisX);
+		var data = fragment.data;
+		data.sort(function(o1,o2) {
+			if(o1[fieldIndexX] < o2[fieldIndexX]) {
+				return -1;
+			}
+			if(o1[fieldIndexX] > o2[fieldIndexX]) {
+				return 1;
+			}
+			return 0;
+		});
 		this._bar.set_colourCalculator(this.getColourCalculator());
 		if(this.config("markerFunction") == "test") {
 			this._bar.getMarkerValueY = function(data,index) {
@@ -5967,13 +5978,12 @@ core_dashboards_portlets_BarGraphPortletInstance.prototype = $extend(core_dashbo
 			var values = [];
 			var n = 0;
 			var _g1 = 0;
-			var _g2 = fragment.data;
-			while(_g1 < _g2.length) {
-				var row = _g2[_g1];
+			while(_g1 < data.length) {
+				var row = data[_g1];
 				++_g1;
 				var valueX = row[fieldIndexX];
 				var valueY = parseFloat(row[fieldIndexY]);
-				values.push({ x : "Site " + n, y : valueY});
+				values.push({ x : valueX, y : valueY});
 				++n;
 			}
 			graphData.push({ key : part, values : values});
@@ -36650,11 +36660,20 @@ sidebars_ImportDataSourceSidebar.prototype = $extend(haxe_ui_containers_SideBar.
 			tableName = this.newTableName.get_text();
 			table = new core_data_Table(tableName,db);
 			var _g = 0;
-			var _g1 = this._parser.getFieldDefinitions();
-			while(_g < _g1.length) {
-				var fd = _g1[_g];
-				++_g;
-				table.defineField(fd.fieldName,1);
+			var _g1 = this.importTableFields.get_dataSource().get_size();
+			while(_g < _g1) {
+				var i = _g++;
+				var item = this.importTableFields.get_dataSource().get(i);
+				if(item.fieldEnabled == false) {
+					continue;
+				}
+				var fieldName = item.fieldName;
+				var fieldTypeString = item.fieldType.value;
+				if(fieldTypeString == null) {
+					fieldTypeString = item.fieldType;
+				}
+				var fieldType = core_data_FieldType.fromString(fieldTypeString);
+				table.defineField(fieldName,fieldType);
 			}
 			core_data_DatabaseManager.get_instance().addBatchOperation(core_data_DatabaseBatchOperationType.CreateTable,table);
 		} else {

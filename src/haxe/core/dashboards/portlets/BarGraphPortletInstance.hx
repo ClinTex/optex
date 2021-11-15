@@ -47,6 +47,17 @@ class BarGraphPortletInstance extends PortletInstance {
         var axisX = config("axisX");
         var axisY = config("axisY");
         var fieldIndexX = table.getFieldIndex(axisX);
+        var data = fragment.data;
+        data.sort(function(o1, o2) {
+            if (o1[fieldIndexX] < o2[fieldIndexX]) {
+                return -1;
+            }
+
+            if (o1[fieldIndexX] > o2[fieldIndexX]) {
+                return 1;
+            }
+            return 0;
+        });
 
         _bar.colourCalculator = getColourCalculator();
         
@@ -67,12 +78,12 @@ class BarGraphPortletInstance extends PortletInstance {
             var fieldIndexY = table.getFieldIndex(part);
             var values:Array<Dynamic> = [];
             var n = 0;
-            for (row in fragment.data) {
+            for (row in data) {
                 var valueX = row[fieldIndexX];
                 var valueY = Std.parseFloat(row[fieldIndexY]);
 
                 values.push({
-                    x: "Site " + n,
+                    x: valueX,
                     y: valueY
                 });
 

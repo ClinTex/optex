@@ -178,8 +178,19 @@ class ImportDataSourceSidebar extends SideBar {
         if (createNewTableOption.selected == true) {
             tableName = newTableName.text;
             table = new Table(tableName, db);
-            for (fd in _parser.getFieldDefinitions()) {
-                table.defineField(fd.fieldName, FieldType.String);
+
+            for (i in 0...importTableFields.dataSource.size) {
+                var item = importTableFields.dataSource.get(i);
+                if (item.fieldEnabled == false) {
+                    continue;
+                }
+                var fieldName = item.fieldName;
+                var fieldTypeString:Dynamic = item.fieldType.value;
+                if (fieldTypeString == null) {
+                    fieldTypeString = item.fieldType;
+                }
+                var fieldType = FieldType.fromString(fieldTypeString);
+                table.defineField(fieldName, fieldType);
             }
             DatabaseManager.instance.addBatchOperation(CreateTable, table);
         } else {
