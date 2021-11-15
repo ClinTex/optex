@@ -30,7 +30,7 @@ class DashboardInstance extends Box {
 
     public var portlets(get, null):Array<Portlet>;
     private function get_portlets():Array<Portlet> {
-        var list = findComponents(Portlet);
+        var list = findComponents(Portlet, 20);
         return list;
     }
 
@@ -42,5 +42,28 @@ class DashboardInstance extends Box {
 
     public function onFilterChanged() {
         refreshAllPortlets();
+    }
+
+    private var _filter:Map<String, Any> = [];
+    public function addFilterItem(field:String, value:Any) {
+        if (_filter.exists(field) && _filter.get(field) == value) {
+            return;
+        }
+        trace("adding filter item: " + field + " = " + value);
+        _filter.set(field, value);
+        for (p in portlets) {
+            p.onFilterChanged(_filter);
+        }
+    }
+
+    public function removeFilterItem(field:String) {
+        if (_filter.exists(field) == false) {
+            return;
+        }
+        trace("removing filter item: " + field);
+        _filter.remove(field);
+        for (p in portlets) {
+            p.onFilterChanged(_filter);
+        }
     }
 }

@@ -5307,6 +5307,7 @@ core_dashboards_DashboardInstanceEvent.prototype = $extend(haxe_ui_events_UIEven
 	__class__: core_dashboards_DashboardInstanceEvent
 });
 var core_dashboards_DashboardInstance = function() {
+	this._filter = new haxe_ds_StringMap();
 	this._container = new haxe_ui_containers_Box();
 	haxe_ui_containers_Box.call(this);
 	this.addClass("default-background-solid");
@@ -5326,7 +5327,7 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 	}
 	,portlets: null
 	,get_portlets: function() {
-		var list = this.findComponents(null,core_dashboards_Portlet);
+		var list = this.findComponents(null,core_dashboards_Portlet,20);
 		return list;
 	}
 	,refreshAllPortlets: function() {
@@ -5340,6 +5341,38 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 	}
 	,onFilterChanged: function() {
 		this.refreshAllPortlets();
+	}
+	,_filter: null
+	,addFilterItem: function(field,value) {
+		if(Object.prototype.hasOwnProperty.call(this._filter.h,field) && this._filter.h[field] == value) {
+			return;
+		}
+		console.log("../../haxe/core/dashboards/DashboardInstance.hx:52:","adding filter item: " + field + " = " + (value == null ? "null" : Std.string(value)));
+		this._filter.h[field] = value;
+		var _g = 0;
+		var _g1 = this.get_portlets();
+		while(_g < _g1.length) {
+			var p = _g1[_g];
+			++_g;
+			p.onFilterChanged(this._filter);
+		}
+	}
+	,removeFilterItem: function(field) {
+		if(Object.prototype.hasOwnProperty.call(this._filter.h,field) == false) {
+			return;
+		}
+		console.log("../../haxe/core/dashboards/DashboardInstance.hx:63:","removing filter item: " + field);
+		var _this = this._filter;
+		if(Object.prototype.hasOwnProperty.call(_this.h,field)) {
+			delete(_this.h[field]);
+		}
+		var _g = 0;
+		var _g1 = this.get_portlets();
+		while(_g < _g1.length) {
+			var p = _g1[_g];
+			++_g;
+			p.onFilterChanged(this._filter);
+		}
 	}
 	,registerBehaviours: function() {
 		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
@@ -5395,6 +5428,11 @@ core_dashboards_Portlet.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,_transformId: null
 	,_transformArgs: null
 	,_additionalConfigParams: null
+	,onFilterChanged: function(filter) {
+		if(this._instance != null) {
+			this._instance.onFilterChanged(filter);
+		}
+	}
 	,onReady: function() {
 		haxe_ui_containers_VBox.prototype.onReady.call(this);
 		if(this._border == false) {
@@ -5588,6 +5626,8 @@ core_dashboards_portlets_PortletInstance.prototype = $extend(haxe_ui_containers_
 	}
 	,onDataRefreshed: function(fragment) {
 	}
+	,onFilterChanged: function(filter) {
+	}
 	,config: function(name,defaultValue) {
 		if(Object.prototype.hasOwnProperty.call(this.additionalConfigParams.h,name) == false) {
 			return defaultValue;
@@ -5628,6 +5668,8 @@ var core_dashboards_portlets_BarGraphPortletInstance = function() {
 	this._bar.set_percentWidth(100);
 	this._bar.set_percentHeight(100);
 	this._bar.labelRotation = -45;
+	this._bar.registerEvent("barSelected",$bind(this,this.onBarSelected));
+	this._bar.registerEvent("barUnselected",$bind(this,this.onBarUnselected));
 	this.addComponent(this._bar);
 };
 $hxClasses["core.dashboards.portlets.BarGraphPortletInstance"] = core_dashboards_portlets_BarGraphPortletInstance;
@@ -5635,6 +5677,24 @@ core_dashboards_portlets_BarGraphPortletInstance.__name__ = "core.dashboards.por
 core_dashboards_portlets_BarGraphPortletInstance.__super__ = core_dashboards_portlets_PortletInstance;
 core_dashboards_portlets_BarGraphPortletInstance.prototype = $extend(core_dashboards_portlets_PortletInstance.prototype,{
 	_bar: null
+	,onBarSelected: function(e) {
+		var axisX = this.config("axisX");
+		var value = e.data.xValue;
+		this.get_dashboardInstance().addFilterItem(axisX,value);
+	}
+	,onBarUnselected: function(e) {
+		var axisX = this.config("axisX");
+		this.get_dashboardInstance().removeFilterItem(axisX);
+	}
+	,onFilterChanged: function(filter) {
+		var axisX = this.config("axisX");
+		var value = filter.h[axisX];
+		if(value == null) {
+			this._bar.unselectBars();
+			return;
+		}
+		this._bar.selectBarFromData(value);
+	}
 	,getColourCalculator: function() {
 		var s = this.config("colorCalculator");
 		if(s == null || StringTools.trim(s) == "") {
@@ -5736,6 +5796,7 @@ core_dashboards_portlets_BarGraphPortletInstance.prototype = $extend(core_dashbo
 	,__class__: core_dashboards_portlets_BarGraphPortletInstance
 });
 var core_dashboards_portlets_ExpandableFilterPortletInstance = function() {
+	this._filterFieldName = null;
 	core_dashboards_portlets_PortletInstance.call(this);
 	this.set_styleString("spacing: 0px");
 	this._filter = new haxe_ui_components_TextField();
@@ -5747,6 +5808,7 @@ var core_dashboards_portlets_ExpandableFilterPortletInstance = function() {
 	this._list.set_virtual(true);
 	this._list.set_percentWidth(100);
 	this._list.set_height(100);
+	this._list.registerEvent("change",$bind(this,this.onListChange));
 	this.addComponent(this._list);
 };
 $hxClasses["core.dashboards.portlets.ExpandableFilterPortletInstance"] = core_dashboards_portlets_ExpandableFilterPortletInstance;
@@ -5755,10 +5817,41 @@ core_dashboards_portlets_ExpandableFilterPortletInstance.__super__ = core_dashbo
 core_dashboards_portlets_ExpandableFilterPortletInstance.prototype = $extend(core_dashboards_portlets_PortletInstance.prototype,{
 	_filter: null
 	,_list: null
+	,onFilterChanged: function(filter) {
+		var value = filter.h[this._filterFieldName];
+		var ds = this._list.get_dataSource();
+		var indexToSelect = 0;
+		var _g = 0;
+		var _g1 = ds.get_size();
+		while(_g < _g1) {
+			var i = _g++;
+			var item = ds.get(i);
+			if(item.text == value) {
+				indexToSelect = i;
+				break;
+			}
+		}
+		this._list.set_selectedIndex(indexToSelect);
+	}
+	,onListChange: function(_) {
+		var selectedItem = this._list.get_selectedItem();
+		if(selectedItem == null) {
+			return;
+		}
+		var selectedText = selectedItem.text;
+		var allValues = StringTools.startsWith(selectedText,"(All)");
+		if(allValues == true) {
+			this.get_dashboardInstance().removeFilterItem(this._filterFieldName);
+		} else {
+			this.get_dashboardInstance().addFilterItem(this._filterFieldName,selectedText);
+		}
+	}
+	,_filterFieldName: null
 	,onDataRefreshed: function(fragment) {
+		this._filterFieldName = fragment.fieldDefinitions[0].fieldName;
+		var indexToSelect = 0;
 		var ds = new haxe_ui_data_ArrayDataSource();
 		var size = fragment.data.length;
-		ds.add({ text : "(All) " + size + " values"});
 		var _g = 0;
 		var _g1 = fragment.data;
 		while(_g < _g1.length) {
@@ -5766,7 +5859,10 @@ core_dashboards_portlets_ExpandableFilterPortletInstance.prototype = $extend(cor
 			++_g;
 			ds.add({ text : row[0]});
 		}
+		ds.sort();
+		ds.insert(0,{ text : "(All) " + size + " values"});
 		this._list.set_dataSource(ds);
+		this._list.set_selectedIndex(indexToSelect);
 	}
 	,registerBehaviours: function() {
 		core_dashboards_portlets_PortletInstance.prototype.registerBehaviours.call(this);
@@ -5833,12 +5929,14 @@ core_dashboards_portlets_FilterPortletInstance.prototype = $extend(core_dashboar
 	,__class__: core_dashboards_portlets_FilterPortletInstance
 });
 var core_dashboards_portlets_TableDataPortletInstance = function() {
+	this._previousTableSelectedIndex = -1;
 	this._header = null;
 	core_dashboards_portlets_PortletInstance.call(this);
 	this._table = new haxe_ui_containers_TableView();
 	this._table.set_percentWidth(100);
 	this._table.set_percentHeight(100);
 	this._table.set_virtual(true);
+	this._table.registerEvent("change",$bind(this,this.onTableSelectionChanged));
 	this.addComponent(this._table);
 };
 $hxClasses["core.dashboards.portlets.TableDataPortletInstance"] = core_dashboards_portlets_TableDataPortletInstance;
@@ -5847,6 +5945,47 @@ core_dashboards_portlets_TableDataPortletInstance.__super__ = core_dashboards_po
 core_dashboards_portlets_TableDataPortletInstance.prototype = $extend(core_dashboards_portlets_PortletInstance.prototype,{
 	_table: null
 	,_header: null
+	,_previousTableSelectedIndex: null
+	,onTableSelectionChanged: function(_) {
+		var selectedItem = this._table.get_selectedItem();
+		if(selectedItem == null) {
+			return;
+		}
+		var field = "Investigator Site";
+		if(this._previousTableSelectedIndex != -1 && this._table.get_selectedIndex() == this._previousTableSelectedIndex) {
+			this._previousTableSelectedIndex = -1;
+			this._table.set_selectedIndex(-1);
+			this.get_dashboardInstance().removeFilterItem(field);
+			return;
+		}
+		this._previousTableSelectedIndex = this._table.get_selectedIndex();
+		var safeField = StringTools.replace(field," ","_");
+		var value = Reflect.field(selectedItem,safeField);
+		this.get_dashboardInstance().addFilterItem(field,value);
+		console.log("../../haxe/core/dashboards/portlets/TableDataPortletInstance.hx:49:",selectedItem);
+	}
+	,onFilterChanged: function(filter) {
+		var ds = this._table.get_dataSource();
+		ds.clearFilter();
+		ds.filter(function(index,item) {
+			var use = true;
+			var h = filter.h;
+			var key_h = h;
+			var key_keys = Object.keys(h);
+			var key_length = key_keys.length;
+			var key_current = 0;
+			while(key_current < key_length) {
+				var key = key_keys[key_current++];
+				var filterValue = filter.h[key];
+				var safeKey = StringTools.replace(key," ","_");
+				var value = Reflect.field(item,safeKey);
+				if(value != filterValue) {
+					use = false;
+				}
+			}
+			return use;
+		});
+	}
 	,onDataRefreshed: function(fragment) {
 		if(this._header == null) {
 			this._header = new haxe_ui_containers_Header();
@@ -6472,10 +6611,28 @@ core_data_Table.prototype = {
 	,__class__: core_data_Table
 	,__properties__: {set_fieldDefinitions:"set_fieldDefinitions",get_fieldDefinitions:"get_fieldDefinitions"}
 };
+var core_graphs_BarGraphEvent = function(type,bubble,data) {
+	haxe_ui_events_UIEvent.call(this,type,bubble,data);
+};
+$hxClasses["core.graphs.BarGraphEvent"] = core_graphs_BarGraphEvent;
+core_graphs_BarGraphEvent.__name__ = "core.graphs.BarGraphEvent";
+core_graphs_BarGraphEvent.__super__ = haxe_ui_events_UIEvent;
+core_graphs_BarGraphEvent.prototype = $extend(haxe_ui_events_UIEvent.prototype,{
+	barIndex: null
+	,clone: function() {
+		var c = new core_graphs_BarGraphEvent(this.type);
+		c.barIndex = this.barIndex;
+		c.data = this.data;
+		this.postClone(c);
+		return c;
+	}
+	,__class__: core_graphs_BarGraphEvent
+});
 var core_graphs_BarGraph = function() {
 	this._coloursBuilt = false;
 	this._data = [];
 	this.getMarkerValueY = null;
+	this._selectedBarIndex = -1;
 	this._colourCalculator = null;
 	this.labelRotation = 0;
 	this.markerColour = "#ffffff";
@@ -6547,11 +6704,79 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 			_gthis._chart.dispatch.on("renderEnd",function() {
 				_gthis.drawMarker();
 			});
+			_gthis._chart.multibar.dispatch.on("elementClick",function(e) {
+				var index = e.index;
+				if(index == _gthis._selectedBarIndex) {
+					_gthis.unselectBars();
+					var event = new core_graphs_BarGraphEvent("barUnselected");
+					event.barIndex = index;
+					_gthis.dispatch(event);
+					return;
+				}
+				_gthis.selectBar(index);
+			});
 			return _gthis._chart;
 		});
 		if(!(this._layout == null || this._layoutLocked == true)) {
 			this.invalidateComponent("layout",false);
 		}
+	}
+	,_selectedBarIndex: null
+	,selectBar: function(barIndex) {
+		var barCount = this._data.length;
+		var dataCount = this._data[0].values.length;
+		this._selectedBarIndex = barIndex;
+		var event = new core_graphs_BarGraphEvent("barSelected");
+		event.barIndex = barIndex;
+		var eventData = { seriesData : []};
+		var _g = 0;
+		var _g1 = barCount;
+		while(_g < _g1) {
+			var n = _g++;
+			if(eventData.xValue == null) {
+				eventData.xValue = this._data[n].values[barIndex].x;
+			}
+			eventData.seriesData.push(this._data[n].values[barIndex]);
+		}
+		event.data = eventData;
+		this.dispatch(event);
+		var g = d3.select("#" + this._container.id + " svg .nvd3");
+		var bars = g.selectAll(".nv-bar");
+		bars.each(function(d,i) {
+			var el = this;
+			if(i == barIndex || i == barIndex + dataCount) {
+				el.classList.remove("dim");
+			} else {
+				el.classList.add("dim");
+			}
+		});
+	}
+	,selectBarFromData: function(value) {
+		var series = this._data[0].values;
+		var index = -1;
+		var n = 0;
+		var _g = 0;
+		while(_g < series.length) {
+			var d = series[_g];
+			++_g;
+			if(d.x == value) {
+				index = n;
+				break;
+			}
+			++n;
+		}
+		if(index != -1) {
+			this.selectBar(index);
+		}
+	}
+	,unselectBars: function() {
+		this._selectedBarIndex = -1;
+		var g = d3.select("#" + this._container.id + " svg .nvd3");
+		var bars = g.selectAll(".nv-bar");
+		bars.each(function(d,i) {
+			var el = this;
+			el.classList.remove("dim");
+		});
 	}
 	,calculateColour: function(data) {
 		return this._colourCalculator.get(data,0,{ xAxisField : this.xAxisField, yAxisField : this.yAxisField});
@@ -6661,6 +6886,7 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 		sheet.insertRule("#" + containerId + " .nvd3 .nv-y .tick.zero line {\r\n                stroke: " + this.yAxisColour + ";\r\n                stroke-opacity: 1;\r\n            }",sheet.cssRules.length);
 		sheet.insertRule("#" + containerId + " .nvd3 .nv-group {\r\n                transform: translate(0px, -1px);\r\n            }",sheet.cssRules.length);
 		sheet.insertRule("#" + containerId + " .nvd3 text {\r\n                fill: " + this.textColour + ";\r\n            }",sheet.cssRules.length);
+		sheet.insertRule("#" + containerId + " .nvd3 .nv-bar.dim {\r\n                opacity: .3;\r\n            }",sheet.cssRules.length);
 	}
 	,onThemeChanged: function() {
 		haxe_ui_core_Component.prototype.onThemeChanged.call(this);
@@ -31405,6 +31631,8 @@ core_data_FieldType.String = 1;
 core_data_FieldType.Number = 2;
 core_data_FieldType.Boolean = 3;
 core_data_DatabaseEvent.Initialized = "initialized";
+core_graphs_BarGraphEvent.BAR_SELECTED = "barSelected";
+core_graphs_BarGraphEvent.BAR_UNSELECTED = "barUnselected";
 core_graphs_BarGraph.counter = 0;
 haxe_crypto_Base64.CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 haxe_crypto_Base64.BYTES = haxe_io_Bytes.ofString(haxe_crypto_Base64.CHARS);

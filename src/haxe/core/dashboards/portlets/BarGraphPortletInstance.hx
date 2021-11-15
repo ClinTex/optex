@@ -19,7 +19,31 @@ class BarGraphPortletInstance extends PortletInstance {
         _bar.labelRotation = -45;
         //_bar.sort = null;
 
+        _bar.registerEvent(BarGraphEvent.BAR_SELECTED, onBarSelected);
+        _bar.registerEvent(BarGraphEvent.BAR_UNSELECTED, onBarUnselected);
+
         addComponent(_bar);
+    }
+
+    private function onBarSelected(e:BarGraphEvent) {
+        var axisX = config("axisX");
+        var value = e.data.xValue;
+        dashboardInstance.addFilterItem(axisX, value);
+    }
+
+    private function onBarUnselected(e:BarGraphEvent) {
+        var axisX = config("axisX");
+        dashboardInstance.removeFilterItem(axisX);
+    }
+
+    public override function onFilterChanged(filter:Map<String, Any>) {
+        var axisX = config("axisX");
+        var value = filter.get(axisX);
+        if (value == null) {
+            _bar.unselectBars();
+            return;
+        }
+        _bar.selectBarFromData(value);
     }
 
     private function getColourCalculator():ColorCalculator {

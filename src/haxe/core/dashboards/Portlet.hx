@@ -30,6 +30,12 @@ class Portlet extends VBox implements IDataComponent {
         addClass("card");
     }
 
+    public function onFilterChanged(filter:Map<String, Any>) {
+        if (_instance != null) {
+            _instance.onFilterChanged(filter);
+        }
+    }
+
     public override function onReady() {
         super.onReady();
 

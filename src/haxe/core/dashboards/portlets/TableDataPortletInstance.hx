@@ -1,5 +1,6 @@
 package core.dashboards.portlets;
 
+import haxe.ui.events.UIEvent;
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.components.Column;
 import haxe.ui.containers.Header;
@@ -20,55 +21,49 @@ class TableDataPortletInstance extends PortletInstance {
         _table.percentWidth = 100;
         _table.percentHeight = 100;
         _table.virtual = true;
+        _table.registerEvent(UIEvent.CHANGE, onTableSelectionChanged);
         addComponent(_table);
+    }
 
-        /*
-        var header = new Header();
-        header.percentWidth = 100;
-
-        var col = new Column();
-        col.id = "fieldA";
-        col.width = 100;
-        col.text = "Field A";
-        header.addComponent(col);
-
-        var col = new Column();
-        col.id = "fieldB";
-        col.width = 100;
-        col.text = "Field B";
-        header.addComponent(col);
-
-        var col = new Column();
-        col.id = "fieldC";
-        col.width = 100;
-        col.text = "Field C";
-        header.addComponent(col);
-
-        var col = new Column();
-        col.id = "fieldD";
-        col.percentWidth = 100;
-        col.text = "Field D";
-        header.addComponent(col);
-
-        _table.addComponent(header);
-
-        var ds = new ArrayDataSource<Dynamic>();
-        for (i in 0...20) {
-            ds.add({
-                fieldA: "Item " + (i + 1) + "A",
-                fieldB: "Item " + (i + 1) + "B",
-                fieldC: "Item " + (i + 1) + "C",
-                fieldD: "Item " + (i + 1) + "D",
-            });
+    private var _previousTableSelectedIndex = -1;
+    private function onTableSelectionChanged(_) {
+        var selectedItem = _table.selectedItem;
+        if (selectedItem == null) {
+            return;
         }
-        _table.dataSource = ds;
 
-        _table.onChange = function(_) {
-            if (dashboardInstance != null) {
-                dashboardInstance.onFilterChanged();
+        var field = "Investigator Site";
+
+        if (_previousTableSelectedIndex != -1 && _table.selectedIndex == _previousTableSelectedIndex) {
+            _previousTableSelectedIndex = -1;
+            _table.selectedIndex = -1;
+            dashboardInstance.removeFilterItem(field);
+            return;
+        }
+
+        _previousTableSelectedIndex = _table.selectedIndex;
+
+        var safeField = field.replace(" ", "_");
+        var value = Reflect.field(selectedItem, safeField);
+        dashboardInstance.addFilterItem(field, value);
+        trace(selectedItem);
+    }
+
+    public override function onFilterChanged(filter:Map<String, Any>) {
+        var ds = _table.dataSource;
+        ds.clearFilter();
+        ds.filter(function(index, item) {
+            var use = true;
+            for (key in filter.keys()) {
+                var filterValue = filter.get(key);
+                var safeKey = key.replace(" ", "_");
+                var value = Reflect.field(item, safeKey);
+                if (value != filterValue) {
+                    use = false;
+                }
             }
-        }
-        */
+            return use;
+        });
     }
 
     public override function onDataRefreshed(fragment:TableFragment) {

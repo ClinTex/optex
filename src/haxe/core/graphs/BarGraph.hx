@@ -6,9 +6,26 @@ import haxe.ui.backend.html5.util.StyleSheetHelper;
 import haxe.ui.core.Component;
 import haxe.ui.util.GUID;
 import js.Browser;
+import js.Syntax;
 import js.html.CSSStyleSheet;
 import js.html.DivElement;
 import core.nvd3.NV;
+import haxe.ui.events.UIEvent;
+
+class BarGraphEvent extends UIEvent {
+    public static inline var BAR_SELECTED:String = "barSelected";
+    public static inline var BAR_UNSELECTED:String = "barUnselected";
+    
+    public var barIndex:Int;
+    
+    public override function clone():UIEvent {
+        var c:BarGraphEvent = new BarGraphEvent(this.type);
+        c.barIndex = this.barIndex;
+        c.data = this.data;
+        postClone(c);
+        return c;
+    }
+}
 
 class BarGraph extends Component {
     private var _container:DivElement = null;
@@ -75,11 +92,84 @@ class BarGraph extends Component {
             _chart.dispatch.on('renderEnd', function(){
                 drawMarker();
             });
+
+            _chart.multibar.dispatch.on("elementClick", function(e:Dynamic) {
+                var index:Int = e.index;
+                if (index == _selectedBarIndex) {
+                    unselectBars();
+                    var event = new BarGraphEvent(BarGraphEvent.BAR_UNSELECTED);
+                    event.barIndex = index;
+                    dispatch(event);
+                    return;
+                }
+        
+                selectBar(index);
+            });
         
             //resizeGraph();
             return _chart;
         });
         invalidateComponentLayout();
+    }
+
+    private var _selectedBarIndex:Int = -1;
+    public function selectBar(barIndex:Int) {
+        var barCount = _data.length;
+        var dataCount = _data[0].values.length;
+        
+        _selectedBarIndex = barIndex;
+        var event = new BarGraphEvent(BarGraphEvent.BAR_SELECTED);
+        event.barIndex = barIndex;
+        var eventData:Dynamic = {
+            seriesData: []
+        }
+        for (n in 0...barCount) {
+            if (eventData.xValue == null) {
+                eventData.xValue = _data[n].values[barIndex].x;
+            }
+            eventData.seriesData.push(_data[n].values[barIndex]);
+        }
+        event.data = eventData;
+        dispatch(event);
+        
+        
+        var g = D3.select("#" + _container.id + " svg .nvd3");
+        var bars = g.selectAll(".nv-bar");
+        bars.each(function(d, i) {
+            var el = Syntax.code("this");
+            if (i == barIndex || i == barIndex + dataCount) {
+                el.classList.remove("dim");
+            } else {
+                el.classList.add("dim");
+            }
+        });
+    }
+
+    public function selectBarFromData(value:Any) {
+        var series:Array<Dynamic> = _data[0].values;
+        var index = -1;
+        var n = 0;
+        for (d in series) {
+            if (d.x == value) {
+                index = n;
+                break;
+            }
+            n++;
+        }
+        
+        if (index != -1) {
+            selectBar(index);
+        }
+    }
+    
+    public function unselectBars() {
+        _selectedBarIndex = -1;
+        var g = D3.select("#" + _container.id + " svg .nvd3");
+        var bars = g.selectAll(".nv-bar");
+        bars.each(function(d, i) {
+            var el = Syntax.code("this");
+            el.classList.remove("dim");
+        });
     }
 
     private function calculateColour(data:Dynamic) {
@@ -228,6 +318,10 @@ class BarGraph extends Component {
 
             sheet.insertRule('#${containerId} .nvd3 text {
                 fill: ${textColour};
+            }', sheet.cssRules.length);
+
+            sheet.insertRule('#${containerId} .nvd3 .nv-bar.dim {
+                opacity: .3;
             }', sheet.cssRules.length);
     }
     

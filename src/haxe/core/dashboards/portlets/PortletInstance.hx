@@ -17,6 +17,9 @@ class PortletInstance extends VBox {
     public function onDataRefreshed(fragment:TableFragment) {
     }
 
+    public function onFilterChanged(filter:Map<String, Any>) {
+    }
+
     public function config(name:String, defaultValue:String = null):String {
         if (additionalConfigParams.exists(name) == false) {
             return defaultValue;

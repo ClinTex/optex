@@ -35,8 +35,12 @@ module {
         var fieldDefinitions:[DBMS.TableFragmentField] = [];
         var count = 0;
         var fieldName = extractParameterValue("fieldName", parameters);
-        var fieldIndex = table.getSchema().fieldIndex(fieldName);
+        var fieldIndex = table.schema.fieldIndex(fieldName);
+        var fieldType = table.schema.fieldDefinitions[Int.abs(fieldIndex)].fieldType;
         var resultMap = Map.HashMap<Text, Nat>(0, Text.equal, Text.hash);
+
+        fieldDefinitions := Array.append(fieldDefinitions, [{ fieldName = fieldName; fieldType = fieldType; }]);
+        fieldDefinitions := Array.append(fieldDefinitions, [{ fieldName = "Count"; fieldType = DBMS.FieldType.Number; }]);
 
         for (row in table.data.vals()) {
             var rowValue = row[Int.abs(fieldIndex)];
