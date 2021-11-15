@@ -97,11 +97,16 @@ module {
                     var i = 0;
                     var newRow:[Text] = [];
                     for (existingValue in existing.vals()) {
+                        var fieldType = table.schema.fieldDefinitions[i].fieldType;
                         var newValue = row[i];
-                        var parsedExistingValue = parseInt(existingValue);
-                        var parsedNewValue = parseInt(newValue);
-                        var sum = parsedExistingValue + parsedNewValue;
-                        newRow := Array.append(newRow, [Int.toText(sum)]);
+                        if (fieldType == DBMS.FieldType.Number) {
+                            var parsedExistingValue = parseInt(existingValue);
+                            var parsedNewValue = parseInt(newValue);
+                            var sum = parsedExistingValue + parsedNewValue;
+                            newRow := Array.append(newRow, [Int.toText(sum)]);
+                        } else {
+                            newRow := Array.append(newRow, [newValue]);
+                        };
                         i := i + 1;
                     };
                     resultMap.put(groupValue, newRow);
