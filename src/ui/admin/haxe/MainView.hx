@@ -1,5 +1,7 @@
 package;
 
+import haxe.ui.containers.HorizontalSplitter;
+import haxe.ui.containers.VerticalSplitter;
 import haxe.ui.components.Spacer;
 import haxe.ui.components.Label;
 import haxe.ui.components.Link;
@@ -28,6 +30,10 @@ class MainView extends VBox {
         ComponentClassMap.instance.registerClassName("link", Type.getClassName(Link));
         ComponentClassMap.instance.registerClassName("label", Type.getClassName(Label));
         ComponentClassMap.instance.registerClassName("spacer", Type.getClassName(Spacer));
+        ComponentClassMap.instance.registerClassName("vertical-splitter", Type.getClassName(VerticalSplitter));
+        ComponentClassMap.instance.registerClassName("horizontal-splitter", Type.getClassName(HorizontalSplitter));
+        ComponentClassMap.instance.registerClassName("vsplitter", Type.getClassName(VerticalSplitter));
+        ComponentClassMap.instance.registerClassName("hsplitter", Type.getClassName(HorizontalSplitter));
 
         DatabaseManager.instance.init().then(function(r) {
             trace("database manager ready");
