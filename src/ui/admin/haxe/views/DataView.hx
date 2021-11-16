@@ -26,25 +26,6 @@ using StringTools;
 class DataView extends VBox {
     public static var instance:DataView;
 
-    @:bind(test, MouseEvent.CLICK)
-    private function onTest(e:UIEvent) {
-        if (tableSelector.selectedItem == null) {
-            return;
-        }
-
-        /*
-        CoreData.applyTableTransform(_database.name, tableSelector.selectedItem.table.name, "group-by", [["fieldName", "Investigator Site"]]).then(function(r) {
-            trace(r);
-        });
-        */
-        /*
-        CoreData.applyTableTransform("", "", "count-unique", [["fieldName", "Investigator Site"]]).then(function(r) {
-            trace(r);
-        });
-        */
-    }
-
-
     private inline function num(i:Dynamic) {
         return Syntax.code("Number({0})", i);
     }
@@ -108,7 +89,7 @@ class DataView extends VBox {
         _database = new Database(dbName);
         _database.listTables().then(function(tables) {
             var ds = new ArrayDataSource<Dynamic>();
-            var indexToSelect = -1;
+            var indexToSelect = 0;
             var n = 0;
             for (table in tables) {
                 ds.add({
@@ -159,7 +140,7 @@ class DataView extends VBox {
             n++;
         }
 
-        var max = Std.int((dataSourceDataTable.height - 75) / 25);
+        var max = 0xffffff;//Std.int((dataSourceDataTable.height - 75) / 25);
         n = 0;
         table.getRows(0, max).then(function(f) {
             var ds = new ArrayDataSource<Dynamic>();

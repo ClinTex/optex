@@ -1,6 +1,7 @@
 <module preload="all">
     <resources>
         <resource path="assets/icons" prefix="icons" />
+        <resource path="assets/fonts" prefix="fonts" />
         <resource path="assets/data" prefix="data" />
     </resources>
     <components>

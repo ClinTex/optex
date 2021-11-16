@@ -1,5 +1,6 @@
 package sidebars;
 
+import views.DashboardsView;
 import haxe.ui.ToolkitAssets;
 import core.data.DashboardManager;
 import core.data.Dashboard;
@@ -33,15 +34,19 @@ class CreateDashboardSidebar extends SideBar {
         }
 
         var dashboardName = dashboardNameField.text;
-        var dashboard = new Dashboard(dashboardName);
+        var dashboardIcon = dashboardIconField.text;
+        var dashboardTemplate = dashboardTemplateField.selectedItem.file;
+        var layoutData = ToolkitAssets.instance.getText(dashboardTemplate);
 
-        var layoutData = ToolkitAssets.instance.getText("data/dummy-dashboard.xml");
+        var dashboard = new Dashboard(dashboardName);
+        dashboard.icon = dashboardIcon;
         dashboard.layoutData = layoutData;
 
         _working = new WorkingIndicator();
         _working.showWorking();
         DashboardManager.instance.createDashboard(dashboard).then(function (r) {
             _working.workComplete();
+            DashboardsView.instance.refreshDashboardSelector(dashboardName);
         });
     }
 

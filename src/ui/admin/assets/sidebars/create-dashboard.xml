@@ -6,8 +6,20 @@
 
             <frame text="Basic" width="100%">
                 <grid columns="2" width="100%">
-                    <label text="Dashboard name" verticalAlign="center" />
-                    <textfield id="dashboardNameField" placeholder="Dashboard name" width="100%"/>
+                    <label text="Name" verticalAlign="center" />
+                    <textfield id="dashboardNameField" placeholder="Enter name" width="100%"/>
+
+                    <label text="Icon" verticalAlign="center" />
+                    <textfield id="dashboardIconField" placeholder="Enter icon" text="dashboard.png" width="100%"/>
+
+                    <label text="Template" verticalAlign="center" />
+                    <dropdown id="dashboardTemplateField" width="100%">
+                        <data>
+                            <item text="Blank" file="data/blank-dashboard.xml" />
+                            <item text="Test1 (bar graphs)" file="data/test-dashboads-bars.xml" />
+                            <item text="Test2 (scatter graphs)" file="data/test-dashboads-scatter.xml" />
+                        </data>
+                    </dropdown>
                 </grid> 
             </frame>    
 

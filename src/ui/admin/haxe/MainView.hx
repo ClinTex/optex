@@ -1,5 +1,6 @@
 package;
 
+import haxe.ui.events.UIEvent;
 import haxe.ui.containers.HorizontalSplitter;
 import haxe.ui.containers.VerticalSplitter;
 import haxe.ui.components.Spacer;
@@ -18,8 +19,12 @@ import haxe.ui.containers.VBox;
 
 @:build(haxe.ui.ComponentBuilder.build("assets/main-view.xml"))
 class MainView extends VBox {
+    public static var instance:MainView = null;
+
     public function new() {
         super();
+
+        instance = this;
 
         ComponentClassMap.instance.registerClassName("vbox", Type.getClassName(VBox));
         ComponentClassMap.instance.registerClassName("hbox", Type.getClassName(HBox));
@@ -46,5 +51,15 @@ class MainView extends VBox {
             case "removeCurrentDatabase":
                 DataView.instance.removeCurrentDatabase();
         }
+    }
+
+    @:bind(mainStack, UIEvent.CHANGE)
+    private function onMainStackChanged(_) {
+        trace("IT CHANGED");
+        mainButtons.selectedIndex = mainStack.selectedIndex;
+    }
+
+    public function changeView(id:String) {
+        mainStack.selectedId = id;
     }
 }

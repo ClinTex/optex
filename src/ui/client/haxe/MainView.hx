@@ -53,7 +53,7 @@ class MainView extends VBox {
             for (d in dashboards) {
                 var icon = d.icon;
                 if (icon == null || icon == "") {
-                    icon = "icons/icons8-dashboard-48.png";
+                    icon = "icons/icons8-dashboard-layout-48.png";
                 }
                 var button = new Button();
                 button.text = d.name;
