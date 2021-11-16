@@ -1,8 +1,18 @@
 <module preload="all">
     <resources>
         <resource path="assets/icons" prefix="icons" />
+        <resource path="assets/css" prefix="css" />
     </resources>
     <components>
         <class package="core.dashboards" />
     </components>
+
+    <themes>
+        <default>
+			<style resource="css/default/main.css" />
+        </default>
+        <dark parent="default">
+			<style resource="css/dark/main.css" />
+        </dark>
+    </themes>    
 </module>
