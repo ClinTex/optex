@@ -7114,7 +7114,7 @@ var core_graphs_BarGraph = function() {
 	this.labelRotation = 0;
 	this.markerColour = "#ffffff";
 	this.textColour = "#b4b4b4";
-	this.gridColour = "#181a1b";
+	this.gridColour = "#242729";
 	this.yAxisColour = "#b4b4b4";
 	this.xAxisColour = "#b4b4b4";
 	this.yAxisField = "y";
@@ -7370,7 +7370,7 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 		if(haxe_ui_Toolkit.get_theme() == "dark") {
 			this.xAxisColour = "#b4b4b4";
 			this.yAxisColour = "#b4b4b4";
-			this.gridColour = "#181a1b";
+			this.gridColour = "#242729";
 			this.textColour = "#b4b4b4";
 			this.markerColour = "#ffffff";
 		} else {

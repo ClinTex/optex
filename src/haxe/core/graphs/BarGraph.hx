@@ -37,7 +37,7 @@ class BarGraph extends Component {
     
     public var xAxisColour:String = "#b4b4b4";
     public var yAxisColour:String = "#b4b4b4";
-    public var gridColour:String = "#181a1b";
+    public var gridColour:String = "#242729";
     public var textColour:String = "#b4b4b4";
     public var markerColour:String = "#ffffff";
     
@@ -332,7 +332,7 @@ class BarGraph extends Component {
         if (Toolkit.theme == "dark") {
             xAxisColour = "#b4b4b4";
             yAxisColour = "#b4b4b4";
-            gridColour = "#181a1b";
+            gridColour = "#242729";
             textColour = "#b4b4b4";
             markerColour = "#ffffff";
         } else {
