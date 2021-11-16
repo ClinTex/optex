@@ -54,8 +54,8 @@ class ThresholdBasedColourCalculator extends ColorCalculator {
     public override function get(data:Dynamic, index:Int, graphInfo:Dynamic):String {
         var v = D3.field(data, graphInfo.yAxisField);
         if (v < threshold) {
-            return "#880000";
+            return "#884444";
         }
-        return "#008800";
+        return "#448844";
     }
 }

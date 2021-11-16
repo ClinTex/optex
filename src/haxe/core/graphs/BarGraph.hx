@@ -220,6 +220,7 @@ class BarGraph extends Component {
                 .attr("id", "markerLine")
                 .style("stroke", markerColour)
                 .style("stroke-width", "2.0px")
+                .style("stroke-dasharray", "5,5")
                 .attr("x1", xValueScale(key) + offset)
                 .attr("y1", y1)
                 .attr("x2", xValueScale(nextKey) + offset)

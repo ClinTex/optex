@@ -6819,7 +6819,7 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 			var y2 = yValueScale(yValue);
 			yValuePrev = yValue;
 			var offset = cx / 2;
-			var tmp = g.append("line").attr("id","markerLine").style("stroke",this.markerColour).style("stroke-width","2.0px");
+			var tmp = g.append("line").attr("id","markerLine").style("stroke",this.markerColour).style("stroke-width","2.0px").style("stroke-dasharray","5,5");
 			var tmp1 = xValueScale(key) + offset;
 			var tmp2 = tmp.attr("x1",tmp1).attr("y1",y1);
 			var tmp3 = xValueScale(nextKey) + offset;
@@ -6989,9 +6989,9 @@ core_graphs_ThresholdBasedColourCalculator.prototype = $extend(core_graphs_Color
 	,get: function(data,index,graphInfo) {
 		var v = data[graphInfo.yAxisField];
 		if(v < this.threshold) {
-			return "#880000";
+			return "#884444";
 		}
-		return "#008800";
+		return "#448844";
 	}
 	,__class__: core_graphs_ThresholdBasedColourCalculator
 });
