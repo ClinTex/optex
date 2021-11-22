@@ -83,6 +83,7 @@ class BarGraph extends Component {
             _chart.reduceXTicks(false);
             _chart.rotateLabels(labelRotation);
             _chart.showControls(false);
+            _chart.tooltip.enabled(false);
             if (_colourCalculator != null) {
                 _chart.barColor(calculateColour);
             }

@@ -9,6 +9,7 @@ import core.dashboards.portlets.TableDataPortletInstance;
 import core.dashboards.portlets.FilterPortletInstance;
 import core.dashboards.portlets.ExpandableFilterPortletInstance;
 import core.dashboards.portlets.BarGraphPortletInstance;
+import core.dashboards.portlets.ScatterGraphPortletInstance;
 import core.dashboards.portlets.PortletInstance;
 import haxe.ui.containers.VBox;
 import haxe.ui.components.Label;
@@ -157,6 +158,10 @@ class Portlet extends VBox implements IDataComponent {
         switch (_type) {
             case "chart-bar":
                 _instance = new BarGraphPortletInstance();
+                _instance.percentWidth = 100;
+                _instance.percentHeight = 100;
+            case "chart-scatter":
+                _instance = new ScatterGraphPortletInstance();
                 _instance.percentWidth = 100;
                 _instance.percentHeight = 100;
             case "filter":    
