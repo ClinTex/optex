@@ -43,20 +43,8 @@ class BarGraph extends Component {
     
     public var labelRotation:Float = 0;
     
-    private var _colourCalculator:ColorCalculator = null;
-    public var colourCalculator(get, set):ColorCalculator;
-    private function get_colourCalculator():ColorCalculator {
-        return _colourCalculator;
-    }
-    private function set_colourCalculator(value:ColorCalculator):ColorCalculator {
-        _colourCalculator = value;
-        if (_chart != null && value != null) {
-            _chart.barColor(calculateColour);
-            //this.data = _data;
-        }
-        return value;
-    }
-    
+    private static var nextId:Int = 0;
+
     public function new() {
         super();
     }
@@ -65,10 +53,10 @@ class BarGraph extends Component {
     private override function onReady() {
         super.onReady();
         if (this.id == null) {
-            this.id = "bar-graph-" + counter;
-            counter++;
+            this.id = "bar" + BarGraph.nextId;
+            BarGraph.nextId++;
         }
-        var containerId = this.id + "-container";
+        var containerId = this.id + "container";
         _container = Browser.document.createDivElement();
         _container.id  = containerId;
         this.element.appendChild(_container);
@@ -111,6 +99,20 @@ class BarGraph extends Component {
             return _chart;
         });
         invalidateComponentLayout();
+    }
+
+    private var _colourCalculator:ColorCalculator = null;
+    public var colourCalculator(get, set):ColorCalculator;
+    private function get_colourCalculator():ColorCalculator {
+        return _colourCalculator;
+    }
+    private function set_colourCalculator(value:ColorCalculator):ColorCalculator {
+        _colourCalculator = value;
+        if (_chart != null && value != null) {
+            _chart.barColor(calculateColour);
+            //this.data = _data;
+        }
+        return value;
     }
 
     private var _selectedBarIndex:Int = -1;
@@ -180,6 +182,7 @@ class BarGraph extends Component {
         });
     }
     
+    public var markerBehind:Bool = false;
     public var getMarkerValueY:Dynamic->Int->Float = null;
     private function drawMarker() {
         if (_container == null || _graph == null || _chart == null) {
@@ -191,7 +194,7 @@ class BarGraph extends Component {
             return;
         }
         
-        var g = D3.select("#" + _container.id + " svg .nvd3");
+        var g = D3.select("#" + _container.id + " svg .nvd3 .nv-groups");
         var xValueScale = _chart.xAxis.scale();
         var yValueScale = _chart.yAxis.scale();
 
@@ -217,27 +220,51 @@ class BarGraph extends Component {
             yValuePrev = yValue;
             
             var offset = (cx / 2);
-            g.append("line")
-                .attr("id", "markerLine")
-                .style("stroke", markerColour)
-                .style("stroke-width", "2.0px")
-                .style("stroke-dasharray", "5,5")
-                .attr("x1", xValueScale(key) + offset)
-                .attr("y1", y1)
-                .attr("x2", xValueScale(nextKey) + offset)
-                .attr("y2", y2);
-            g.append("circle")
-                .attr("id", "markerLine")
-                .attr("cx", xValueScale(key) + offset)
-                .attr("cy", y1)
-                .attr("r", "3px")
-                .style("fill", markerColour);
-            g.append("circle")
-                .attr("id", "markerLine")
-                .attr("cx", xValueScale(nextKey) + offset)
-                .attr("cy", y2)
-                .attr("r", "3px")
-                .style("fill", markerColour);
+            if (markerBehind == false) {
+                g.append("line")
+                    .attr("id", "markerLine")
+                    .style("stroke", markerColour)
+                    .style("stroke-width", "2.0px")
+                    .style("stroke-dasharray", "2,2")
+                    .attr("x1", xValueScale(key) + offset)
+                    .attr("y1", y1)
+                    .attr("x2", xValueScale(nextKey) + offset)
+                    .attr("y2", y2);
+                g.append("circle")
+                    .attr("id", "markerLine")
+                    .attr("cx", xValueScale(key) + offset)
+                    .attr("cy", y1)
+                    .attr("r", "2px")
+                    .style("fill", markerColour);
+                g.append("circle")
+                    .attr("id", "markerLine")
+                    .attr("cx", xValueScale(nextKey) + offset)
+                    .attr("cy", y2)
+                    .attr("r", "2px")
+                    .style("fill", markerColour);
+            } else {
+                g.insert("line", ":first-child")
+                    .attr("id", "markerLine")
+                    .style("stroke", markerColour)
+                    .style("stroke-width", "2.0px")
+                    .style("stroke-dasharray", "2,2")
+                    .attr("x1", xValueScale(key) + offset)
+                    .attr("y1", y1)
+                    .attr("x2", xValueScale(nextKey) + offset)
+                    .attr("y2", y2);
+                g.insert("circle", ":first-child")
+                    .attr("id", "markerLine")
+                    .attr("cx", xValueScale(key) + offset)
+                    .attr("cy", y1)
+                    .attr("r", "2px")
+                    .style("fill", markerColour);
+                g.insert("circle", ":first-child")
+                    .attr("id", "markerLine")
+                    .attr("cx", xValueScale(nextKey) + offset)
+                    .attr("cy", y2)
+                    .attr("r", "2px")
+                    .style("fill", markerColour);
+            }
         }
     }
     
@@ -315,7 +342,7 @@ class BarGraph extends Component {
             }', sheet.cssRules.length);
             
             sheet.insertRule('#${containerId} .nvd3 .nv-group {
-                transform: translate(0px, -1px);
+                transform: translate(0px, 0px);
             }', sheet.cssRules.length);
 
             sheet.insertRule('#${containerId} .nvd3 text {

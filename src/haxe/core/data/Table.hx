@@ -128,6 +128,7 @@ class Table {
         return new Promise((resolve, reject) -> {
             if (_dataToAdd != null && _dataToAdd.length > 0) {
                 commitData(_dataToAdd, null).then(function(dataCreateResult) {
+                    _dataToAdd = [];
                     resolve(dataCreateResult);
                 });
             } else {

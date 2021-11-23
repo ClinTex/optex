@@ -27,6 +27,13 @@ class PortletInstance extends VBox {
         return additionalConfigParams.get(name);
     }
 
+    public function configBool(name:String, defaultValue:Bool = false):Bool {
+        if (additionalConfigParams.exists(name) == false) {
+            return defaultValue;
+        }
+        return additionalConfigParams.get(name) == "true";
+    }
+
     public var dashboardInstance(get, null):DashboardInstance;
     private function get_dashboardInstance():DashboardInstance {
         return findAncestor(DashboardInstance);

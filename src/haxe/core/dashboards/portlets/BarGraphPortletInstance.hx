@@ -2,8 +2,10 @@ package core.dashboards.portlets;
 
 import core.graphs.ColorCalculator;
 import core.graphs.BarGraph;
+import core.graphs.MarkerFunctions;
 import core.data.CoreData.TableFragment;
 import core.data.Table;
+import core.util.FunctionDetails;
 
 using StringTools;
 
@@ -84,12 +86,8 @@ class BarGraphPortletInstance extends PortletInstance {
         });
 
         _bar.colourCalculator = getColourCalculator();
-        
-        if (config("markerFunction") == "test") {
-            _bar.getMarkerValueY = function(data, index) {
-                return Math.abs(data[0].y - data[1].y);
-            }
-        }
+        _bar.getMarkerValueY = MarkerFunctions.get(config("markerFunction"));
+        _bar.markerBehind = configBool("markerBehind");
 
         var graphData:Dynamic = [];
         var axisYParts = axisY.split(",");

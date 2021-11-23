@@ -104,6 +104,7 @@ class DatabaseManager extends EventDispatcher<DatabaseEvent> {
             var table = new Table("dashboards");
                 table.defineField("dashboardName", FieldType.String);
                 table.defineField("dashboardLayoutData", FieldType.String);
+                table.defineField("dashboardIcon", FieldType.String);
             tables.push(table);
 
             createDatabaseIfDoesntExist("__optex_internal_data", tables).then(function(r) {

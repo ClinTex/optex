@@ -1,5 +1,6 @@
 package;
 
+import components.WorkingIndicator;
 import haxe.ui.events.UIEvent;
 import haxe.ui.containers.HorizontalSplitter;
 import haxe.ui.containers.VerticalSplitter;
@@ -50,12 +51,24 @@ class MainView extends VBox {
         switch (e.menuItem.id) {
             case "removeCurrentDatabase":
                 DataView.instance.removeCurrentDatabase();
+            case "clearAll":
+                clearAllDbs();
         }
+    }
+
+    private function clearAllDbs() {
+        var working = new WorkingIndicator();
+        working.showWorking();
+        DatabaseManager.instance.removeDatabase("ClintexPrimaryData").then(function(r) {
+            DatabaseManager.instance.removeDatabase("__optex_internal_data").then(function(r) {
+                working.workComplete();
+            });
+            
+        });
     }
 
     @:bind(mainStack, UIEvent.CHANGE)
     private function onMainStackChanged(_) {
-        trace("IT CHANGED");
         mainButtons.selectedIndex = mainStack.selectedIndex;
     }
 

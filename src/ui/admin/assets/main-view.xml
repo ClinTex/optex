@@ -32,6 +32,7 @@
     <menu-bar id="mainMenu" width="100%">
         <menu text="Admin" id="adminMenu">
             <menu-item id="removeCurrentDatabase" text="Remove Current Database" />
+            <menu-item id="clearAll" text="Clear All" />
         </menu>
     </menu-bar>
 

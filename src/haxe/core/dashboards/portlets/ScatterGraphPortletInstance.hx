@@ -4,6 +4,7 @@ import core.graphs.ScatterGraph;
 import core.graphs.ColorCalculator;
 import core.data.CoreData.TableFragment;
 import core.data.Table;
+import core.graphs.MarkerFunctions;
 
 using StringTools;
 
@@ -47,6 +48,9 @@ class ScatterGraphPortletInstance extends PortletInstance {
             return 0;
         });
 
+        _scatter.getMarkerValueY = MarkerFunctions.get(config("markerFunction"));
+        _scatter.markerBehind = configBool("markerBehind");
+
         var graphData:Dynamic = [];
         var axisYParts = axisY.split(",");
         for (part in axisYParts) {
@@ -62,11 +66,10 @@ class ScatterGraphPortletInstance extends PortletInstance {
                 var valueX = row[fieldIndexX];
                 var valueY = Std.parseFloat(row[fieldIndexY]);
                 var valueSize = Std.parseFloat(row[fieldIndexSize]);
-trace("value Size: " + valueSize);
                 values.push({
                     x: valueX,
                     y: valueY,
-                    size: valueSize
+                    size: valueSize * 30
                 });
 
                 n++;

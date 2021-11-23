@@ -8,6 +8,8 @@
                             transform="group-by('Investigator Site')"
                             axisX="Investigator Site"
                             axisY="Number Completed Visits"
+                            markerFunction="static-y(60)"
+                            markerBehind="true"
                             colorCalculator="threshold:60" />
                 </data>
             </portlet>
@@ -18,7 +20,7 @@
                             transform="group-by('Investigator Site')"
                             axisX="Investigator Site"
                             axisY="Expected Number of Visits,Actual Number of Visits"
-                            markerFunction="test" />
+                            markerFunction="delta-y(0, 1)" />
                 </data>
             </portlet>
         </hsplitter>
