@@ -30,6 +30,9 @@ class DashboardInstance extends Box {
 
         _container.removeAllComponents();
         _container.addComponent(c);
+        for (p in portlets) {
+            p.onFilterChanged(_filter);
+        }
     }
 
     public function clearDashboard() {
@@ -52,7 +55,16 @@ class DashboardInstance extends Box {
         refreshAllPortlets();
     }
 
+
+    // TODO: temp
+    public var onTempFilterChanged:Map<String, Any>->Void = null;
+
     private var _filter:Map<String, Any> = [];
+    public var filter(get, null):Map<String, Any>;
+    private function get_filter():Map<String, Any> {
+        return _filter;
+    }
+
     public function addFilterItem(field:String, value:Any) {
         if (_filter.exists(field) && _filter.get(field) == value) {
             return;
@@ -61,6 +73,10 @@ class DashboardInstance extends Box {
         _filter.set(field, value);
         for (p in portlets) {
             p.onFilterChanged(_filter);
+        }
+
+        if (onTempFilterChanged != null) {
+            onTempFilterChanged(_filter);
         }
     }
 
@@ -72,6 +88,10 @@ class DashboardInstance extends Box {
         _filter.remove(field);
         for (p in portlets) {
             p.onFilterChanged(_filter);
+        }
+
+        if (onTempFilterChanged != null) {
+            onTempFilterChanged(_filter);
         }
     }
 }

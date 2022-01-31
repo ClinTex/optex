@@ -73,6 +73,9 @@ class DashboardsView extends VBox {
                 if (firstNode == null) {
                     firstNode = groupNode;
                 }
+                if (groupId !=  null && group.dashboardGroupId == groupId) {
+                    nodeToSelect = groupNode;
+                }
                 groupNode.expanded = true;
                 var dashboards = map.get(group);
                 for (dashboard in dashboards) {
@@ -123,6 +126,17 @@ class DashboardsView extends VBox {
         }
         if (selectedItem.data.groupData != null) {
             var groupData:DashboardGroupData = selectedItem.data.groupData;
+            var iconData:IconData = dashboardGroupIconField.selectedItem.iconData;
+
+            groupData.name = dashboardGroupNameField.text;
+            groupData.iconId = iconData.iconId;
+
+            var working = new WorkingIndicator();
+            working.showWorking();
+            groupData.update().then(function(r) {
+                working.workComplete();
+                refreshDashboardSelector(groupData.dashboardGroupId, null);
+            });
         } else if (selectedItem.data.dashboardData != null) {
             var dashboardData:DashboardData = selectedItem.data.dashboardData;
             var iconData:IconData = dashboardIconField.selectedItem.iconData;

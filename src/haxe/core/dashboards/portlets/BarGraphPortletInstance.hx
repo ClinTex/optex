@@ -116,39 +116,8 @@ class BarGraphPortletInstance extends PortletInstance {
 
         if (width > 0 && height > 0) {
             _bar.data = graphData;
+            onFilterChanged(dashboardInstance.filter);
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-        /*
-        var graphData:Dynamic = [];
-        var n = 0;
-        for (row in fragment.data) {
-            var valueX = row[fieldIndexX];
-            var valueY = row[fieldIndexY];
-
-            graphData.push({
-                group: "" + n,
-                value: Std.parseFloat(valueY)
-            });
-
-            n++;
-        }
-
-        if (width > 0 && height > 0) {
-            _bar.data = graphData;
-        }
-        */
     }
 
     public override function refresh() {

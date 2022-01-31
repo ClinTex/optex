@@ -166,6 +166,9 @@ class BarGraph extends Component {
     }
     
     public function unselectBars() {
+        if (_container == null) {
+            return;
+        }
         _selectedBarIndex = -1;
         var g = D3.select("#" + _container.id + " svg .nvd3");
         var bars = g.selectAll(".nv-bar");

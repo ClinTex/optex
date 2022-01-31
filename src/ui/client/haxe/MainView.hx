@@ -1,5 +1,6 @@
 package;
 
+import haxe.ui.data.ArrayDataSource;
 import core.data.DashboardData;
 import haxe.ui.Toolkit;
 import haxe.ui.containers.HorizontalSplitter;
@@ -42,6 +43,62 @@ class MainView extends VBox {
         
         DatabaseManager.instance.listen(DatabaseEvent.Initialized, function(_) {
             refreshDashboardSelector();
+        });
+
+        dashboardInstance.onTempFilterChanged = function(filter) {
+            if (filter.exists("Investigator Site")) {
+                var siteId = filter.get("Investigator Site");
+                sitesFilter.selectedItem = siteId;
+            } else {
+                sitesFilter.selectedItem = "All Sites";
+            }
+        }
+
+        populateSitesFilter();
+    }
+
+    private function populateSitesFilter() {
+        var dbName = "ClintexPrimaryData";
+        DatabaseManager.instance.getDatabase(dbName).then(function(db) {
+            db.getTable("ICP 1 Data - Patient Visits").fetch().then(function(objects) {
+                var ds = new ArrayDataSource<Dynamic>();
+                ds.add({ text: "All Sites"});
+                var map:Map<String, String> = [];
+                for (o in objects) {
+                    var siteId = o.getFieldValue("Investigator Site");
+                    map.set(siteId, siteId);
+                }
+                for (siteId in map.keys()) {
+                    ds.add({ text: siteId });
+                }
+
+                sitesFilter.dataSource = ds;
+                populatePatientsFilter();
+            });
+        });
+    }
+
+    private function populatePatientsFilter(siteId:String = null) {
+        var dbName = "ClintexPrimaryData";
+        DatabaseManager.instance.getDatabase(dbName).then(function(db) {
+            db.getTable("ICP 1 Data - Patient Visits").fetch().then(function(objects) {
+                var ds = new ArrayDataSource<Dynamic>();
+                ds.add({ text: "All Patients"});
+                var map:Map<String, String> = [];
+                for (o in objects) {
+                    var recordSiteId = o.getFieldValue("Investigator Site");
+                    if (siteId != null && recordSiteId != siteId) {
+                        continue;
+                    }
+                    var patientId = o.getFieldValue("Patient Number");
+                    map.set(patientId, patientId);
+                }
+                for (patientId in map.keys()) {
+                    ds.add({ text: patientId });
+                }
+
+                patientsFilter.dataSource = ds;
+            });
         });
     }
 
@@ -95,6 +152,24 @@ class MainView extends VBox {
             dashboardInstance.buildDashboard(dashboardData);
         } else {
             //selectedItem.expanded = !selectedItem.expanded;
+        }
+    }
+
+    @:bind(sitesFilter, UIEvent.CHANGE)
+    private function onSitesFilterChanged(_) {
+        if (sitesFilter.selectedItem == null) {
+            return;
+        }
+        var siteId = sitesFilter.selectedItem.text;
+        if (siteId == "All Sites") {
+            siteId = null;
+        }
+
+        populatePatientsFilter(siteId);
+        if (siteId != null) {
+            dashboardInstance.addFilterItem("Investigator Site", siteId);
+        } else {
+            dashboardInstance.removeFilterItem("Investigator Site");
         }
     }
 }

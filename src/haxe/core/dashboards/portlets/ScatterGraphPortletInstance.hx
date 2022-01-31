@@ -78,6 +78,7 @@ class ScatterGraphPortletInstance extends PortletInstance {
 
         if (width > 0 && height > 0) {
             _scatter.data = graphData;
+            onFilterChanged(dashboardInstance.filter);
         }
     }
 

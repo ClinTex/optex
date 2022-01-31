@@ -4732,7 +4732,7 @@ haxe_ui_containers_VBox.prototype = $extend(haxe_ui_containers_Box.prototype,{
 var MainView = function() {
 	var _gthis = this;
 	haxe_ui_containers_VBox.call(this);
-	haxe_ui_Toolkit.styleSheet.parse("\n        .portlet.no-border {\n            filter: none;\n            border: none;\n            border-radius: 0;\n            padding: 0;\n        }\n\n#dashboardTree .scrollview-contents {\n    spacing: 20px;\n}\n\n#dashboardTree .treeviewnode, #dashboardTree .treenode-container {\n    spacing: 5px;\n}\n\n#dashboardTree .itemrenderer:hover {\n    background-color: none;\n}\n\n#dashboardTree .itemrenderer .label {\n    padding-left: 5px;\n}\n\n.treeview .itemrenderer:hover .label {\n    color: #cacad1;\n}\n\n.treeview .itemrenderer:node-selected {\n    background-color: none;\n}\n\n.treeview .itemrenderer:node-selected .label {\n    color: white;\n}\n\n.vertical-splitter {\n    spacing: 20px;\n}\n\n.horizontal-splitter {\n    spacing: 20px;\n}\n    ","user");
+	haxe_ui_Toolkit.styleSheet.parse("\n        .portlet.no-border {\n            filter: none;\n            border: none;\n            border-radius: 0;\n            padding: 0;\n        }\n\n#dashboardTree .scrollview-contents {\n    spacing: 20px;\n}\n\n#dashboardTree .treeviewnode, #dashboardTree .treenode-container {\n    spacing: 5px;\n}\n\n#dashboardTree .itemrenderer:hover {\n    background-color: none;\n}\n\n#dashboardTree .itemrenderer .label {\n    padding-left: 5px;\n}\n\n.treeview .itemrenderer:hover .label {\n    color: #cacad1;\n}\n\n.treeview .itemrenderer:node-selected {\n    background-color: none;\n}\n\n.treeview .itemrenderer:node-selected .label {\n    color: white;\n}\n\n.vertical-splitter {\n    spacing: 20px;\n}\n\n.horizontal-splitter {\n    spacing: 20px;\n}\n\n.dropdown-search-field {\n    icon: none;\n}\n    ","user");
 	var c0 = new haxe_ui_containers_HBox();
 	c0.set_percentWidth(100.);
 	c0.set_styleString("padding-bottom:20px;");
@@ -4746,20 +4746,13 @@ var MainView = function() {
 	c3.set_styleString("spacing:0;padding:0px;");
 	c3.set_verticalAlign("center");
 	var c4 = new haxe_ui_components_DropDown();
+	c4.set_id("sitesFilter");
 	c4.set_width(200.);
+	c4.set_virtual(true);
 	c4.set_searchable(true);
+	c4.set_searchPrompt("Search Sites");
 	var ds4 = new haxe_ui_data_ArrayDataSource();
 	ds4.add({ text : "All Sites", id : "item"});
-	ds4.add({ text : "Site 0001", id : "item"});
-	ds4.add({ text : "Site 0002", id : "item"});
-	ds4.add({ text : "Site 0003", id : "item"});
-	ds4.add({ text : "Site 0004", id : "item"});
-	ds4.add({ text : "Site 0005", id : "item"});
-	ds4.add({ text : "Site 0006", id : "item"});
-	ds4.add({ text : "Site 0007", id : "item"});
-	ds4.add({ text : "Site 0008", id : "item"});
-	ds4.add({ text : "Site 0009", id : "item"});
-	ds4.add({ text : "Site 0010", id : "item"});
 	c4.set_dataSource(ds4);
 	c3.addComponent(c4);
 	var c5 = new haxe_ui_core_Component();
@@ -4769,15 +4762,13 @@ var MainView = function() {
 	c5.set_verticalAlign("center");
 	c3.addComponent(c5);
 	var c6 = new haxe_ui_components_DropDown();
+	c6.set_id("patientsFilter");
 	c6.set_width(200.);
+	c6.set_virtual(true);
 	c6.set_searchable(true);
+	c6.set_searchPrompt("Search Patients");
 	var ds6 = new haxe_ui_data_ArrayDataSource();
 	ds6.add({ text : "All Patients", id : "item"});
-	ds6.add({ text : "Ian Harrigan", id : "item"});
-	ds6.add({ text : "Andre Byrne", id : "item"});
-	ds6.add({ text : "Brendan Mannion", id : "item"});
-	ds6.add({ text : "Neill Something", id : "item"});
-	ds6.add({ text : "Mathew Buckly", id : "item"});
 	c6.set_dataSource(ds6);
 	c3.addComponent(c6);
 	c0.addComponent(c3);
@@ -4820,6 +4811,8 @@ var MainView = function() {
 	this.set_styleNames("default-background");
 	this.set_styleString("spacing:0;padding:20px;");
 	this.bindingRoot = true;
+	this.sitesFilter = c4;
+	this.patientsFilter = c6;
 	this.dashboardTree = c12;
 	this.dashboardInstance = c14;
 	haxe_ui_core_ComponentClassMap.get_instance().registerClassName("vbox",haxe_ui_containers_VBox.__name__);
@@ -4836,23 +4829,99 @@ var MainView = function() {
 	haxe_ui_core_ComponentClassMap.get_instance().registerClassName("vsplitter",haxe_ui_containers_VerticalSplitter.__name__);
 	haxe_ui_core_ComponentClassMap.get_instance().registerClassName("hsplitter",haxe_ui_containers_HorizontalSplitter.__name__);
 	core_data_DatabaseManager.get_instance().init().then(function(r) {
-		console.log("haxe/MainView.hx:40:","database manager ready");
+		console.log("haxe/MainView.hx:41:","database manager ready");
 	});
 	core_data_DatabaseManager.get_instance().listen("dbInitialized",function(_) {
 		_gthis.refreshDashboardSelector();
 	});
+	this.dashboardInstance.onTempFilterChanged = function(filter) {
+		if(Object.prototype.hasOwnProperty.call(filter.h,"Investigator Site")) {
+			var siteId = filter.h["Investigator Site"];
+			_gthis.sitesFilter.set_selectedItem(siteId);
+		} else {
+			_gthis.sitesFilter.set_selectedItem("All Sites");
+		}
+	};
+	this.populateSitesFilter();
 	var c = this.dashboardTree;
 	if(c != null) {
 		c.registerEvent("change",$bind(this,this.onDashboardTreeChange));
 	} else {
 		console.log("haxe/ui/macros/Macros.hx:302:","WARNING: could not find component to regsiter event (" + "dashboardTree" + ")");
 	}
+	var c = this.sitesFilter;
+	if(c != null) {
+		c.registerEvent("change",$bind(this,this.onSitesFilterChanged));
+	} else {
+		console.log("haxe/ui/macros/Macros.hx:302:","WARNING: could not find component to regsiter event (" + "sitesFilter" + ")");
+	}
 };
 $hxClasses["MainView"] = MainView;
 MainView.__name__ = "MainView";
 MainView.__super__ = haxe_ui_containers_VBox;
 MainView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
-	refreshDashboardSelector: function() {
+	populateSitesFilter: function() {
+		var _gthis = this;
+		var dbName = "ClintexPrimaryData";
+		core_data_DatabaseManager.get_instance().getDatabase(dbName).then(function(db) {
+			db.getTable("ICP 1 Data - Patient Visits").fetch().then(function(objects) {
+				var ds = new haxe_ui_data_ArrayDataSource();
+				ds.add({ text : "All Sites"});
+				var map_h = Object.create(null);
+				var _g = 0;
+				while(_g < objects.length) {
+					var o = objects[_g];
+					++_g;
+					var siteId = o.getFieldValue("Investigator Site");
+					map_h[siteId] = siteId;
+				}
+				var h = map_h;
+				var siteId_h = h;
+				var siteId_keys = Object.keys(h);
+				var siteId_length = siteId_keys.length;
+				var siteId_current = 0;
+				while(siteId_current < siteId_length) {
+					var siteId = siteId_keys[siteId_current++];
+					ds.add({ text : siteId});
+				}
+				_gthis.sitesFilter.set_dataSource(ds);
+				_gthis.populatePatientsFilter();
+			});
+		});
+	}
+	,populatePatientsFilter: function(siteId) {
+		var _gthis = this;
+		var dbName = "ClintexPrimaryData";
+		core_data_DatabaseManager.get_instance().getDatabase(dbName).then(function(db) {
+			db.getTable("ICP 1 Data - Patient Visits").fetch().then(function(objects) {
+				var ds = new haxe_ui_data_ArrayDataSource();
+				ds.add({ text : "All Patients"});
+				var map_h = Object.create(null);
+				var _g = 0;
+				while(_g < objects.length) {
+					var o = objects[_g];
+					++_g;
+					var recordSiteId = o.getFieldValue("Investigator Site");
+					if(siteId != null && recordSiteId != siteId) {
+						continue;
+					}
+					var patientId = o.getFieldValue("Patient Number");
+					map_h[patientId] = patientId;
+				}
+				var h = map_h;
+				var patientId_h = h;
+				var patientId_keys = Object.keys(h);
+				var patientId_length = patientId_keys.length;
+				var patientId_current = 0;
+				while(patientId_current < patientId_length) {
+					var patientId = patientId_keys[patientId_current++];
+					ds.add({ text : patientId});
+				}
+				_gthis.patientsFilter.set_dataSource(ds);
+			});
+		});
+	}
+	,refreshDashboardSelector: function() {
 		var _gthis = this;
 		var dashboardId = null;
 		core_data_DatabaseManager.get_instance().internal.dashboardData.getDashboardsByGroup().then(function(map) {
@@ -4902,6 +4971,21 @@ MainView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 			this.dashboardInstance.buildDashboard(dashboardData);
 		}
 	}
+	,onSitesFilterChanged: function(_) {
+		if(this.sitesFilter.get_selectedItem() == null) {
+			return;
+		}
+		var siteId = this.sitesFilter.get_selectedItem().text;
+		if(siteId == "All Sites") {
+			siteId = null;
+		}
+		this.populatePatientsFilter(siteId);
+		if(siteId != null) {
+			this.dashboardInstance.addFilterItem("Investigator Site",siteId);
+		} else {
+			this.dashboardInstance.removeFilterItem("Investigator Site");
+		}
+	}
 	,registerBehaviours: function() {
 		haxe_ui_containers_VBox.prototype.registerBehaviours.call(this);
 	}
@@ -4921,6 +5005,8 @@ MainView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,self: function() {
 		return new MainView();
 	}
+	,sitesFilter: null
+	,patientsFilter: null
 	,dashboardTree: null
 	,dashboardInstance: null
 	,__class__: MainView
@@ -5540,6 +5626,7 @@ core_dashboards_DashboardInstanceEvent.prototype = $extend(haxe_ui_events_UIEven
 });
 var core_dashboards_DashboardInstance = function() {
 	this._filter = new haxe_ds_StringMap();
+	this.onTempFilterChanged = null;
 	this._container = new haxe_ui_containers_Box();
 	haxe_ui_containers_Box.call(this);
 	this._container.set_percentWidth(100);
@@ -5559,6 +5646,13 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 		var c = haxe_ui_RuntimeComponentBuilder.fromString(layoutData);
 		this._container.removeAllComponents();
 		this._container.addComponent(c);
+		var _g = 0;
+		var _g1 = this.get_portlets();
+		while(_g < _g1.length) {
+			var p = _g1[_g];
+			++_g;
+			p.onFilterChanged(this._filter);
+		}
 	}
 	,clearDashboard: function() {
 		this._container.removeAllComponents();
@@ -5580,12 +5674,17 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 	,onFilterChanged: function() {
 		this.refreshAllPortlets();
 	}
+	,onTempFilterChanged: null
 	,_filter: null
+	,filter: null
+	,get_filter: function() {
+		return this._filter;
+	}
 	,addFilterItem: function(field,value) {
 		if(Object.prototype.hasOwnProperty.call(this._filter.h,field) && this._filter.h[field] == value) {
 			return;
 		}
-		console.log("../../haxe/core/dashboards/DashboardInstance.hx:60:","adding filter item: " + field + " = " + (value == null ? "null" : Std.string(value)));
+		console.log("../../haxe/core/dashboards/DashboardInstance.hx:72:","adding filter item: " + field + " = " + (value == null ? "null" : Std.string(value)));
 		this._filter.h[field] = value;
 		var _g = 0;
 		var _g1 = this.get_portlets();
@@ -5594,12 +5693,15 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 			++_g;
 			p.onFilterChanged(this._filter);
 		}
+		if(this.onTempFilterChanged != null) {
+			this.onTempFilterChanged(this._filter);
+		}
 	}
 	,removeFilterItem: function(field) {
 		if(Object.prototype.hasOwnProperty.call(this._filter.h,field) == false) {
 			return;
 		}
-		console.log("../../haxe/core/dashboards/DashboardInstance.hx:71:","removing filter item: " + field);
+		console.log("../../haxe/core/dashboards/DashboardInstance.hx:87:","removing filter item: " + field);
 		var _this = this._filter;
 		if(Object.prototype.hasOwnProperty.call(_this.h,field)) {
 			delete(_this.h[field]);
@@ -5610,6 +5712,9 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 			var p = _g1[_g];
 			++_g;
 			p.onFilterChanged(this._filter);
+		}
+		if(this.onTempFilterChanged != null) {
+			this.onTempFilterChanged(this._filter);
 		}
 	}
 	,registerBehaviours: function() {
@@ -5632,7 +5737,7 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 		return new core_dashboards_DashboardInstance();
 	}
 	,__class__: core_dashboards_DashboardInstance
-	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{get_portlets:"get_portlets"})
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{get_filter:"get_filter",get_portlets:"get_portlets"})
 });
 var haxe_ui_core_IDataComponent = function() { };
 $hxClasses["haxe.ui.core.IDataComponent"] = haxe_ui_core_IDataComponent;
@@ -5699,7 +5804,6 @@ core_dashboards_Portlet.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 			_gthis._database = db;
 			_gthis._table = _gthis._database.getTable(_gthis._tableName);
 			_gthis._table.fetch({ transformId : _gthis._transformId, transformParameters : _gthis._transformArgs}).then(function(data) {
-				console.log("../../haxe/core/dashboards/Portlet.hx:75:","-------------------------------> " + data.length);
 				_gthis._instance.onDataRefreshed(_gthis._table);
 			});
 		});
@@ -5792,13 +5896,6 @@ core_dashboards_Portlet.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 			this._instance = new core_dashboards_portlets_ScatterGraphPortletInstance();
 			this._instance.set_percentWidth(100);
 			this._instance.set_percentHeight(100);
-			break;
-		case "filter":
-			this._instance = new core_dashboards_portlets_FilterPortletInstance();
-			break;
-		case "filter-expandable":
-			this._instance = new core_dashboards_portlets_ExpandableFilterPortletInstance();
-			this._instance.set_percentWidth(100);
 			break;
 		case "table":
 			this._instance = new core_dashboards_portlets_TableDataPortletInstance();
@@ -6003,6 +6100,7 @@ core_dashboards_portlets_BarGraphPortletInstance.prototype = $extend(core_dashbo
 		}
 		if(this.get_width() > 0 && this.get_height() > 0) {
 			this._bar.set_data(graphData);
+			this.onFilterChanged(this.get_dashboardInstance().get_filter());
 		}
 	}
 	,refresh: function() {
@@ -6040,124 +6138,6 @@ core_dashboards_portlets_BarGraphPortletInstance.prototype = $extend(core_dashbo
 		return new core_dashboards_portlets_BarGraphPortletInstance();
 	}
 	,__class__: core_dashboards_portlets_BarGraphPortletInstance
-});
-var core_dashboards_portlets_ExpandableFilterPortletInstance = function() {
-	this._filterFieldName = null;
-	core_dashboards_portlets_PortletInstance.call(this);
-	this.set_styleString("spacing: 0px");
-	this._filter = new haxe_ui_components_TextField();
-	this._filter.set_percentWidth(100);
-	this._filter.set_placeholder("Type to search in list");
-	this._filter.set_styleString("border-radius: 0; border-bottom: none;");
-	this.addComponent(this._filter);
-	this._list = new haxe_ui_containers_ListView();
-	this._list.set_virtual(true);
-	this._list.set_percentWidth(100);
-	this._list.set_height(100);
-	this._list.registerEvent("change",$bind(this,this.onListChange));
-	this.addComponent(this._list);
-};
-$hxClasses["core.dashboards.portlets.ExpandableFilterPortletInstance"] = core_dashboards_portlets_ExpandableFilterPortletInstance;
-core_dashboards_portlets_ExpandableFilterPortletInstance.__name__ = "core.dashboards.portlets.ExpandableFilterPortletInstance";
-core_dashboards_portlets_ExpandableFilterPortletInstance.__super__ = core_dashboards_portlets_PortletInstance;
-core_dashboards_portlets_ExpandableFilterPortletInstance.prototype = $extend(core_dashboards_portlets_PortletInstance.prototype,{
-	_filter: null
-	,_list: null
-	,onFilterChanged: function(filter) {
-		var value = filter.h[this._filterFieldName];
-		var ds = this._list.get_dataSource();
-		var indexToSelect = 0;
-		var _g = 0;
-		var _g1 = ds.get_size();
-		while(_g < _g1) {
-			var i = _g++;
-			var item = ds.get(i);
-			if(item.text == value) {
-				indexToSelect = i;
-				break;
-			}
-		}
-		this._list.set_selectedIndex(indexToSelect);
-	}
-	,onListChange: function(_) {
-		var selectedItem = this._list.get_selectedItem();
-		if(selectedItem == null || this.get_dashboardInstance() == null) {
-			return;
-		}
-		var selectedText = selectedItem.text;
-		var allValues = StringTools.startsWith(selectedText,"(All)");
-		if(allValues == true) {
-			this.get_dashboardInstance().removeFilterItem(this._filterFieldName);
-		} else {
-			this.get_dashboardInstance().addFilterItem(this._filterFieldName,selectedText);
-		}
-	}
-	,_filterFieldName: null
-	,onDataRefreshed: function(table) {
-	}
-	,registerBehaviours: function() {
-		core_dashboards_portlets_PortletInstance.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = core_dashboards_portlets_PortletInstance.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new core_dashboards_portlets_ExpandableFilterPortletInstance();
-	}
-	,__class__: core_dashboards_portlets_ExpandableFilterPortletInstance
-});
-var core_dashboards_portlets_FilterPortletInstance = function() {
-	var _gthis = this;
-	core_dashboards_portlets_PortletInstance.call(this);
-	var dd = new haxe_ui_components_DropDown();
-	var ds = new haxe_ui_data_ArrayDataSource();
-	ds.add({ text : "Filter Item 1"});
-	ds.add({ text : "Filter Item 2"});
-	ds.add({ text : "Filter Item 3"});
-	ds.add({ text : "Filter Item 4"});
-	ds.add({ text : "Filter Item 5"});
-	dd.set_dataSource(ds);
-	this.addComponent(dd);
-	dd.set_onChange(function(_) {
-		if(_gthis.get_dashboardInstance() != null) {
-			_gthis.get_dashboardInstance().onFilterChanged();
-		}
-	});
-};
-$hxClasses["core.dashboards.portlets.FilterPortletInstance"] = core_dashboards_portlets_FilterPortletInstance;
-core_dashboards_portlets_FilterPortletInstance.__name__ = "core.dashboards.portlets.FilterPortletInstance";
-core_dashboards_portlets_FilterPortletInstance.__super__ = core_dashboards_portlets_PortletInstance;
-core_dashboards_portlets_FilterPortletInstance.prototype = $extend(core_dashboards_portlets_PortletInstance.prototype,{
-	registerBehaviours: function() {
-		core_dashboards_portlets_PortletInstance.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = core_dashboards_portlets_PortletInstance.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new core_dashboards_portlets_FilterPortletInstance();
-	}
-	,__class__: core_dashboards_portlets_FilterPortletInstance
 });
 var core_dashboards_portlets_ScatterGraphPortletInstance = function() {
 	this.hasSize = false;
@@ -6219,6 +6199,7 @@ core_dashboards_portlets_ScatterGraphPortletInstance.prototype = $extend(core_da
 		}
 		if(this.get_width() > 0 && this.get_height() > 0) {
 			this._scatter.set_data(graphData);
+			this.onFilterChanged(this.get_dashboardInstance().get_filter());
 		}
 	}
 	,hasSize: null
@@ -6350,6 +6331,7 @@ core_dashboards_portlets_TableDataPortletInstance.prototype = $extend(core_dashb
 			ds.add(item);
 		}
 		this._table.set_dataSource(ds);
+		this.onFilterChanged(this.get_dashboardInstance().get_filter());
 	}
 	,registerBehaviours: function() {
 		core_dashboards_portlets_PortletInstance.prototype.registerBehaviours.call(this);
@@ -8813,6 +8795,9 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 		}
 	}
 	,unselectBars: function() {
+		if(this._container == null) {
+			return;
+		}
 		this._selectedBarIndex = -1;
 		var g = d3.select("#" + this._container.id + " svg .nvd3");
 		var bars = g.selectAll(".nv-bar");

@@ -94,5 +94,6 @@ class TableDataPortletInstance extends PortletInstance {
         }
 
         _table.dataSource = ds;
+        onFilterChanged(dashboardInstance.filter);
     }
 }

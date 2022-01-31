@@ -8,8 +8,6 @@ import haxe.ui.data.ArrayDataSource;
 import haxe.ui.data.DataSource;
 import haxe.ui.core.IDataComponent;
 import core.dashboards.portlets.TableDataPortletInstance;
-import core.dashboards.portlets.FilterPortletInstance;
-import core.dashboards.portlets.ExpandableFilterPortletInstance;
 import core.dashboards.portlets.BarGraphPortletInstance;
 import core.dashboards.portlets.ScatterGraphPortletInstance;
 import core.dashboards.portlets.PortletInstance;
@@ -72,22 +70,9 @@ class Portlet extends VBox implements IDataComponent {
             _database = db;
             _table = _database.getTable(_tableName);
             _table.fetch({transformId: _transformId, transformParameters: _transformArgs}).then(function(data) {
-                trace("-------------------------------> " + data.length);
                 _instance.onDataRefreshed(cast _table);
             });
         });
-        /*
-        if (_database == null) {
-            _database = new Database(_databaseName);
-        }
-        if (_table == null) {
-            _table = new Table(_tableName, _database);
-        }
-
-        _table.getTransformedRows(_transformId, _transformArgs).then(function(transformedFragment) {
-            _instance.onDataRefreshed(transformedFragment);
-        });
-        */
     }
 
     private function parseConfigData() {
@@ -171,11 +156,6 @@ class Portlet extends VBox implements IDataComponent {
                 _instance = new ScatterGraphPortletInstance();
                 _instance.percentWidth = 100;
                 _instance.percentHeight = 100;
-            case "filter":    
-                _instance = new FilterPortletInstance();
-            case "filter-expandable":    
-                _instance = new ExpandableFilterPortletInstance();
-                _instance.percentWidth = 100;
             case "table":
                 _instance = new TableDataPortletInstance();
                 _instance.percentWidth = 100;
