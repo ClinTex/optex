@@ -1,0 +1,26 @@
+.dropdown-popup {
+    background-color: none;
+    border: 2px solid #2c2c45;
+}
+
+.dropdown:down {
+    background-color: #2c2c45;
+    color: #cacad1;
+}
+
+.dropdown-search-container {
+    spacing: 0;
+}
+
+.dropdown-search-field-container {
+    width: 100%;
+    padding: 2px;
+}
+
+.dropdown-search-field {
+    width: 100%;
+    border: none;
+    border-radius: 0px;
+    icon: "haxeui-core/styles/default/search.png";
+}
+

@@ -1,9 +1,8 @@
 package core.dashboards.portlets;
 
+import core.data.GenericTable;
 import core.graphs.ScatterGraph;
 import core.graphs.ColorCalculator;
-import core.data.CoreData.TableFragment;
-import core.data.Table;
 import core.graphs.MarkerFunctions;
 
 using StringTools;
@@ -26,23 +25,19 @@ class ScatterGraphPortletInstance extends PortletInstance {
         addComponent(_scatter);
     }
 
-    private var _fragment:TableFragment = null;
-    public override function onDataRefreshed(fragment:TableFragment) {
-        _fragment = fragment;
+    private var _table:GenericTable = null;
+    public override function onDataRefreshed(table:GenericTable) {
+        _table = table;
 
-        var table = Table.fromFragment(fragment);
         var axisX = config("axisX");
         var axisY = config("axisY");
         var size = config("size");
-        var fieldIndexX = table.getFieldIndex(axisX);
-        var fieldIndexSize = table.getFieldIndex(size);
-        var data = fragment.data;
-        data.sort(function(o1, o2) {
-            if (o1[fieldIndexX] < o2[fieldIndexX]) {
+        var records = table.records;
+        records.sort(function(o1, o2) {
+            if (Std.string(o1.getFieldValue(axisX)) < Std.string(o2.getFieldValue(axisX))) {
                 return -1;
             }
-
-            if (o1[fieldIndexX] > o2[fieldIndexX]) {
+            if (Std.string(o1.getFieldValue(axisX)) > Std.string(o2.getFieldValue(axisX))) {
                 return 1;
             }
             return 0;
@@ -62,10 +57,10 @@ class ScatterGraphPortletInstance extends PortletInstance {
             var fieldIndexY = table.getFieldIndex(part);
             var values:Array<Dynamic> = [];
             var n = 0;
-            for (row in data) {
-                var valueX = row[fieldIndexX];
-                var valueY = Std.parseFloat(row[fieldIndexY]);
-                var valueSize = Std.parseFloat(row[fieldIndexSize]);
+            for (row in records) {
+                var valueX = row.getFieldValue(axisX);
+                var valueY = Std.parseFloat(row.getFieldValue(axisY));
+                var valueSize = Std.parseFloat(row.getFieldValue(size));
                 values.push({
                     x: valueX,
                     y: valueY,
@@ -92,8 +87,8 @@ class ScatterGraphPortletInstance extends PortletInstance {
         if (width > 0 && height > 0) {
             if (hasSize == false) {
                 hasSize = true;
-                if (_fragment != null) {
-                    onDataRefreshed(_fragment);
+                if (_table != null) {
+                    onDataRefreshed(_table);
                 }
             }
         }

@@ -4,13 +4,28 @@
         <rule />
         <vbox width="100%" height="100%" style="padding: 10px;spacing: 10px;">
 
-            <frame text="Basic" width="100%">
+            <frame text="Dashboard Group" width="100%">
+                <grid columns="2" width="100%">
+                    <optionbox width="175" id="createNewGroupOption" group="groupOption" text="Create new group" verticalAlign="top" selected="true" />
+                    <vbox width="100%">
+                        <textfield id="newGroupName" placeholder="Group name" width="100%"/>
+                        <dropdown id="newGroupIcon" width="100%" />
+                    </vbox>
+
+                    <optionbox width="175" id="addToExistingGroupOption" group="groupOption" text="Add to existing group" verticalAlign="center" hidden="true" />
+                    <dropdown id="existingGroupSelector" width="100%" disabled="true" hidden="true" />
+                </grid> 
+            </frame>    
+
+            <frame text="Dashboard Details" width="100%">
                 <grid columns="2" width="100%">
                     <label text="Name" verticalAlign="center" />
                     <textfield id="dashboardNameField" placeholder="Enter name" width="100%"/>
 
                     <label text="Icon" verticalAlign="center" />
-                    <textfield id="dashboardIconField" placeholder="Enter icon" text="dashboard.png" width="100%"/>
+
+                    <dropdown id="dashboardIconField" width="100%">
+                    </dropdown>
 
                     <label text="Template" verticalAlign="center" />
                     <dropdown id="dashboardTemplateField" width="100%">

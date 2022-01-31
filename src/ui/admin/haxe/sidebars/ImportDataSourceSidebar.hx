@@ -1,17 +1,19 @@
 package sidebars;
 
-import core.data.Table;
-import core.data.DatabaseManager;
+import core.data.GenericTable;
 import views.DataView;
-import core.data.CoreData.FieldType;
+import core.data.internal.CoreData.FieldType;
 import components.WorkingIndicator;
 import haxe.ui.events.MouseEvent;
-import core.data.Database;
+import core.data.dao.Database;
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.events.UIEvent;
 import haxe.ui.containers.SideBar;
 import core.data.parsers.DataParser;
 import core.data.parsers.CSVDataParser;
+import core.data.DatabaseManager;
+
+using StringTools;
 
 @:build(haxe.ui.ComponentBuilder.build("assets/sidebars/import-datasource.xml"))
 class ImportDataSourceSidebar extends SideBar {
@@ -32,6 +34,10 @@ class ImportDataSourceSidebar extends SideBar {
     private function populateDatabases() {
         var ds = new ArrayDataSource<Dynamic>();
         for (db in _databases) {
+            if (db.name.startsWith("__")) {
+                continue;
+            }
+
             ds.add({
                 text: db.name,
                 db: db
@@ -64,7 +70,7 @@ class ImportDataSourceSidebar extends SideBar {
             var ds = new ArrayDataSource<Dynamic>();
             for (table in tables) {
                 ds.add({
-                    text: table.name + " (" + table.getRowCount() + " records)",
+                    text: table.name + " (" + table.recordCount + " records)",
                     table: table
                 });
             }
@@ -165,11 +171,13 @@ class ImportDataSourceSidebar extends SideBar {
         var db = null;
         if (createNewCoreOption.selected == true) {
             dbName = newCoreName.text;
-            db = new Database(dbName);
+            db = new Database();
+            db.name = dbName;
             DatabaseManager.instance.addBatchOperation(CreateDatabase, db);
         } else {
             dbName = existingCoreSelector.selectedItem.db.name;
-            db = new Database(dbName);
+            db = new Database();
+            db.name = dbName;
         }
 
         // table
@@ -177,7 +185,9 @@ class ImportDataSourceSidebar extends SideBar {
         var table = null;
         if (createNewTableOption.selected == true) {
             tableName = newTableName.text;
-            table = new Table(tableName, db);
+            table = new GenericTable();
+            table.name = tableName;
+            table.db = db;
 
             for (i in 0...importTableFields.dataSource.size) {
                 var item = importTableFields.dataSource.get(i);
@@ -195,7 +205,9 @@ class ImportDataSourceSidebar extends SideBar {
             DatabaseManager.instance.addBatchOperation(CreateTable, table);
         } else {
             tableName = existingTableSelector.selectedItem.table.name;
-            table = new Table(tableName, db);
+            table = new GenericTable();
+            table.name = tableName;
+            table.db = db;
         }
 
         // data
@@ -204,8 +216,16 @@ class ImportDataSourceSidebar extends SideBar {
 
         _working = new WorkingIndicator();
         _working.showWorking();
-        DatabaseManager.instance.performBatchOperations(function(s) {
-            _working.message = s;
+        DatabaseManager.instance.performBatchOperations(function(operation, current, max) {
+            trace(operation.type, current, max);
+            switch (operation.type) {
+                case CreateDatabase:
+                    _working.message = "Creating Core";
+                case CreateTable:
+                    _working.message = "Creating Table";
+                case AddTableData:
+                    _working.message = "Adding Data";
+            }
         }).then(function(result) {
             _working.workComplete();
             DataView.instance.refresh(dbName, tableName);

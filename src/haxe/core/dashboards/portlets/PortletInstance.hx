@@ -1,7 +1,7 @@
 package core.dashboards.portlets;
 
+import core.data.GenericTable;
 import haxe.ui.containers.VBox;
-import core.data.CoreData.TableFragment;
 
 class PortletInstance extends VBox {
     public var additionalConfigParams:Map<String, String> = [];
@@ -14,7 +14,7 @@ class PortletInstance extends VBox {
 
     }
 
-    public function onDataRefreshed(fragment:TableFragment) {
+    public function onDataRefreshed(table:GenericTable) {
     }
 
     public function onFilterChanged(filter:Map<String, Any>) {

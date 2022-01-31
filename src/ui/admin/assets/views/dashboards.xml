@@ -4,12 +4,10 @@
             <vbox  width="100%" style="padding:7px;background-color: #eeeeee;__padding-right: 1px;border-bottom:1px solid #ababab;border-right:1px solid #ababab">
                 <textfield placeholder="Filter dashboards" width="100%" />
             </vbox>
-            <listview id="dashboardSelector" styleName="left-menu" width="100%" height="100%" selectedIndex="0">
-                <item-renderer width="100%" layoutName="horizontal">
-                    <image id="icon" verticalAlign="center" />
-                    <label width="100%" id="name" verticalAlign="center" />
-                </item-renderer>
-            </listview>
+
+            <treeview id="dashboardTree" width="100%" height="100%">
+            </treeview>
+
             <hbox width="100%" height="67" style="padding:0px;spacing:0px;border-right: 1px solid #ababab;border-top: 1px solid #ababab;padding-right:1px;padding-top: 1px;border-bottom:1px solid #ababab;padding-bottom:1px;" styleName="bottom-buttons">
                 <button id="addDashboardButton" text="Add" width="33%" height="100%" icon="icons/icons8-plus-+-32.png" iconPosition="top" />
                 <component width="1" height="100%" style="background-color: #ababab" />
@@ -24,21 +22,66 @@
                 border: none;
                 filter: none;
             }
+
+            #dashboardTree {
+                border: none;
+                background-color: #eeeeee;
+                border-right: 1px solid #ababab;
+            }
         </style>
 
 
         <vbox id="detailsContainer" width="100%" height="100%" style="padding: 10px;">
-            <tabview id="mainTabs" width="100%" height="100%" tabPosition="bottom">
+            <tabview id="dashboardDetailsTabs" width="100%" height="100%" tabPosition="bottom">
+                <vbox text="Details" width="100%" height="100%">
+                    <vbox horizontalAlign="right" width="100%" height="100%" style="padding: 10px;">
+                        <box width="100%" height="100%">
+                            <box id="dashboardGroupDetails" width="100%" height="100%">
+                                <vbox width="100%">
+                                    <label id="dashboardGroupNameLabel" text="Group Details" style="font-size: 22px;color:#888888;" horizontalAlign="right" />
+                                    <rule />
+
+                                    <grid width="100%">
+                                        <label text="Id" />
+                                        <label id="dashboardGroupIdField" text="-" />
+
+                                        <label text="Name" verticalAlign="center" />
+                                        <textfield id="dashboardGroupNameField" width="200" />
+
+                                        <label text="Icon" verticalAlign="center" />
+                                        <dropdown id="dashboardGroupIconField" width="200" />
+                                    </grid>
+                                </vbox>
+                            </box>
+
+                            <box id="dashboardDetails" width="100%" height="100%">
+                                <vbox width="100%" height="100%">
+                                    <label id="dashboardNameLabel" text="Dashboard Details" style="font-size: 22px;color:#888888;" horizontalAlign="right" />
+                                    <rule />
+
+                                    <grid width="100%">
+                                        <label text="Id" />
+                                        <label id="dashboardIdField" text="-" />
+
+                                        <label text="Name" verticalAlign="center" />
+                                        <textfield id="dashboardNameField" width="200" />
+
+                                        <label text="Group" verticalAlign="center" />
+                                        <dropdown id="dashboardGroupField" width="200" />
+
+                                        <label text="Icon" verticalAlign="center" />
+                                        <dropdown id="dashboardIconField" width="200" />
+                                    </grid>
+
+                                    <textarea id="dashboardDataField" width="100%" height="100%"/>
+                                </vbox>
+                            </box>
+                        </box>
+                        <button id="updateDetailsButton" text="Update" horizontalAlign="right" />
+                    </vbox>
+                </vbox>
                 <vbox id="previewTab" text="Preview" width="100%" height="100%">
                     <dashboard-instance id="dashboardPreviewInstance" width="100%" height="100%" style="padding: 15px;" />
-                </vbox>
-                <vbox text="Designer" width="100%" height="100%">
-                </vbox>
-                <vbox text="Layout Data" width="100%" height="100%">
-                    <textarea id="layoutDataField" width="100%" height="100%" wrap="false" />
-                    <hbox horizontalAlign="right">
-                        <button id="updateLayoutDataButton" text="Update" />
-                    </hbox>
                 </vbox>
             </tabview>
         </vbox>

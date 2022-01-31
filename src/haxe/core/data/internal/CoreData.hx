@@ -1,4 +1,4 @@
-package core.data;
+package core.data.internal;
 
 import js.lib.Promise;
 

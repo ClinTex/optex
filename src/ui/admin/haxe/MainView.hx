@@ -13,10 +13,10 @@ import haxe.ui.containers.HBox;
 import haxe.ui.containers.Box;
 import haxe.ui.containers.Card;
 import haxe.ui.core.ComponentClassMap;
-import core.data.DatabaseManager;
 import views.DataView;
 import haxe.ui.containers.menus.Menu.MenuEvent;
 import haxe.ui.containers.VBox;
+import core.data.DatabaseManager;
 
 @:build(haxe.ui.ComponentBuilder.build("assets/main-view.xml"))
 class MainView extends VBox {
@@ -57,6 +57,7 @@ class MainView extends VBox {
     }
 
     private function clearAllDbs() {
+        /*
         var working = new WorkingIndicator();
         working.showWorking();
         DatabaseManager.instance.removeDatabase("ClintexPrimaryData").then(function(r) {
@@ -65,6 +66,7 @@ class MainView extends VBox {
             });
             
         });
+        */
     }
 
     @:bind(mainStack, UIEvent.CHANGE)

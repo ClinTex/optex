@@ -1,0 +1,15 @@
+.button {
+    background-color: #24243A;
+    border: 2px solid #2c2c45;
+    color: #9292a0;
+    padding: 8px 12px;
+}
+
+.button:hover {
+    background-color: #2c2c45;
+    color: #cacad1;
+}
+
+.button:down {
+    background-color: #24243A;
+}

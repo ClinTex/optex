@@ -1,13 +1,12 @@
 package core.data;
 
-import core.data.CoreData.CoreResult;
-import js.lib.Promise;
-import core.data.CoreData.DatabaseInfo;
-import core.data.CoreData.FieldType;
-import core.EventDispatcher;
 import core.EventDispatcher.Event;
-
-using StringTools;
+import js.lib.Reflect;
+import core.data.GenericTable;
+import core.data.utils.PromiseUtils;
+import core.data.dao.Database;
+import core.data.internal.CoreData;
+import js.lib.Promise;
 
 enum DatabaseBatchOperationType {
     CreateDatabase;
@@ -21,7 +20,7 @@ typedef DatabaseBatchOperation = {
 }
 
 class DatabaseEvent extends Event {
-    public static inline var Initialized = "initialized";
+    public static inline var Initialized = "dbInitialized";
 }
 
 class DatabaseManager extends EventDispatcher<DatabaseEvent> {
@@ -34,170 +33,118 @@ class DatabaseManager extends EventDispatcher<DatabaseEvent> {
         return _instance;
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    // INSTANCE
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public var internalData:Database = null;
-    public var dashboardsData:Table = null;
+    //////////////////////////////////////////////////////////////////////////////////////////
 
-    private function new() {
+    public var internal:InternalDB = null;
+    private var _cachedDatabases:Array<Database> = null;
+
+    public function new() {
+        internal = InternalDB.instance;
     }
 
-    private var _batchOperations:Array<DatabaseBatchOperation> = [];
+    public function init():Promise<Bool> {
+        return new Promise((resolve, reject) -> {
+            var promises = [internal.init()];
+
+            PromiseUtils.runSequentially(promises, function() {
+                resolve(true);
+                dispatch(new DatabaseEvent(DatabaseEvent.Initialized));
+            });
+        });
+    }
+
+    public function getDatabase(name:String):Promise<Database> {
+        return new Promise((resolve, reject) -> {
+            CoreData.getDatabaseInfo(name).then(function(databaseDef) {
+                var db = new Database();
+                db.name = databaseDef.databaseName;
+                db.info = databaseDef;
+
+                for (tableDef in databaseDef.tables) {
+                    var table = new GenericTable();
+                    table.info = tableDef;
+                    db.registerTable(tableDef.tableName, table);
+                }
+
+                resolve(db);
+            });
+        });
+    }
+
+    public function listDatabases(useCache:Bool = true):Promise<Array<Database>> {
+        return new Promise((resolve, reject) -> {
+            if (useCache == true && _cachedDatabases != null) {
+                resolve(_cachedDatabases);
+                return;
+            }
+
+            CoreData.listDatabases().then(function(databaseDefs) {
+                var dbs = [];
+                for (databaseDef in databaseDefs) {
+                    var db = new Database();
+                    db.name = databaseDef.databaseName;
+                    db.info = databaseDef;
+                    dbs.push(db);
+                    
+                    for (tableDef in databaseDef.tables) {
+                        var table = new GenericTable();
+                        table.info = tableDef;
+                        db.registerTable(tableDef.tableName, table);
+                    }
+                }
+
+                _cachedDatabases = dbs;
+                resolve(dbs);
+            });
+        });
+    }
+
+    private var _batchOperations:Array<DatabaseBatchOperation> = null;
     public function addBatchOperation(type:DatabaseBatchOperationType, data:Dynamic) {
+        if (_batchOperations == null) {
+            _batchOperations = [];
+        }
         _batchOperations.push({
             type: type,
             data: data
         });
     }
 
-    public function performBatchOperations(onProgress:String->Void):Promise<CoreResult> {
+    public function performBatchOperations(onProgress:DatabaseBatchOperation->Int->Int->Void):Promise<Bool> {
         return new Promise((resolve, reject) -> {
-            performBatches(_batchOperations.copy(), onProgress, function() {
-                _batchOperations = [];
-                resolve({
-                    errored: false,
-                    errorCode: 0,
-                    errorText: ""
-                });
-            });
+            performBatches(_batchOperations.copy(), 0, _batchOperations.length, function() {
+                resolve(true);
+            }, onProgress);
         });
     }
 
-    private function performBatches(list:Array<DatabaseBatchOperation>, onProgress:String->Void, complete:Void->Void) {
+    private function performBatches(list:Array<DatabaseBatchOperation>, current:Int, max:Int, onComplete:Void->Void, onProgress:DatabaseBatchOperation->Int->Int->Void) {
         if (list.length == 0) {
-            complete();
+            onComplete();
             return;
         }
 
         var item = list.shift();
+        if (onProgress != null) {
+            onProgress(item, (current + 1), max);
+        }
+
         switch (item.type) {
             case CreateDatabase:
-                var database:Database = cast(item.data, Database);
-                if (onProgress != null) {
-                    onProgress("Creating database '" + database.name + "'");
-                }
-                createDatabase(database.name).then(function(createdDatabase) {
-                    performBatches(list, onProgress, complete);
+                var db = cast(item.data, Database);
+                db.create().then(function(r) {
+                    performBatches(list, current + 1, max, onComplete, onProgress);
                 });
             case CreateTable:
-                var table:Table = cast(item.data, Table);
-                if (onProgress != null) {
-                    onProgress("Creating table '" + table.name + "'");
-                }
-                CoreData.createTable(table.database.name, table.name, table.fieldDefinitions).then(function(createTableResult) {
-                    performBatches(list, onProgress, complete);
+                var table = cast(item.data, GenericTable);
+                table.create().then(function(r) {
+                    performBatches(list, current + 1, max, onComplete, onProgress);
                 });
-            case AddTableData:   
-                var table:Table = cast(item.data, Table);
-                @:privateAccess {
-                    table.commitData(table._dataToAdd, onProgress).then(function(addDataResult) {
-                        performBatches(list, onProgress, complete);
-                    });
-                }     
+            case AddTableData:
+                var table = cast(item.data, GenericTable);
+                table.commitData().then(function(r) {
+                    performBatches(list, current + 1, max, onComplete, onProgress);
+                });
         }
-    }
-
-    public function init():Promise<Bool> {
-        return new Promise((resolve, reject) -> {
-            var tables = [];
-            var table = new Table("dashboards");
-                table.defineField("dashboardName", FieldType.String);
-                table.defineField("dashboardLayoutData", FieldType.String);
-                table.defineField("dashboardIcon", FieldType.String);
-            tables.push(table);
-
-            createDatabaseIfDoesntExist("__optex_internal_data", tables).then(function(r) {
-                getDatabase("__optex_internal_data").then(function(db) {
-                    internalData = db;
-                    internalData.getTable("dashboards").then(function(t) {
-                        dashboardsData = t;
-                        resolve(true);
-                        dispatch(new DatabaseEvent(DatabaseEvent.Initialized));
-                    });
-                });
-            });
-
-        });
-    }
-
-    public function createDatabaseIfDoesntExist(databaseName:String, tablesToCreate:Array<Table>):Promise<Bool> {
-        return new Promise((resolve, reject) -> {
-            CoreData.hasDatabase(databaseName).then(function(hasDatabase) {
-                if (hasDatabase == false) {
-                    CoreData.createDatabase(databaseName).then(function(createDatabaseResult) {
-                        createTablesIfDontExist(databaseName, tablesToCreate.copy(), function() {
-                            resolve(true);
-                        });
-                    });
-                } else {
-                    createTablesIfDontExist(databaseName, tablesToCreate.copy(), function() {
-                        resolve(true);
-                    });
-                }
-            });
-        });
-    }
-
-    private function createTablesIfDontExist(databaseName:String, tablesToCreate:Array<Table>, complete:Void->Void) {
-        if (tablesToCreate.length == 0) {
-            complete();
-            return;
-        }
-
-        var table = tablesToCreate.shift();
-        CoreData.hasTable(databaseName, table.name).then(function(hasTable) {
-            if (hasTable) {
-                createTablesIfDontExist(databaseName, tablesToCreate, complete);
-            } else {
-                CoreData.createTable(databaseName, table.name, table.fieldDefinitions).then(function(createTableResult) {
-                    createTablesIfDontExist(databaseName, tablesToCreate, complete);
-                });
-            }
-        });
-    }
-
-    public function createDatabase(databaseName:String):Promise<Database> {
-        return new Promise((resolve, reject) -> {
-            Logger.instance.log("creating database '" + databaseName + "'");
-            CoreData.createDatabase(databaseName).then(function(createDatabaseResult) {
-                Logger.instance.log("database '" + databaseName + "' created successfully");
-                getDatabase(databaseName).then(function(database) {
-                    resolve(database);
-                });
-            });
-        });
-    }
-
-    public function getDatabase(databaseName:String):Promise<Database> {
-        return new Promise((resolve, reject) -> {
-            CoreData.getDatabaseInfo(databaseName).then(function(info) {
-                var db = new Database(databaseName, info);
-                resolve(db);
-            });
-        });
-    }
-
-    public function listDatabases(includeInternal:Bool = false):Promise<Array<Database>> {
-        return new Promise((resolve, reject) -> {
-            CoreData.listDatabases().then(function(dbs:Array<DatabaseInfo>) {
-                var list = [];
-                for (db in dbs) {
-                    if (includeInternal == false && db.databaseName.startsWith("__")) {
-                        continue;
-                    }
-                    list.push(new Database(db.databaseName, db));
-                }
-                resolve(list);
-            });
-        });
-    }
-
-    public function removeDatabase(databaseName):Promise<CoreResult> {
-        return new Promise((resolve, reject) -> {
-            CoreData.removeDatabase(databaseName).then(function(result) {
-                resolve(result);
-            });
-        });
     }
 }

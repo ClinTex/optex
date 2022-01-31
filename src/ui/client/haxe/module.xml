@@ -2,17 +2,26 @@
     <resources>
         <resource path="assets/icons" prefix="icons" />
         <resource path="assets/css" prefix="css" />
+        <resource path="core/assets/themes" prefix="themes" />
+        <resource path="core/assets/fonts" prefix="fonts" />
     </resources>
     <components>
         <class package="core.dashboards" />
     </components>
 
     <themes>
-        <default>
-			<style resource="css/default/main.css" />
-        </default>
-        <dark parent="default">
-			<style resource="css/dark/main.css" />
-        </dark>
-    </themes>    
+        <optex parent="default">
+            <style resource="themes/optex/main.css" />
+            <style resource="themes/optex/buttons.css" />
+            <style resource="themes/optex/textinputs.css" />
+            <style resource="themes/optex/scrollbars.css" />
+            <style resource="themes/optex/scrollviews.css" />
+            <style resource="themes/optex/dropdowns.css" />
+            <style resource="themes/optex/listviews.css" />
+            <style resource="themes/optex/treeviews.css" />
+            <style resource="themes/optex/cards.css" />
+            <style resource="themes/optex/splitters.css" />
+            <style resource="themes/optex/tableviews.css" />
+        </optex>
+    </themes>
 </module>

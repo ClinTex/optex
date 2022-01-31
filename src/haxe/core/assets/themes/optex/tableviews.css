@@ -1,0 +1,43 @@
+.header {
+    background-color: none;
+}
+
+.header .column {
+    border-radius: 0;
+    icon-position: far-right;
+    border-left-width: 0;
+    text-align: left;
+    background-color: #333352;
+    border: 1px solid #24243A;
+}
+
+.tableview {
+    background-color: #24243A;
+    border: 2px solid #24243A;
+    padding: 0px;
+}
+
+.tableview .even {
+    background-color: #24243A;
+}
+
+.tableview .even:hover {
+    background-color: #2c2c45;
+}
+
+.tableview .odd {
+    background-color: #24243A;
+}
+
+.tableview .odd:hover {
+    background-color: #2c2c45;
+}
+
+.tableview .compounditemrenderer:selected {
+    background-color: #333352;
+    color: #cacad1;
+}
+
+.tableview .compounditemrenderer:selected .label {
+    color: #cacad1;
+}

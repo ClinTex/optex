@@ -1,11 +1,11 @@
 package core.dashboards.portlets;
 
+import core.data.GenericTable;
 import core.graphs.ColorCalculator;
 import core.graphs.BarGraph;
 import core.graphs.MarkerFunctions;
-import core.data.CoreData.TableFragment;
-import core.data.Table;
 import core.util.FunctionDetails;
+import core.data.internal.CoreData.TableFragment;
 
 using StringTools;
 
@@ -65,21 +65,18 @@ class BarGraphPortletInstance extends PortletInstance {
         return cc;
     }
 
-    private var _fragment:TableFragment = null;
-    public override function onDataRefreshed(fragment:TableFragment) {
-        _fragment = fragment;
+    private var _table:GenericTable = null;
+    public override function onDataRefreshed(table:GenericTable) {
+        _table = table;
 
-        var table = Table.fromFragment(fragment);
         var axisX = config("axisX");
         var axisY = config("axisY");
-        var fieldIndexX = table.getFieldIndex(axisX);
-        var data = fragment.data;
-        data.sort(function(o1, o2) {
-            if (o1[fieldIndexX] < o2[fieldIndexX]) {
+        var records = table.records;
+        records.sort(function(o1, o2) {
+            if (Std.string(o1.getFieldValue(axisX)) < Std.string(o2.getFieldValue(axisX))) {
                 return -1;
             }
-
-            if (o1[fieldIndexX] > o2[fieldIndexX]) {
+            if (Std.string(o1.getFieldValue(axisX)) > Std.string(o2.getFieldValue(axisX))) {
                 return 1;
             }
             return 0;
@@ -97,12 +94,11 @@ class BarGraphPortletInstance extends PortletInstance {
                 continue;
             }
 
-            var fieldIndexY = table.getFieldIndex(part);
             var values:Array<Dynamic> = [];
             var n = 0;
-            for (row in data) {
-                var valueX = row[fieldIndexX];
-                var valueY = Std.parseFloat(row[fieldIndexY]);
+            for (row in records) {
+                var valueX = row.getFieldValue(axisX);
+                var valueY = Std.parseFloat(row.getFieldValue(part));
 
                 values.push({
                     x: valueX,
@@ -121,6 +117,18 @@ class BarGraphPortletInstance extends PortletInstance {
         if (width > 0 && height > 0) {
             _bar.data = graphData;
         }
+
+
+
+
+
+
+
+
+
+
+
+
 
         /*
         var graphData:Dynamic = [];
@@ -152,8 +160,8 @@ class BarGraphPortletInstance extends PortletInstance {
         if (width > 0 && height > 0) {
             if (hasSize == false) {
                 hasSize = true;
-                if (_fragment != null) {
-                    onDataRefreshed(_fragment);
+                if (_table != null) {
+                    onDataRefreshed(_table);
                 }
             }
         }

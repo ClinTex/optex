@@ -3,6 +3,7 @@
         <resource path="assets/icons" prefix="icons" />
         <resource path="assets/fonts" prefix="fonts" />
         <resource path="assets/data" prefix="data" />
+        <resource path="core/assets/themes" prefix="themes" />
     </resources>
     <components>
         <class package="core.dashboards" />

@@ -1,7 +1,7 @@
 package core.data.parsers;
 
-import core.data.CoreData.FieldType;
-import core.data.CoreData.TableFieldInfo;
+import core.data.internal.CoreData.FieldType;
+import core.data.internal.CoreData.TableFieldInfo;
 using StringTools;
 
 class CSVDataParser extends DataParser {

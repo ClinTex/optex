@@ -1,0 +1,9 @@
+.default-background {
+    background-color: #24243A;
+}
+    
+.label, .textfield, .textarea {
+    font-name: "fonts/Akzidenz-grotesk-roman.ttf";
+    color: #9292a0;
+    font-size: 14px;
+}

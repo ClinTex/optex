@@ -1,0 +1,19 @@
+.splitter {
+    spacing: 0;
+}
+
+.vertical-splitter-gripper {
+    border-radius: 3px;
+}
+
+.vertical-splitter-gripper:hover {
+    background-color: #333352;
+}
+
+.horizontal-splitter-gripper:hover {
+    background-color: #333352;
+}
+
+.horizontal-splitter-gripper {
+    border-radius: 3px;
+}

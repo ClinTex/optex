@@ -1,4 +1,4 @@
-<vbox width="100%" height="100%" styleName="default-background-solid" style="spacing:0;">
+<vbox width="100%" height="100%" styleName="default-background" style="spacing:0;padding:20px;">
     <style>
         .portlet.no-border {
             filter: none;
@@ -6,17 +6,100 @@
             border-radius: 0;
             padding: 0;
         }
+
+#dashboardTree .scrollview-contents {
+    spacing: 20px;
+}
+
+#dashboardTree .treeviewnode, #dashboardTree .treenode-container {
+    spacing: 5px;
+}
+
+#dashboardTree .itemrenderer:hover {
+    background-color: none;
+}
+
+#dashboardTree .itemrenderer .label {
+    padding-left: 5px;
+}
+
+.treeview .itemrenderer:hover .label {
+    color: #cacad1;
+}
+
+.treeview .itemrenderer:node-selected {
+    background-color: none;
+}
+
+.treeview .itemrenderer:node-selected .label {
+    color: white;
+}
+
+.vertical-splitter {
+    spacing: 20px;
+}
+
+.horizontal-splitter {
+    spacing: 20px;
+}
     </style>
 
+    <hbox width="100%" style="padding-bottom:20px;">
+        <image resource="themes/optex/clintex-logo.png" />
+        <spacer width="100%" />
+        <hbox style="spacing:0;padding:0px;" verticalAlign="center">
+            <dropdown width="200" searchable="true">
+                <data>
+                    <item text="All Sites" />
+                    <item text="Site 0001" />
+                    <item text="Site 0002" />
+                    <item text="Site 0003" />
+                    <item text="Site 0004" />
+                    <item text="Site 0005" />
+                    <item text="Site 0006" />
+                    <item text="Site 0007" />
+                    <item text="Site 0008" />
+                    <item text="Site 0009" />
+                    <item text="Site 0010" />
+                </data>
+            </dropdown>
+            
+            <component width="40" height="2" style="background-color: #2c2c45" verticalAlign="center" />
+            
+            <dropdown width="200" searchable="true">
+                <data>
+                    <item text="All Patients" />
+                    <item text="Ian Harrigan" />
+                    <item text="Andre Byrne" />
+                    <item text="Brendan Mannion" />
+                    <item text="Neill Something" />
+                    <item text="Mathew Buckly" />
+                </data>
+            </dropdown>
+        </hbox>
+    </hbox>
+
+    <!--
     <menu-bar id="mainMenu" width="100%">
         <spacer width="100%" />
         <label text="Light Mode" verticalAlign="center" />
         <switch onchange="this.selected ? haxe.ui.Toolkit.theme='default' : haxe.ui.Toolkit.theme='dark';" />
     </menu-bar>
+    -->
 
     <hbox width="100%" height="100%">
+        <vbox width="270" height="100%">
+            <spacer height="10" />
+            <image resource="themes/optex/oem-console-logo.png" />
+            <spacer height="20" />
+            <treeview id="dashboardTree" width="100%" height="100%" style="border: none;">
+            </treeview>
+        </vbox>    
+
+        <!--
         <button-bar id="dashboardSelector" direction="vertical" height="100%" selectedIndex="0" styleName="left-menu" style="margin-top: -1px">
         </button-bar>
+        -->
 
         <vbox width="100%" height="100%" style="padding: 15px;">
             <dashboard-instance id="dashboardInstance"  width="100%" height="100%" />

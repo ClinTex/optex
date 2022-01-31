@@ -363,12 +363,18 @@ class BarGraph extends Component {
             gridColour = "#242729";
             textColour = "#b4b4b4";
             markerColour = "#ffffff";
-        } else {
+        } else if (Toolkit.theme == "default") {
             xAxisColour = "#222222";
             yAxisColour = "#222222";
             gridColour = "#EEEEEE";
             textColour = "#222222";
             markerColour = "#444444";
+        } else if (Toolkit.theme == "optex") {
+            xAxisColour = "#45456e";
+            yAxisColour = "#45456e";
+            gridColour = "#45456e";
+            textColour = "#cacad1";
+            markerColour = "#ffffff";
         }
         
         _coloursBuilt = false;

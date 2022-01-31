@@ -1,7 +1,9 @@
 package core.dashboards;
 
-import core.data.Table;
-import core.data.Database;
+import core.data.dao.IDataTable;
+import core.data.DatabaseManager;
+import core.data.GenericTable;
+import core.data.GenericData;
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.data.DataSource;
 import haxe.ui.core.IDataComponent;
@@ -13,6 +15,7 @@ import core.dashboards.portlets.ScatterGraphPortletInstance;
 import core.dashboards.portlets.PortletInstance;
 import haxe.ui.containers.VBox;
 import haxe.ui.components.Label;
+import core.data.dao.Database;
 
 using StringTools;
 
@@ -45,12 +48,6 @@ class Portlet extends VBox implements IDataComponent {
         }
 
         parseConfigData();
-        /*
-        trace("_databaseName: " + _databaseName);
-        trace("_tableName: " + _tableName);
-        trace("_transformId: " + _transformId);
-        trace("_transformArgs: " + _transformArgs);
-        */
         _instance.additionalConfigParams = _additionalConfigParams;
         refreshData();
 
@@ -69,8 +66,17 @@ class Portlet extends VBox implements IDataComponent {
     }
 
     private var _database:Database = null;
-    private var _table:Table = null;
+    private var _table:IDataTable<GenericData> = null;
     private function refreshData() {
+        DatabaseManager.instance.getDatabase(_databaseName).then(function(db) {
+            _database = db;
+            _table = _database.getTable(_tableName);
+            _table.fetch({transformId: _transformId, transformParameters: _transformArgs}).then(function(data) {
+                trace("-------------------------------> " + data.length);
+                _instance.onDataRefreshed(cast _table);
+            });
+        });
+        /*
         if (_database == null) {
             _database = new Database(_databaseName);
         }
@@ -81,6 +87,7 @@ class Portlet extends VBox implements IDataComponent {
         _table.getTransformedRows(_transformId, _transformArgs).then(function(transformedFragment) {
             _instance.onDataRefreshed(transformedFragment);
         });
+        */
     }
 
     private function parseConfigData() {

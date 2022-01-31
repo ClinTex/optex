@@ -1,10 +1,11 @@
 package core.dashboards.portlets;
 
+import core.data.GenericTable;
 import haxe.ui.containers.ListView;
 import haxe.ui.components.TextField;
-import core.data.CoreData.TableFragment;
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.events.UIEvent;
+import core.data.internal.CoreData.TableFragment;
 
 using StringTools;
 
@@ -47,7 +48,7 @@ class ExpandableFilterPortletInstance extends PortletInstance {
 
     private function onListChange(_) {
         var selectedItem = _list.selectedItem;
-        if (selectedItem == null) {
+        if (selectedItem == null || dashboardInstance == null) {
             return;
         }
 
@@ -61,7 +62,8 @@ class ExpandableFilterPortletInstance extends PortletInstance {
     }
 
     private var _filterFieldName:String = null;
-    public override function onDataRefreshed(fragment:TableFragment) {
+    public override function onDataRefreshed(table:GenericTable) {
+        /*
         _filterFieldName = fragment.fieldDefinitions[0].fieldName;
 
         var indexToSelect = 0;
@@ -78,5 +80,6 @@ class ExpandableFilterPortletInstance extends PortletInstance {
         });
         _list.dataSource = ds;
         _list.selectedIndex = indexToSelect;
+        */
     }
 }

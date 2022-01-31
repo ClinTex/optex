@@ -1,6 +1,6 @@
 package core.data.parsers;
 
-import core.data.CoreData.TableFieldInfo;
+import core.data.internal.CoreData.TableFieldInfo;
 
 class DataParser {
     public function new() {

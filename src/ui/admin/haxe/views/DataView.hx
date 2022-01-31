@@ -1,8 +1,5 @@
 package views;
 
-import haxe.ui.core.Platform;
-import core.data.CoreData;
-import haxe.ui.containers.Box;
 import haxe.ui.core.Component;
 import haxe.ui.containers.dialogs.Dialog.DialogButton;
 import haxe.ui.containers.dialogs.MessageBox.MessageBoxType;
@@ -16,9 +13,9 @@ import haxe.ui.events.UIEvent;
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.containers.VBox;
 import haxe.ui.events.MouseEvent;
-import core.data.Database;
-import core.data.Table;
+import core.data.dao.Database;
 import core.data.DatabaseManager;
+import core.data.GenericTable;
 
 using StringTools;
 
@@ -26,26 +23,35 @@ using StringTools;
 class DataView extends VBox {
     public static var instance:DataView;
 
-    private inline function num(i:Dynamic) {
-        return Syntax.code("Number({0})", i);
-    }
+    private var _database:Database;
+    private var _table:GenericTable;
 
     public function new() {
         super();
         instance = this;
-        refresh();
+        DatabaseManager.instance.listen(DatabaseEvent.Initialized, function(_) {
+            refresh("__optex_data");
+        });
     }
 
     private var _databaseToSelect:String = null;
     private var _tableToSelect:String = null;
+    private var _showInternalDatabases:Bool = true;
     public function refresh(selectedDatabase:String = null, selectedTable:String = null) {
         _databaseToSelect = selectedDatabase;
         _tableToSelect = selectedTable;
-        DatabaseManager.instance.listDatabases().then(function(dbs) {
+
+        _database = null;
+        _table = null;
+
+        DatabaseManager.instance.listDatabases(false).then(function(dbs) {
             var ds = new ArrayDataSource<Dynamic>();
             var indexToSelect = 0;
             var n = 0;
             for (db in dbs) {
+                if (db.name.startsWith("__")) {
+                    continue;
+                }
                 ds.add({
                     text: db.name,
                     db: db
@@ -55,6 +61,25 @@ class DataView extends VBox {
                 }
                 n++;
             }
+
+            ds.sort("text");
+
+            if (_showInternalDatabases) {
+                for (db in dbs) {
+                    if (!db.name.startsWith("__")) {
+                        continue;
+                    }
+                    ds.add({
+                        text: db.name,
+                        db: db
+                    });
+                    if (selectedDatabase != null && db.name == selectedDatabase) {
+                        indexToSelect = n;
+                    }
+                    n++;
+                }
+            }
+
             databaseSelector.dataSource = ds;
             databaseSelector.selectedIndex = -1;
             databaseSelector.selectedIndex = indexToSelect;
@@ -71,13 +96,12 @@ class DataView extends VBox {
 
         var working = new WorkingIndicator();
         working.showWorking();
-        DatabaseManager.instance.removeDatabase(selectedItem.db.name).then(function(r) {
+        _database.remove().then(function(r) {
             working.workComplete();
             refresh();
         });
     }
 
-    private var _database:Database;
     @:bind(databaseSelector, UIEvent.CHANGE)
     private function onDatabaseSelectorChanged(e:UIEvent) {
         var selectedItem = databaseSelector.selectedItem;
@@ -85,8 +109,8 @@ class DataView extends VBox {
             return;
         }
 
-        var dbName = selectedItem.db.name;
-        _database = new Database(dbName);
+        _database = selectedItem.db;
+        _table = null;
         _database.listTables().then(function(tables) {
             var ds = new ArrayDataSource<Dynamic>();
             var indexToSelect = 0;
@@ -95,7 +119,7 @@ class DataView extends VBox {
                 ds.add({
                     name: table.name,
                     type: "static",
-                    rows: table.getRowCount(),
+                    rows: table.recordCount,
                     table: table
                 });
                 if (_tableToSelect != null && _tableToSelect == table.name) {
@@ -104,6 +128,7 @@ class DataView extends VBox {
                 n++;
             }
 
+            ds.sort("name");
             tableSelector.dataSource = ds;
             tableSelector.selectedIndex = -1;
             tableSelector.selectedIndex = indexToSelect;
@@ -118,15 +143,16 @@ class DataView extends VBox {
         }
 
         var selectedItem = tableSelector.selectedItem;
+        _table = selectedItem.table;
         refreshTableData(selectedItem.table);
     }
 
-    private function refreshTableData(table:Table) {
+    private function refreshTableData(table:GenericTable) {
         dataSourceDataTable.clearContents(true);
 
         var colWidths:Map<Component, Float> = [];
         var cols:Map<String, Component> = [];
-        var fieldDefs = table.fieldDefinitions;
+        var fieldDefs = table.info.fieldDefinitions;
         var maxCols = 9;
         var n = 0;
         for (fd in fieldDefs) {
@@ -140,25 +166,21 @@ class DataView extends VBox {
             n++;
         }
 
-        var max = 0xffffff;//Std.int((dataSourceDataTable.height - 75) / 25);
         n = 0;
-        table.getRows(0, max).then(function(f) {
+        table.fetch().then(function(data) {
             var ds = new ArrayDataSource<Dynamic>();
-            for (d in f.data) {
-                var fieldIndex = 0;
+            for (d in data) {
                 var item:Dynamic = {};
                 n = 0;
                 for (fd in fieldDefs) {
-                    Reflect.setField(item, safeId(fd.fieldName), d[fieldIndex]);
+                    Reflect.setField(item, safeId(fd.fieldName), d.getFieldValue(fd.fieldName));
 
                     var column = cols.get(safeId(fd.fieldName));
                     var columnWidth = colWidths.get(column);
-                    var newWidth = guessStringWidth(Std.string(d[fieldIndex]), 9);
+                    var newWidth = guessStringWidth(Std.string(d.getFieldValue(fd.fieldName)), 9);
                     if (newWidth > columnWidth) {
                         colWidths.set(column, newWidth);
                     }
-
-                    fieldIndex++;
 
                     if (n > maxCols) {
                         break;
@@ -203,16 +225,20 @@ class DataView extends VBox {
             return;
         }
 
-        var message = "Are you sure you wisth to remove the '" + tableSelector.selectedItem.table.name + "' table?\n\nThis cannot be undone";
+        var message = "Are you sure you wisth to remove the '" + tableSelector.selectedItem.table.name + "' table?\n\nThis cannot be undone.\n\n";
         Dialogs.messageBox(message, "Confirm Removal", MessageBoxType.TYPE_QUESTION, function(button) {
             if (button == DialogButton.YES) {
                 var working = new WorkingIndicator();
                 working.showWorking();
-                _database.removeTable(tableSelector.selectedItem.table.name).then(function(r) {
+                _table.remove().then(function(r) {
                     working.workComplete();
                     refresh(_database.name);
                 });
             }
         });
+    }
+
+    private inline function num(i:Dynamic) {
+        return Syntax.code("Number({0})", i);
     }
 }

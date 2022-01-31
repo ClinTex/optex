@@ -1,12 +1,11 @@
 package core.dashboards.portlets;
 
+import core.data.GenericTable;
 import haxe.ui.events.UIEvent;
 import haxe.ui.data.ArrayDataSource;
 import haxe.ui.components.Column;
 import haxe.ui.containers.Header;
 import haxe.ui.containers.TableView;
-import core.data.CoreData.TableFragment;
-import core.data.Table;
 
 using StringTools;
 
@@ -66,13 +65,13 @@ class TableDataPortletInstance extends PortletInstance {
         });
     }
 
-    public override function onDataRefreshed(fragment:TableFragment) {
+    public override function onDataRefreshed(table:GenericTable) {
         if (_header == null) {
             _header = new Header();
-            var pcx = 100 / fragment.fieldDefinitions.length;
+            var pcx = 100 / table.info.fieldDefinitions.length;
             _header.percentWidth = 100;
             _table.addComponent(_header);
-            for (fd in fragment.fieldDefinitions) {
+            for (fd in table.info.fieldDefinitions) {
                 var col = new Column();
                 col.id = fd.fieldName.replace(" ", "_");
                 //col.width = 200;
@@ -83,11 +82,11 @@ class TableDataPortletInstance extends PortletInstance {
         }
 
         var ds = new ArrayDataSource<Dynamic>();
-        for (row in fragment.data) {
+        for (row in table.records) {
             var fieldIndex = 0;
             var item:Dynamic = {};
-            for (fd in fragment.fieldDefinitions) {
-                Reflect.setField(item, fd.fieldName.replace(" ", "_"), row[fieldIndex]);
+            for (fd in table.info.fieldDefinitions) {
+                Reflect.setField(item, fd.fieldName.replace(" ", "_"), row.getFieldValue(fd.fieldName));
                 fieldIndex++;
             }
 

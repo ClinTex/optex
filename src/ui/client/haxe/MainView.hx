@@ -1,5 +1,7 @@
 package;
 
+import core.data.DashboardData;
+import haxe.ui.Toolkit;
 import haxe.ui.containers.HorizontalSplitter;
 import haxe.ui.containers.VerticalSplitter;
 import haxe.ui.components.Spacer;
@@ -12,9 +14,6 @@ import haxe.ui.containers.HBox;
 import haxe.ui.containers.Card;
 import haxe.ui.core.ComponentClassMap;
 import haxe.ui.events.UIEvent;
-import core.data.Dashboard;
-import haxe.ui.components.Button;
-import core.data.DashboardManager;
 import core.data.DatabaseManager;
 import haxe.ui.containers.VBox;
 
@@ -47,34 +46,55 @@ class MainView extends VBox {
     }
 
     public function refreshDashboardSelector() {
-        DashboardManager.instance.listDashboards().then(function(dashboards) {
-            dashboardSelector.removeAllComponents();
-
-            for (d in dashboards) {
-                var icon = d.icon;
-                if (icon == null || icon == "") {
-                    icon = "icons/icons8-dashboard-layout-48.png";
+        var dashboardId:Null<Int> = null;
+        DatabaseManager.instance.internal.dashboardData.getDashboardsByGroup().then(function(map) {
+            dashboardTree.clearNodes();
+            var firstNode = null;
+            var nodeToSelect = null;
+            var nGroup = 0;
+            for (group in map.keys()) {
+                var groupNode = dashboardTree.addNode({text: group.name, icon: "themes/optex/" + group.icon.path, groupData: group});
+                if (nGroup == 0) {
+                    groupNode.expanded = true;
                 }
-                var button = new Button();
-                button.text = d.name;
-                button.icon = icon;
-                button.userData = d;
-                dashboardSelector.addComponent(button);
+
+                var dashboards = map.get(group);
+                for (dashboard in dashboards) {
+                    var dashboardNode = groupNode.addNode({text: dashboard.name, icon: "themes/optex/" + dashboard.icon.path, dashboardData: dashboard});
+                    if (firstNode == null) {
+                        firstNode = dashboardNode;
+                    }
+                    if (dashboardId != null && dashboard.dashboardId == dashboardId) {
+                        nodeToSelect = dashboardNode;
+                    }
+                }
+                nGroup++;
             }
-            
-            dashboardSelector.registerInternalEvents(true);
-            dashboardSelector.selectedIndex = -1;
-            dashboardSelector.selectedIndex = 0;
+
+            if (nodeToSelect == null) {
+                nodeToSelect = firstNode;
+            }
+
+            if (nodeToSelect != null) {
+                Toolkit.callLater(function() {
+                    dashboardTree.selectedNode = nodeToSelect;
+                });
+            }
         });
     }
 
-    @:bind(dashboardSelector, UIEvent.CHANGE)
-    private function onDashboardSelectorChange(_) {
-        var selectedButton = dashboardSelector.selectedButton;
-        if (selectedButton == null) {
+    @:bind(dashboardTree, UIEvent.CHANGE)
+    private function onDashboardTreeChange(_) {
+        var selectedItem = dashboardTree.selectedNode;
+        if (selectedItem == null || selectedItem.data == null) {
             return;
         }
-        var dashboard:Dashboard = cast(selectedButton.userData, Dashboard);
-        dashboardInstance.buildDashboard(dashboard);
+
+        if (selectedItem.data.dashboardData != null) {
+            var dashboardData:DashboardData = selectedItem.data.dashboardData;
+            dashboardInstance.buildDashboard(dashboardData);
+        } else {
+            //selectedItem.expanded = !selectedItem.expanded;
+        }
     }
 }
