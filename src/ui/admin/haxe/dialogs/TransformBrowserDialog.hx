@@ -1,15 +1,11 @@
 package dialogs;
 
-import core.data.dao.IDataTable.FetchParams;
-import core.util.FunctionDetails;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.components.Label;
 import haxe.ui.core.Component;
 import haxe.ui.events.UIEvent;
 import core.data.GenericTable;
 import core.data.dao.Database;
-import core.data.transforms.TransformFactory;
-import core.data.transforms.TransformDetails;
 import haxe.ui.data.ArrayDataSource;
 import core.data.DatabaseManager;
 import haxe.ui.containers.dialogs.Dialog;
@@ -118,47 +114,11 @@ class TransformBrowserDialog extends Dialog {
         refreshTableData(_table, transformListField.text);
     }
 
-    private function applyTransforms(table:GenericTable, transformList:String = null) {
-        var s = transformList;
-        if (s != null && s.trim().length == 0) {
-            s = null;
-        }
-
-        var transformedTable = table;
-
-        if (s != null) {
-            var transformStack:Array<TransformDetails> = [];
-
-            var parts = s.split("->");
-            for (p in parts) {
-                p = p.trim();
-                if (p.length == 0) {
-                    continue;
-                }
-                var functionDetails = new FunctionDetails(p);
-                transformStack.push({
-                    transformId: functionDetails.name,
-                    transformParameters: functionDetails.params
-                });
-
-            }
-            
-            for (item in transformStack) {
-                var t = TransformFactory.getTransform(item.transformId);
-                if (t != null) {
-                    transformedTable = t.applyTransform(transformedTable, item);
-                }
-            }
-        }
-
-        return transformedTable;
-    }
-
     private function refreshTableData(table:GenericTable, transformList:String = null) {
         resultsTable.clearContents(true);
 
         table.fetch().then(function(_) {
-            table = applyTransforms(table, transformList);
+            table = table.transform(transformList);
 
             var colWidths:Map<Component, Float> = [];
             var cols:Map<String, Component> = [];

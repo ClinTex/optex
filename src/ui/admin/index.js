@@ -7819,6 +7819,7 @@ var core_data_GenericTable = function(name) {
 	this.batchSize = 5000;
 	this._cachedFieldIndex = new haxe_ds_StringMap();
 	this._dataToAdd = null;
+	this.primaryKeyName = null;
 	this.records = [];
 	this.info = null;
 	this.name = name;
@@ -7835,6 +7836,38 @@ core_data_GenericTable.prototype = {
 	,info: null
 	,records: null
 	,primaryKeyName: null
+	,transform: function(transformList) {
+		var s = transformList;
+		if(s != null && StringTools.trim(s).length == 0) {
+			s = null;
+		}
+		var transformedTable = this;
+		if(s != null) {
+			var transformStack = [];
+			var parts = s.split("->");
+			var _g = 0;
+			while(_g < parts.length) {
+				var p = parts[_g];
+				++_g;
+				p = StringTools.trim(p);
+				if(p.length == 0) {
+					continue;
+				}
+				var functionDetails = new core_util_FunctionDetails(p);
+				transformStack.push({ transformId : functionDetails.name, transformParameters : functionDetails.params});
+			}
+			var _g = 0;
+			while(_g < transformStack.length) {
+				var item = transformStack[_g];
+				++_g;
+				var t = core_data_transforms_TransformFactory.getTransform(item.transformId);
+				if(t != null) {
+					transformedTable = t.applyTransform(transformedTable,item);
+				}
+			}
+		}
+		return transformedTable;
+	}
 	,recordCount: null
 	,get_recordCount: function() {
 		if(this.info == null) {
@@ -10546,7 +10579,7 @@ dialogs_TransformBrowserDialog.prototype = $extend(haxe_ui_containers_dialogs_Di
 		var _gthis = this;
 		this.resultsTable.clearContents(true);
 		table.fetch().then(function(_) {
-			table = _gthis.applyTransforms(table,transformList);
+			table = table.transform(transformList);
 			var colWidths = new haxe_ds_ObjectMap();
 			var cols_h = Object.create(null);
 			var fieldDefs = table.info.fieldDefinitions;

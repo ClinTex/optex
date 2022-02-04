@@ -7,7 +7,12 @@ import core.data.dao.Logger;
 import core.data.internal.CoreData;
 import core.data.internal.CoreData.TableInfo;
 import core.data.utils.ConversionUtils;
+import core.data.transforms.TransformFactory;
+import core.data.transforms.TransformDetails;
 import js.lib.Promise;
+import core.util.FunctionDetails;
+
+using StringTools;
 
 class GenericTable implements IDataTable<GenericData> {
     public var db:Database;
@@ -16,7 +21,7 @@ class GenericTable implements IDataTable<GenericData> {
     public var info:TableInfo = null;
     public var records:Array<GenericData> = [];
     
-    public var primaryKeyName:String;
+    public var primaryKeyName:String = null;
 
     public function new(name:String = null) {
         this.name = name;
@@ -29,6 +34,42 @@ class GenericTable implements IDataTable<GenericData> {
         }
     }
     
+    public function transform(transformList:String):GenericTable {
+        var s = transformList;
+        if (s != null && s.trim().length == 0) {
+            s = null;
+        }
+
+        var transformedTable = this;
+
+        if (s != null) {
+            var transformStack:Array<TransformDetails> = [];
+
+            var parts = s.split("->");
+            for (p in parts) {
+                p = p.trim();
+                if (p.length == 0) {
+                    continue;
+                }
+                var functionDetails = new FunctionDetails(p);
+                transformStack.push({
+                    transformId: functionDetails.name,
+                    transformParameters: functionDetails.params
+                });
+
+            }
+            
+            for (item in transformStack) {
+                var t = TransformFactory.getTransform(item.transformId);
+                if (t != null) {
+                    transformedTable = t.applyTransform(transformedTable, item);
+                }
+            }
+        }
+
+        return transformedTable;
+    }
+
     public var recordCount(get, null):Int;
     private function get_recordCount():Int {
         if (this.info == null) {
