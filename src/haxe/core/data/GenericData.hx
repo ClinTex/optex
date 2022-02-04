@@ -8,7 +8,7 @@ import js.lib.Promise;
 class GenericData implements IDataObject {
     public var table:GenericTable = null;
     
-    private var data:Array<String> = [];
+    public var data:Array<String> = [];
     
     public function new() {
     }
@@ -30,13 +30,17 @@ class GenericData implements IDataObject {
             return null;
         }
         
+        return getFieldValueByIndex(fieldIndex);
+    }
+
+    public function getFieldValueByIndex(fieldIndex:Int):Any {
         var fieldDef = table.info.fieldDefinitions[fieldIndex];
         var fieldValue = data[fieldIndex];
         var convertedValue = ConversionUtils.fromString(fieldValue, fieldDef.fieldType);
         
         return convertedValue;
     }
-    
+
     public function update():Promise<Bool> {
         return new Promise((resolve, reject) -> {
             resolve(true);

@@ -33,6 +33,7 @@
         <menu text="Admin" id="adminMenu">
             <menu-item id="removeCurrentDatabase" text="Remove Current Database" />
             <menu-item id="clearAll" text="Clear All" />
+            <menu-item id="transformBrowser" text="Transform Browser" />
         </menu>
     </menu-bar>
 

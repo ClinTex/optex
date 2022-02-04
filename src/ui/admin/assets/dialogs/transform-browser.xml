@@ -1,0 +1,25 @@
+<dialog title="Transform Browser" width="800" height="600">
+    <frame text="Data" width="100%">
+        <hbox width="100%">
+            <dropdown id="databaseSelector" width="50%" />
+            <dropdown id="tableSelector" width="50%" />
+        </hbox>
+    </frame>    
+
+    <frame text="Transforms" width="100%">
+        <vbox width="100%">
+            <textarea id="transformListField" width="100%" placeholder="Enter transform list" />
+            <hbox width="100%">
+                <button id="example1Button" text="Example 1" />
+                <button id="example2Button" text="Example 2" />
+                <button id="example3Button" text="Example 3" />
+                <spacer width="100%" />
+                <button id="applyTransformButton" text="Apply Transform" />
+            </hbox>
+        </vbox>    
+    </frame>
+
+    <frame text="Results" width="100%" height="100%">
+        <tableview id="resultsTable" width="100%" height="100%" virtual="true" />
+    </frame>    
+</dialog>

@@ -388,7 +388,7 @@ class ScatterGraph extends Component {
             xAxisColour = "#45456e";
             yAxisColour = "#45456e";
             gridColour = "#45456e";
-            textColour = "#cacad1";
+            textColour = "#9292a0";
             markerColour = "#ffffff";
         }
         

@@ -30,7 +30,7 @@ class DataView extends VBox {
         super();
         instance = this;
         DatabaseManager.instance.listen(DatabaseEvent.Initialized, function(_) {
-            refresh("__optex_data");
+            refresh();
         });
     }
 

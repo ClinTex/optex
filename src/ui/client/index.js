@@ -8949,7 +8949,7 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 			this.xAxisColour = "#45456e";
 			this.yAxisColour = "#45456e";
 			this.gridColour = "#45456e";
-			this.textColour = "#cacad1";
+			this.textColour = "#9292a0";
 			this.markerColour = "#ffffff";
 		}
 		this._coloursBuilt = false;
@@ -9408,7 +9408,7 @@ core_graphs_ScatterGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 			this.xAxisColour = "#45456e";
 			this.yAxisColour = "#45456e";
 			this.gridColour = "#45456e";
-			this.textColour = "#cacad1";
+			this.textColour = "#9292a0";
 			this.markerColour = "#ffffff";
 		}
 		this._coloursBuilt = false;

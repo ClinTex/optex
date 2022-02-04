@@ -16,6 +16,8 @@ class GenericTable implements IDataTable<GenericData> {
     public var info:TableInfo = null;
     public var records:Array<GenericData> = [];
     
+    public var primaryKeyName:String;
+
     public function new(name:String = null) {
         this.name = name;
         if (name != null) {
@@ -47,6 +49,11 @@ class GenericTable implements IDataTable<GenericData> {
         for (d in datas) {
             addData(d);
         }
+    }
+
+    public function getFieldType(fieldIndex:Int):Int {
+        var fieldDef = info.fieldDefinitions[fieldIndex];
+        return fieldDef.fieldType;
     }
 
     public function commitData():Promise<Bool> {
@@ -159,6 +166,8 @@ class GenericTable implements IDataTable<GenericData> {
                             record.fromArray(rawRecord);
                             records.push(record);
                         }
+                        this.info.fieldDefinitions = frag.fieldDefinitions;
+                        this._cachedFieldIndex = [];
                         this.records = records;
                         resolve(records);
                     });

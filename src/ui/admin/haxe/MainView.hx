@@ -1,5 +1,6 @@
 package;
 
+import dialogs.TransformBrowserDialog;
 import components.WorkingIndicator;
 import haxe.ui.events.UIEvent;
 import haxe.ui.containers.HorizontalSplitter;
@@ -53,6 +54,9 @@ class MainView extends VBox {
                 DataView.instance.removeCurrentDatabase();
             case "clearAll":
                 clearAllDbs();
+            case "transformBrowser":
+                var dialog = new TransformBrowserDialog();
+                dialog.show();
         }
     }
 
