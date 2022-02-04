@@ -13,6 +13,12 @@ class TransformFactory {
                 return new CountUnique();
             case "average" | "avg":
                 return new Average();
+            case "filterby":
+                return new FilterBy();
+            case "addrow":
+                return new AddRow();
+            case "setfield":
+                return new SetField();
         }
         return null;
     }

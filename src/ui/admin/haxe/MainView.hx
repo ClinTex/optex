@@ -1,5 +1,6 @@
 package;
 
+import haxe.ui.containers.Grid;
 import dialogs.TransformBrowserDialog;
 import components.WorkingIndicator;
 import haxe.ui.events.UIEvent;
@@ -41,6 +42,7 @@ class MainView extends VBox {
         ComponentClassMap.instance.registerClassName("horizontal-splitter", Type.getClassName(HorizontalSplitter));
         ComponentClassMap.instance.registerClassName("vsplitter", Type.getClassName(VerticalSplitter));
         ComponentClassMap.instance.registerClassName("hsplitter", Type.getClassName(HorizontalSplitter));
+        ComponentClassMap.instance.registerClassName("Grid", Type.getClassName(Grid));
 
         DatabaseManager.instance.init().then(function(r) {
             trace("database manager ready");

@@ -118,7 +118,7 @@ class TransformBrowserDialog extends Dialog {
         resultsTable.clearContents(true);
 
         table.fetch().then(function(_) {
-            table = table.transform(transformList);
+            table = table.transform(transformList, []);
 
             var colWidths:Map<Component, Float> = [];
             var cols:Map<String, Component> = [];

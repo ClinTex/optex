@@ -34,7 +34,30 @@ class GenericTable implements IDataTable<GenericData> {
         }
     }
     
-    public function transform(transformList:String):GenericTable {
+    public function createRecord(add:Bool = true) {
+        var record = new GenericData();
+        record.table = this;
+        records.push(record);
+        info.recordCount++;
+        return record;
+    }
+
+    public function clone(includeData:Bool = false) {
+        var copy = new GenericTable();
+        copy.primaryKeyName = this.primaryKeyName;
+        copy.info = {
+            tableName: this.info.tableName,
+            fieldDefinitions: this.info.fieldDefinitions.copy(),
+            recordCount: 0
+        }
+        if (includeData == true) {
+            copy.records = this.records.copy();
+            copy.info.recordCount = this.records.length;
+        }
+        return copy;
+    }
+
+    public function transform(transformList:String, context:Map<String, Any>):GenericTable {
         var s = transformList;
         if (s != null && s.trim().length == 0) {
             s = null;
@@ -62,7 +85,7 @@ class GenericTable implements IDataTable<GenericData> {
             for (item in transformStack) {
                 var t = TransformFactory.getTransform(item.transformId);
                 if (t != null) {
-                    transformedTable = t.applyTransform(transformedTable, item);
+                    transformedTable = t.applyTransform(transformedTable, item, context);
                 }
             }
         }

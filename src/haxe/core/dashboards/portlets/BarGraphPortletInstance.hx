@@ -27,6 +27,14 @@ class BarGraphPortletInstance extends PortletInstance {
         addComponent(_bar);
     }
 
+    private override function onConfigChanged() {
+        _bar.showLegend = configBool("showLegend", true);
+    }
+
+    public override function clearData() {
+        _bar.data = [];
+    }
+
     private function onBarSelected(e:BarGraphEvent) {
         var axisX = config("axisX");
         var value = e.data.xValue;

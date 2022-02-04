@@ -3,7 +3,7 @@ package core.data.transforms;
 import core.data.internal.CoreData.FieldType;
 
 class GroupBy extends Transform {
-    public override function applyTransform(table:GenericTable, details:TransformDetails):GenericTable {
+    public override function applyTransform(table:GenericTable, details:TransformDetails, context:Map<String, Any>):GenericTable {
         var fieldName = details.transformParameters[0];
         var fieldIndex = table.getFieldIndex(fieldName);
 

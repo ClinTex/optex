@@ -49,6 +49,20 @@ class BarGraph extends Component {
         super();
     }
     
+    private var _showLegend:Bool = true;
+    public var showLegend(get, set):Bool;
+    private function get_showLegend():Bool {
+        return _showLegend;
+    }
+    private function set_showLegend(value:Bool):Bool {
+        _showLegend = value;
+        if (_chart != null) {
+            _chart.showLegend(value);
+            _chart.update();
+        }
+        return value;
+    }
+
     private static var counter:Int = 0;
     private override function onReady() {
         super.onReady();
@@ -71,6 +85,8 @@ class BarGraph extends Component {
             _chart.reduceXTicks(false);
             _chart.rotateLabels(labelRotation);
             _chart.showControls(false);
+            _chart.noData("");
+            _chart.showLegend(showLegend);
             _chart.tooltip.enabled(false);
             if (_colourCalculator != null) {
                 _chart.barColor(calculateColour);
@@ -352,8 +368,12 @@ class BarGraph extends Component {
                 fill: ${textColour};
             }', sheet.cssRules.length);
 
+            sheet.insertRule('#${containerId} .nv-noData {
+                fill: ${textColour} !important;
+            }', sheet.cssRules.length);
+
             sheet.insertRule('#${containerId} .nvd3 .nv-bar.dim {
-                opacity: .3;
+                opacity: .2;
             }', sheet.cssRules.length);
     }
     

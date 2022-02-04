@@ -4,13 +4,30 @@ import core.data.GenericTable;
 import haxe.ui.containers.VBox;
 
 class PortletInstance extends VBox {
-    public var additionalConfigParams:Map<String, String> = [];
-
     public function new() {
         super();
     }
 
+    private var _additionalConfigParams:Map<String, String> = [];
+    public var additionalConfigParams(get, set):Map<String, String>;
+    private function get_additionalConfigParams() {
+        return _additionalConfigParams;
+    }
+    private function set_additionalConfigParams(value:Map<String, String>):Map<String, String> {
+        _additionalConfigParams = value;
+        onConfigChanged();
+        return value;
+    }
+
+    private function onConfigChanged() {
+
+    }
+
     public function refresh() {
+
+    }
+
+    public function clearData() {
 
     }
 

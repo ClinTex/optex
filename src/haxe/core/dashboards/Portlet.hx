@@ -22,8 +22,7 @@ class Portlet extends VBox implements IDataComponent {
 
     private var _databaseName:String;
     private var _tableName:String;
-    private var _transformId:String;
-    private var _transformArgs:Map<String, String>;
+    private var _transformList:String;
     private var _additionalConfigParams:Map<String, String> = [];
 
     public function new() {
@@ -33,6 +32,16 @@ class Portlet extends VBox implements IDataComponent {
     }
 
     public function onFilterChanged(filter:Map<String, Any>) {
+        if (_waitForFilterItem != null) {
+            var filter = dashboardInstance.filter;
+            if (filter.exists(_waitForFilterItem) == true) {
+                refreshData();
+            } else {
+                clearData();
+            }
+            return;
+        }
+
         if (_instance != null) {
             _instance.onFilterChanged(filter);
         }
@@ -43,6 +52,7 @@ class Portlet extends VBox implements IDataComponent {
 
         if (_border == false) {
             addClass("no-border");
+            removeClass("card");
         }
 
         parseConfigData();
@@ -63,14 +73,28 @@ class Portlet extends VBox implements IDataComponent {
         addComponent(_instance);
     }
 
+    private function clearData() {
+        if (_instance != null) {
+            _instance.clearData();
+        }
+    }
+
     private var _database:Database = null;
-    private var _table:IDataTable<GenericData> = null;
+    private var _table:GenericTable = null;
+    private var _waitForFilterItem:String = null;
     private function refreshData() {
+        if (_waitForFilterItem != null) {
+            var filter = dashboardInstance.filter;
+            if (filter.exists(_waitForFilterItem) == false) {
+                return;
+            }
+        }
         DatabaseManager.instance.getDatabase(_databaseName).then(function(db) {
             _database = db;
-            _table = _database.getTable(_tableName);
-            _table.fetch({transformId: _transformId, transformParameters: _transformArgs}).then(function(data) {
-                _instance.onDataRefreshed(cast _table);
+            _table = cast _database.getTable(_tableName);
+            _table.fetch().then(function(data) {
+                _table = _table.transform(_transformList, dashboardInstance.filter);
+                _instance.onDataRefreshed(_table);
             });
         });
     }
@@ -86,34 +110,20 @@ class Portlet extends VBox implements IDataComponent {
                         case "table":
                             _tableName = Reflect.field(item, f);
                         case "transform":
-                            var transform:String = Reflect.field(item, f);
-                            transform = transform.trim();
-                            var n = transform.indexOf("(");
-                            if (n != null) {
-                                var argsString = transform.substring(n + 1, transform.length - 1);
-                                var transformArgs = [];
-                                for (arg in argsString.split(",")) {
-                                    arg = arg.trim();
-                                    if (arg.length == 0) {
-                                        continue;
-                                    }
-                                    if (arg.startsWith("'") && arg.endsWith("'")) {
-                                        arg = arg.substr(1, arg.length - 2);
-                                    }
-                                    transformArgs.push(arg);
-                                }
-
-                                transform = transform.substr(0, n);
-                                _transformArgs = [];
-                                _transformArgs.set("fieldName", transformArgs[0]);
-                            }
-                            _transformId = transform;
+                            _transformList = Reflect.field(item, f);
+                        case "waitForFilterItem":
+                            _waitForFilterItem = Reflect.field(item, f);
                         case _:
                             _additionalConfigParams.set(f, Reflect.field(item, f));
                     }
                 }
             }
         }
+    }
+
+    public var dashboardInstance(get, null):DashboardInstance;
+    private function get_dashboardInstance():DashboardInstance {
+        return findAncestor(DashboardInstance);
     }
 
     private var _title:String = null;

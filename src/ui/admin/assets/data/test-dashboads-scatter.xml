@@ -7,13 +7,13 @@
                         <data>
                             <source database="ClintexPrimaryData"
                                     table="ICP 1 Data - Patient Visits"
-                                    transform="group-by('Investigator Site')->average('Data Entry Lag (Days)')"
+                                    transform="group-by('Investigator Site')->average('Number Completed Visits')->average('Data Entry Lag (Days)')->average('Expected Number of Visits')->average('Actual Number of Visits')"
                                     axisX="Investigator Site"
                                     axisY="Data Entry Lag (Days)"
                                     size="Number Completed Visits"
-                                    markerFunction="static-y(180)"
+                                    markerFunction="static-y(16)"
                                     markerBehind="true"
-                                    colorCalculator="threshold:60" />
+                                    colorCalculator="threshold:16" />
                         </data>
                     </portlet>
                 </hsplitter>

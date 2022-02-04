@@ -19,10 +19,31 @@ class ScatterGraphPortletInstance extends PortletInstance {
         //_scatter.labelRotation = -45;
         //_bar.sort = null;
 
-        //_scatter.registerEvent(BarGraphEvent.BAR_SELECTED, onBarSelected);
-        //_scatter.registerEvent(BarGraphEvent.BAR_UNSELECTED, onBarUnselected);
+        _scatter.registerEvent(ScatterGraphEvent.POINT_SELECTED, onPointSelected);
+        _scatter.registerEvent(ScatterGraphEvent.POINT_UNSELECTED, onPointUnselected);
 
         addComponent(_scatter);
+    }
+
+    private function onPointSelected(e:ScatterGraphEvent) {
+        var axisX = config("axisX");
+        var value = e.data.originalX;
+        dashboardInstance.addFilterItem(axisX, value);
+    }
+
+    private function onPointUnselected(e:ScatterGraphEvent) {
+        var axisX = config("axisX");
+        dashboardInstance.removeFilterItem(axisX);
+    }
+
+    public override function onFilterChanged(filter:Map<String, Any>) {
+        var axisX = config("axisX");
+        var value = filter.get(axisX);
+        if (value == null) {
+            _scatter.unselectPoints();
+            return;
+        }
+        _scatter.selectPointFromData(value);
     }
 
     private var _table:GenericTable = null;

@@ -10,6 +10,23 @@ import js.html.CSSStyleSheet;
 import js.html.DivElement;
 import core.nvd3.NV;
 import haxe.ui.util.Timer;
+import haxe.ui.events.UIEvent;
+import js.Syntax;
+
+class ScatterGraphEvent extends UIEvent {
+    public static inline var POINT_SELECTED:String = "pointSelected";
+    public static inline var POINT_UNSELECTED:String = "pointUnselected";
+    
+    public var pointIndex:Int;
+    
+    public override function clone():UIEvent {
+        var c:ScatterGraphEvent = new ScatterGraphEvent(this.type);
+        c.pointIndex = this.pointIndex;
+        c.data = this.data;
+        postClone(c);
+        return c;
+    }
+}
 
 class ScatterGraph extends Component {
     private var _container:DivElement = null;
@@ -31,6 +48,7 @@ class ScatterGraph extends Component {
         super();
     }
 
+    private var _selectedPointIndex:Int = -1;
     private override function onReady() {
         super.onReady();
 
@@ -55,18 +73,34 @@ class ScatterGraph extends Component {
             _chart.xAxis.staggerLabels(false);
             _chart.xAxis.rotateLabels(-45);
             _chart.tooltip.enabled(false);
+            _chart.noData("");
             //_chart.useVoronoi(false);
 
             _chart.xAxis.tickValues(buildXValues()).tickFormat(function(d){
                 return buildXLabels()[d];
             });
             
+            _chart.scatter.dispatch.on("elementClick", function(e:Dynamic) {
+                var index:Int = e.pointIndex;
+                if (index == _selectedPointIndex) {
+                    unselectPoints();
+                    var event = new ScatterGraphEvent(ScatterGraphEvent.POINT_UNSELECTED);
+                    event.pointIndex = index;
+                    dispatch(event);
+                    return;
+                }
+
+                selectPoint(index);
+            });
+
             _graph.datum(_data).call(_chart);
 
             addColorer();
 
-            _chart.dispatch.on('renderEnd', function(){
-                drawMarker();
+            _chart.dispatch.on('renderEnd', function() {
+                Timer.delay(function() {
+                    drawMarker();
+                }, 100);
             });
 
             drawMarker();
@@ -79,6 +113,63 @@ class ScatterGraph extends Component {
 
         invalidateComponentLayout();
         drawMarker();
+    }
+
+    public function unselectPoints() {
+        if (_container == null) {
+            return;
+        }
+
+        _selectedPointIndex = -1;
+        var g = D3.select("#" + _container.id + " svg .nvd3");
+        var points = g.selectAll(".nv-point");
+        points.each(function(d, i) {
+            var el = Syntax.code("this");
+            el.classList.remove("dim");
+        });
+    }
+
+    public function selectPoint(pointIndex:Int) {
+        if (_container == null) {
+            return;
+        }
+
+        _selectedPointIndex = pointIndex;
+        var event = new ScatterGraphEvent(ScatterGraphEvent.POINT_SELECTED);
+        event.pointIndex = pointIndex;
+        var eventData:Dynamic = _data[0].values[pointIndex];
+        eventData.seriesData = [_data[0].values[pointIndex]];
+        event.data = eventData;
+        dispatch(event);
+
+        var g = D3.select("#" + _container.id + " svg .nvd3");
+        var points = g.selectAll(".nv-point");
+        points.each(function(d, i) {
+            var el = Syntax.code("this");
+            if (i == pointIndex) {
+                el.classList.remove("dim");
+            } else {
+                el.classList.add("dim");
+            }
+        });
+
+    }
+
+    public function selectPointFromData(value:Any) {
+        var series:Array<Dynamic> = _data[0].values;
+        var index = -1;
+        var n = 0;
+        for (d in series) {
+            if (d.originalX == value) {
+                index = n;
+                break;
+            }
+            n++;
+        }
+        
+        if (index != -1) {
+            selectPoint(index);
+        }
     }
 
     public var markerBehind:Bool = false;
@@ -312,9 +403,9 @@ class ScatterGraph extends Component {
     private function addColorer() {
         var colorer = function(d:Dynamic, i) {
             var y = d[0].y;
-            if (y > 0 && y <= 170) {
+            if (y <= 14) {
                 return "#448844";
-            } else if (y > 170 && y <= 200) {
+            } else if (y > 14 && y <= 17) {
                 return "#FFBF00";
             } else {
                 return "#FF4444";
@@ -361,8 +452,12 @@ class ScatterGraph extends Component {
                     fill: ${textColour};
                 }', sheet.cssRules.length);
                 
-                sheet.insertRule('#${containerId} .nvd3 .nv-bar.dim {
-                    opacity: .3;
+                sheet.insertRule('#${containerId} .nv-noData {
+                    fill: ${textColour} !important;
+                }', sheet.cssRules.length);
+    
+                sheet.insertRule('#${containerId} .nvd3 .nv-point.dim {
+                    opacity: .2;
                 }', sheet.cssRules.length);
         } catch (e:Dynamic) {
             trace(e);

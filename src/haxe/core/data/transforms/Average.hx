@@ -1,7 +1,7 @@
 package core.data.transforms;
 
 class Average extends Transform {
-    public override function applyTransform(table:GenericTable, details:TransformDetails):GenericTable {
+    public override function applyTransform(table:GenericTable, details:TransformDetails, context:Map<String, Any>):GenericTable {
         if (details.transformParameters.length == 1 && table.primaryKeyName != null) {
             details.transformParameters.insert(0, table.primaryKeyName);
         }
