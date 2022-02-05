@@ -7,3 +7,9 @@
     color: #9292a0;
     font-size: 14px;
 }
+
+.modal-background {
+    background-color: #31314c;
+    background-color: #cacad1;
+    opacity: 0.5;
+}

@@ -9,7 +9,11 @@ import haxe.ui.data.DataSource;
 import haxe.ui.core.IDataComponent;
 import core.dashboards.portlets.TableDataPortletInstance;
 import core.dashboards.portlets.BarGraphPortletInstance;
+import core.dashboards.portlets.HorizontalBarGraphPortletInstance;
 import core.dashboards.portlets.ScatterGraphPortletInstance;
+import core.dashboards.portlets.GaugeGraphPortletInstance;
+import core.dashboards.portlets.UserInputPortletInstance;
+import core.dashboards.portlets.FieldValuePortletInstance;
 import core.dashboards.portlets.PortletInstance;
 import haxe.ui.containers.VBox;
 import haxe.ui.components.Label;
@@ -45,6 +49,9 @@ class Portlet extends VBox implements IDataComponent {
         if (_instance != null) {
             _instance.onFilterChanged(filter);
         }
+    }
+
+    public function onUserInputChanged(inputs:Map<String, Any>) {
     }
 
     public override function onReady() {
@@ -83,6 +90,14 @@ class Portlet extends VBox implements IDataComponent {
     private var _table:GenericTable = null;
     private var _waitForFilterItem:String = null;
     private function refreshData() {
+        if (_databaseName == null || _databaseName.length == 0) {
+            return;
+        }
+
+        if (_tableName == null || _tableName.length == 0) {
+            return;
+        }
+
         if (_waitForFilterItem != null) {
             var filter = dashboardInstance.filter;
             if (filter.exists(_waitForFilterItem) == false) {
@@ -162,14 +177,26 @@ class Portlet extends VBox implements IDataComponent {
                 _instance = new BarGraphPortletInstance();
                 _instance.percentWidth = 100;
                 _instance.percentHeight = 100;
+            case "chart-horizontal-bar":
+                _instance = new HorizontalBarGraphPortletInstance();
+                _instance.percentWidth = 100;
+                _instance.percentHeight = 100;
             case "chart-scatter":
                 _instance = new ScatterGraphPortletInstance();
+                _instance.percentWidth = 100;
+                _instance.percentHeight = 100;
+            case "chart-gauge":
+                _instance = new GaugeGraphPortletInstance();
                 _instance.percentWidth = 100;
                 _instance.percentHeight = 100;
             case "table":
                 _instance = new TableDataPortletInstance();
                 _instance.percentWidth = 100;
                 _instance.percentHeight = 100;
+            case "user-input":
+                _instance = new UserInputPortletInstance();
+            case "field-value":
+                _instance = new FieldValuePortletInstance();
         }
 
         return value;

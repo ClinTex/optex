@@ -156,6 +156,9 @@ class ScatterGraph extends Component {
     }
 
     public function selectPointFromData(value:Any) {
+        if (_data == null || _data[0] == null || _data[0].values == null) {
+            return;
+        }
         var series:Array<Dynamic> = _data[0].values;
         var index = -1;
         var n = 0;

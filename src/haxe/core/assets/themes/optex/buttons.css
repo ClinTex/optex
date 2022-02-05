@@ -3,6 +3,7 @@
     border: 2px solid #2c2c45;
     color: #9292a0;
     padding: 8px 12px;
+    border-radius: 4px;
 }
 
 .button:hover {

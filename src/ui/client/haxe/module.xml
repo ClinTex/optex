@@ -16,6 +16,7 @@
             <style resource="themes/optex/textinputs.css" />
             <style resource="themes/optex/scrollbars.css" />
             <style resource="themes/optex/scrollviews.css" />
+            <style resource="themes/optex/steppers.css" />
             <style resource="themes/optex/dropdowns.css" />
             <style resource="themes/optex/listviews.css" />
             <style resource="themes/optex/treeviews.css" />

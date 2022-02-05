@@ -80,6 +80,24 @@ class DashboardInstance extends Box {
         }
     }
 
+    private var _userInputs:Map<String, Any> = [];
+    public var userInputs(get, null):Map<String, Any>;
+    private function get_userInputs():Map<String, Any> {
+        return _userInputs;
+    }
+
+    public function addUserInputItem(inputId:String, value:Any) {
+        if (_userInputs.exists(inputId) && _userInputs.get(inputId) == value) {
+            return;
+        }
+
+        trace("adding using input item: " + inputId + " = " + value);
+        _userInputs.set(inputId, value);
+        for (p in portlets) {
+            p.onUserInputChanged(_userInputs);
+        }
+    }
+
     public function removeFilterItem(field:String) {
         if (_filter.exists(field) == false) {
             return;
