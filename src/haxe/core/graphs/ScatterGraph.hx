@@ -103,6 +103,10 @@ class ScatterGraph extends Component {
                 }, 100);
             });
 
+            if (_pointToSelect != null) {
+                selectPoint(_pointToSelect);
+            }
+
             drawMarker();
             return _chart;
         });
@@ -129,8 +133,10 @@ class ScatterGraph extends Component {
         });
     }
 
+    private var _pointToSelect:Null<Int> = null;
     public function selectPoint(pointIndex:Int) {
         if (_container == null) {
+            _pointToSelect = pointIndex;
             return;
         }
 
@@ -153,6 +159,7 @@ class ScatterGraph extends Component {
             }
         });
 
+        _pointToSelect = null;
     }
 
     public function selectPointFromData(value:Any) {

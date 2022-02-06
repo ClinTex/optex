@@ -5634,6 +5634,8 @@ var core_dashboards_DashboardInstance = function() {
 	this._userInputs = new haxe_ds_StringMap();
 	this._filter = new haxe_ds_StringMap();
 	this.onTempFilterChanged = null;
+	this._tableCache = new haxe_ds_StringMap();
+	this._databaseCache = new haxe_ds_StringMap();
 	this._container = new haxe_ui_containers_Box();
 	haxe_ui_containers_Box.call(this);
 	this._container.set_percentWidth(100);
@@ -5681,6 +5683,41 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 	,onFilterChanged: function() {
 		this.refreshAllPortlets();
 	}
+	,_databaseCache: null
+	,getDatabase: function(databaseName) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			if(Object.prototype.hasOwnProperty.call(_gthis._databaseCache.h,databaseName)) {
+				resolve(_gthis._databaseCache.h[databaseName]);
+				return;
+			}
+			core_data_DatabaseManager.get_instance().getDatabase(databaseName).then(function(db) {
+				_gthis._databaseCache.h[databaseName] = db;
+				resolve(db);
+			});
+		});
+	}
+	,_tableCache: null
+	,fetchTableData: function(databaseName,tableName) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var key = databaseName + "." + tableName;
+			if(Object.prototype.hasOwnProperty.call(_gthis._tableCache.h,key)) {
+				var table = _gthis._tableCache.h[key];
+				var copy = table.clone(true);
+				resolve(copy);
+				return;
+			}
+			_gthis.getDatabase(databaseName).then(function(db) {
+				var table = db.getTable(tableName);
+				table.fetch().then(function(_) {
+					var copy = table.clone(true);
+					_gthis._tableCache.h[key] = copy;
+					resolve(copy);
+				});
+			});
+		});
+	}
 	,onTempFilterChanged: null
 	,_filter: null
 	,filter: null
@@ -5691,7 +5728,7 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 		if(Object.prototype.hasOwnProperty.call(this._filter.h,field) && this._filter.h[field] == value) {
 			return;
 		}
-		haxe_Log.trace("adding filter item: " + field + " = " + (value == null ? "null" : Std.string(value)),{ fileName : "../../haxe/core/dashboards/DashboardInstance.hx", lineNumber : 72, className : "core.dashboards.DashboardInstance", methodName : "addFilterItem"});
+		haxe_Log.trace("adding filter item: " + field + " = " + (value == null ? "null" : Std.string(value)),{ fileName : "../../haxe/core/dashboards/DashboardInstance.hx", lineNumber : 111, className : "core.dashboards.DashboardInstance", methodName : "addFilterItem"});
 		this._filter.h[field] = value;
 		var _g = 0;
 		var _g1 = this.get_portlets();
@@ -5713,7 +5750,7 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 		if(Object.prototype.hasOwnProperty.call(this._userInputs.h,inputId) && this._userInputs.h[inputId] == value) {
 			return;
 		}
-		haxe_Log.trace("adding using input item: " + inputId + " = " + (value == null ? "null" : Std.string(value)),{ fileName : "../../haxe/core/dashboards/DashboardInstance.hx", lineNumber : 94, className : "core.dashboards.DashboardInstance", methodName : "addUserInputItem"});
+		haxe_Log.trace("adding using input item: " + inputId + " = " + (value == null ? "null" : Std.string(value)),{ fileName : "../../haxe/core/dashboards/DashboardInstance.hx", lineNumber : 133, className : "core.dashboards.DashboardInstance", methodName : "addUserInputItem"});
 		this._userInputs.h[inputId] = value;
 		var _g = 0;
 		var _g1 = this.get_portlets();
@@ -5727,7 +5764,7 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 		if(Object.prototype.hasOwnProperty.call(this._filter.h,field) == false) {
 			return;
 		}
-		haxe_Log.trace("removing filter item: " + field,{ fileName : "../../haxe/core/dashboards/DashboardInstance.hx", lineNumber : 105, className : "core.dashboards.DashboardInstance", methodName : "removeFilterItem"});
+		haxe_Log.trace("removing filter item: " + field,{ fileName : "../../haxe/core/dashboards/DashboardInstance.hx", lineNumber : 144, className : "core.dashboards.DashboardInstance", methodName : "removeFilterItem"});
 		var _this = this._filter;
 		if(Object.prototype.hasOwnProperty.call(_this.h,field)) {
 			delete(_this.h[field]);
@@ -5782,7 +5819,6 @@ var core_dashboards_Portlet = function() {
 	this._title = null;
 	this._waitForFilterItem = null;
 	this._table = null;
-	this._database = null;
 	this._additionalConfigParams = new haxe_ds_StringMap();
 	haxe_ui_containers_VBox.call(this);
 	this.addClass("card");
@@ -5839,7 +5875,6 @@ core_dashboards_Portlet.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 			this._instance.clearData();
 		}
 	}
-	,_database: null
 	,_table: null
 	,_waitForFilterItem: null
 	,refreshData: function() {
@@ -5856,16 +5891,13 @@ core_dashboards_Portlet.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 				return;
 			}
 		}
-		core_data_DatabaseManager.get_instance().getDatabase(this._databaseName).then(function(db) {
-			_gthis._database = db;
-			_gthis._table = _gthis._database.getTable(_gthis._tableName);
-			_gthis._table.fetch().then(function(data) {
-				var _gthis1 = _gthis._table;
-				var _gthis2 = _gthis._transformList;
-				var tmp = _gthis.get_dashboardInstance().get_filter();
-				_gthis._table = _gthis1.transform(_gthis2,tmp);
-				_gthis._instance.onDataRefreshed(_gthis._table);
-			});
+		this.get_dashboardInstance().fetchTableData(this._databaseName,this._tableName).then(function(table) {
+			_gthis._table = table;
+			var _gthis1 = _gthis._table;
+			var _gthis2 = _gthis._transformList;
+			var tmp = _gthis.get_dashboardInstance().get_filter();
+			_gthis._table = _gthis1.transform(_gthis2,tmp);
+			_gthis._instance.onDataRefreshed(_gthis._table);
 		});
 	}
 	,parseConfigData: function() {
@@ -9397,6 +9429,7 @@ var core_graphs_BarGraph = function() {
 	this._data = [];
 	this.getMarkerValueY = null;
 	this.markerBehind = false;
+	this._barToSelect = null;
 	this._selectedBarIndex = -1;
 	this._colourCalculator = null;
 	this._showLegend = true;
@@ -9485,6 +9518,10 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 				}
 				_gthis.selectBar(index);
 			});
+			if(_gthis._barToSelect != null) {
+				haxe_Log.trace("-----------------> " + _gthis._barToSelect,{ fileName : "../../haxe/core/graphs/BarGraph.hx", lineNumber : 115, className : "core.graphs.BarGraph", methodName : "onReady"});
+				_gthis.selectBar(_gthis._barToSelect);
+			}
 			return _gthis._chart;
 		});
 		if(!(this._layout == null || this._layoutLocked == true)) {
@@ -9503,7 +9540,12 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 		return value;
 	}
 	,_selectedBarIndex: null
+	,_barToSelect: null
 	,selectBar: function(barIndex) {
+		if(this._container == null) {
+			this._barToSelect = barIndex;
+			return;
+		}
 		var barCount = this._data.length;
 		var dataCount = this._data[0].values.length;
 		this._selectedBarIndex = barIndex;
@@ -9531,6 +9573,7 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 				el.classList.add("dim");
 			}
 		});
+		this._barToSelect = null;
 	}
 	,selectBarFromData: function(value) {
 		var series = this._data[0].values;
@@ -10315,6 +10358,7 @@ var core_graphs_ScatterGraph = function() {
 	this._xLabels = null;
 	this.getMarkerValueY = null;
 	this.markerBehind = false;
+	this._pointToSelect = null;
 	this._selectedPointIndex = -1;
 	this.markerColour = "#ffffff";
 	this.textColour = "#b4b4b4";
@@ -10386,6 +10430,9 @@ core_graphs_ScatterGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 					_gthis.drawMarker();
 				},100);
 			});
+			if(_gthis._pointToSelect != null) {
+				_gthis.selectPoint(_gthis._pointToSelect);
+			}
 			_gthis.drawMarker();
 			return _gthis._chart;
 		});
@@ -10409,8 +10456,10 @@ core_graphs_ScatterGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 			el.classList.remove("dim");
 		});
 	}
+	,_pointToSelect: null
 	,selectPoint: function(pointIndex) {
 		if(this._container == null) {
+			this._pointToSelect = pointIndex;
 			return;
 		}
 		this._selectedPointIndex = pointIndex;
@@ -10430,6 +10479,7 @@ core_graphs_ScatterGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 				el.classList.add("dim");
 			}
 		});
+		this._pointToSelect = null;
 	}
 	,selectPointFromData: function(value) {
 		if(this._data == null || this._data[0] == null || this._data[0].values == null) {
@@ -10658,7 +10708,7 @@ core_graphs_ScatterGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 			sheet.insertRule("#" + containerId + " .nvd3 .nv-point.dim {\n                    opacity: .2;\n                }",sheet.cssRules.length);
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
-			haxe_Log.trace(e,{ fileName : "../../haxe/core/graphs/ScatterGraph.hx", lineNumber : 466, className : "core.graphs.ScatterGraph", methodName : "buildColours"});
+			haxe_Log.trace(e,{ fileName : "../../haxe/core/graphs/ScatterGraph.hx", lineNumber : 473, className : "core.graphs.ScatterGraph", methodName : "buildColours"});
 		}
 	}
 	,onThemeChanged: function() {

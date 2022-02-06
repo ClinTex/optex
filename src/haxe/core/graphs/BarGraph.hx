@@ -111,6 +111,10 @@ class BarGraph extends Component {
                 selectBar(index);
             });
         
+            if (_barToSelect != null) {
+                selectBar(_barToSelect);
+            }
+
             //resizeGraph();
             return _chart;
         });
@@ -132,7 +136,13 @@ class BarGraph extends Component {
     }
 
     private var _selectedBarIndex:Int = -1;
+    private var _barToSelect:Null<Int> = null;
     public function selectBar(barIndex:Int) {
+        if (_container == null) {
+            _barToSelect = barIndex;
+            return;
+        }
+
         var barCount = _data.length;
         var dataCount = _data[0].values.length;
         
@@ -162,6 +172,8 @@ class BarGraph extends Component {
                 el.classList.add("dim");
             }
         });
+
+        _barToSelect = null;
     }
 
     public function selectBarFromData(value:Any) {

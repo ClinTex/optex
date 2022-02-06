@@ -86,7 +86,7 @@ class Portlet extends VBox implements IDataComponent {
         }
     }
 
-    private var _database:Database = null;
+    //private var _database:Database = null;
     private var _table:GenericTable = null;
     private var _waitForFilterItem:String = null;
     private function refreshData() {
@@ -104,6 +104,7 @@ class Portlet extends VBox implements IDataComponent {
                 return;
             }
         }
+        /*
         DatabaseManager.instance.getDatabase(_databaseName).then(function(db) {
             _database = db;
             _table = cast _database.getTable(_tableName);
@@ -112,6 +113,12 @@ class Portlet extends VBox implements IDataComponent {
                 _instance.onDataRefreshed(_table);
             });
         });
+        */
+        dashboardInstance.fetchTableData(_databaseName, _tableName).then(function(table) {
+            _table = table;
+            _table = _table.transform(_transformList, dashboardInstance.filter);
+            _instance.onDataRefreshed(_table);
+    });
     }
 
     private function parseConfigData() {
