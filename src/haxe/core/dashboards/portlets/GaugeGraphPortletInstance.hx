@@ -40,6 +40,7 @@ class GaugeGraphPortletInstance extends PortletInstance {
         value *= userInput1;
         value *= userInput2;
         value *= userInput3;
+        value /= 1000;
         trace(Std.parseFloat(table.records[0].getFieldValue(valueField)), userInput1, userInput2, userInput3, value);
         _gauge.setValue(value);
     }

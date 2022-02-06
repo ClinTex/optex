@@ -1,7 +1,7 @@
 package core.dashboards.portlets;
 
 import core.data.GenericTable;
-import core.graphs.ColorCalculator;
+import core.graphs.ColorCalculator_OLD;
 import core.graphs.BarGraph;
 import core.graphs.MarkerFunctions;
 import core.util.FunctionDetails;
@@ -56,7 +56,7 @@ class BarGraphPortletInstance extends PortletInstance {
         _bar.selectBarFromData(value);
     }
 
-    private function getColourCalculator():ColorCalculator {
+    private function getColourCalculator():ColorCalculator_OLD {
         var s = config("colorCalculator");
         if (s == null || s.trim() == "") {
             return null;

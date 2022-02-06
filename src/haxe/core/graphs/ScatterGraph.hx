@@ -48,6 +48,25 @@ class ScatterGraph extends Component {
         super();
     }
 
+    private var _noDataLabel:String = "";
+    public var noDataLabel(get, set):String;
+    private function get_noDataLabel():String {
+        return _noDataLabel;
+    }
+    private function set_noDataLabel(value:String):String {
+        if (value == _noDataLabel) {
+            return value;
+        }
+
+        _noDataLabel = value;
+        if (_chart != null) {
+            _chart.noData(value);
+            _chart.update();
+        }
+
+        return value;
+    }
+
     private var _selectedPointIndex:Int = -1;
     private override function onReady() {
         super.onReady();
@@ -73,7 +92,7 @@ class ScatterGraph extends Component {
             _chart.xAxis.staggerLabels(false);
             _chart.xAxis.rotateLabels(-45);
             _chart.tooltip.enabled(false);
-            _chart.noData("");
+            _chart.noData(this.noDataLabel);
             //_chart.useVoronoi(false);
 
             _chart.xAxis.tickValues(buildXValues()).tickFormat(function(d){

@@ -46,6 +46,21 @@
 .dropdown-search-field {
     icon: none;
 }
+
+.tableview {
+    border: none;
+    background-color: none;
+}
+
+.tableview .column {
+    border: none;
+    background-color: none;
+}
+
+.tableview .itemrenderer {
+    padding-left: 13px;
+}
+
     </style>
 
     <hbox width="100%" style="padding-bottom:20px;">

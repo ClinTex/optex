@@ -1,5 +1,9 @@
 package core.dashboards.portlets;
 
+import haxe.ui.util.Color;
+import core.util.color.IColorCalculator;
+import core.util.color.ColorCalculatorFactory;
+import core.util.FunctionDetails;
 import haxe.ui.util.MathUtil;
 import core.data.internal.CoreData.FieldType;
 import haxe.ui.components.Label;
@@ -25,6 +29,7 @@ class FieldValuePortletInstance extends PortletInstance {
         _valueLabel = new Label();
         _valueLabel.text = "-";
         _valueLabel.horizontalAlign = "center";
+        _valueLabel.customStyle.opacity = .7;
         box.addComponent(_valueLabel);
 
         addComponent(box);
@@ -32,10 +37,48 @@ class FieldValuePortletInstance extends PortletInstance {
 
     public override function clearData() {
         _valueLabel.text = "-";
-    }
+        _valueLabel.customStyle.color = null;
+        _valueLabel.invalidateComponentStyle();
+}
 
+    private var _colorCalculator:IColorCalculator = null;
     private override function onConfigChanged() {
         _promptLabel.text = config("prompt");
+
+        var promptFontSize = configFloat("promptFontSize", -1);
+        if (promptFontSize > 0) {
+            _promptLabel.customStyle.fontSize = promptFontSize;
+            _promptLabel.invalidateComponentStyle();
+        }
+
+        var valueFontSize = configFloat("valueFontSize", -1);
+        if (valueFontSize > 0) {
+            _valueLabel.customStyle.fontSize = valueFontSize;
+            _valueLabel.invalidateComponentStyle();
+        }
+
+        var colorCalculator = config("colorCalculator");
+        if (colorCalculator != null) {
+            trace("------------------> " + colorCalculator);
+            var details = new FunctionDetails(colorCalculator);
+            _colorCalculator = ColorCalculatorFactory.getColorCalculator(details.name);
+            _colorCalculator.configure(details.params);
+            trace(details.name);
+            trace(details.params);
+        }
+    }
+
+    private function applyColor() {
+        if (_colorCalculator == null) {
+            return;
+        }
+
+        var data = Std.parseFloat(_valueLabel.text);
+        var col = _colorCalculator.getColor(data);
+        if (col != null) {
+            _valueLabel.customStyle.color = Color.fromString(col);
+            _valueLabel.invalidateComponentStyle();
+        }
     }
 
     public override function onDataRefreshed(table:GenericTable) {
@@ -48,5 +91,6 @@ class FieldValuePortletInstance extends PortletInstance {
             case _:
         }
         _valueLabel.text = Std.string(value);
+        applyColor();
     }
 }

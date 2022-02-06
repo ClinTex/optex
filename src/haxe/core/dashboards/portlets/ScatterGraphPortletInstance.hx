@@ -2,7 +2,6 @@ package core.dashboards.portlets;
 
 import core.data.GenericTable;
 import core.graphs.ScatterGraph;
-import core.graphs.ColorCalculator;
 import core.graphs.MarkerFunctions;
 
 using StringTools;

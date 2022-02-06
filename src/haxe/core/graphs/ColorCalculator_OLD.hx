@@ -3,7 +3,7 @@ package core.graphs;
 import core.d3.D3;
 import haxe.ui.util.StringUtil;
 
-class ColorCalculator {
+class ColorCalculator_OLD {
     private var _colors:Array<String> = null;
     private var _colorsReverse:Array<String> = null;
     
@@ -30,7 +30,7 @@ class ColorCalculator {
     }
 }
 
-class ValueBasedColourCalculator extends ColorCalculator {
+class ValueBasedColourCalculator extends ColorCalculator_OLD {
     public override function get(data:Dynamic, index:Int, graphInfo:Dynamic):String {
         var max = graphInfo.valueMax;
         var value = Reflect.field(data, graphInfo.valueField);
@@ -43,7 +43,7 @@ class ValueBasedColourCalculator extends ColorCalculator {
     }
 }
 
-class ThresholdBasedColourCalculator extends ColorCalculator {
+class ThresholdBasedColourCalculator extends ColorCalculator_OLD {
     private var threshold:Float = 50;
     
     public function new(threshold:Float) {

@@ -63,6 +63,25 @@ class HorizontalBarGraph extends Component {
         return value;
     }
 
+    private var _noDataLabel:String = "";
+    public var noDataLabel(get, set):String;
+    private function get_noDataLabel():String {
+        return _noDataLabel;
+    }
+    private function set_noDataLabel(value:String):String {
+        if (value == _noDataLabel) {
+            return value;
+        }
+
+        _noDataLabel = value;
+        if (_chart != null) {
+            _chart.noData(value);
+            _chart.update();
+        }
+
+        return value;
+    }
+
     private static var counter:Int = 0;
     private override function onReady() {
         super.onReady();
@@ -86,7 +105,7 @@ class HorizontalBarGraph extends Component {
             //_chart.rotateLabels(labelRotation);
             _chart.showValues(true);
             _chart.showControls(false);
-            _chart.noData("");
+            _chart.noData(this.noDataLabel);
             _chart.showLegend(showLegend);
             _chart.tooltip.enabled(false);
             if (_colourCalculator != null) {
@@ -118,12 +137,12 @@ class HorizontalBarGraph extends Component {
         invalidateComponentLayout();
     }
 
-    private var _colourCalculator:ColorCalculator = null;
-    public var colourCalculator(get, set):ColorCalculator;
-    private function get_colourCalculator():ColorCalculator {
+    private var _colourCalculator:ColorCalculator_OLD = null;
+    public var colourCalculator(get, set):ColorCalculator_OLD;
+    private function get_colourCalculator():ColorCalculator_OLD {
         return _colourCalculator;
     }
-    private function set_colourCalculator(value:ColorCalculator):ColorCalculator {
+    private function set_colourCalculator(value:ColorCalculator_OLD):ColorCalculator_OLD {
         _colourCalculator = value;
         if (_chart != null && value != null) {
             _chart.barColor(calculateColour);
@@ -371,6 +390,7 @@ class HorizontalBarGraph extends Component {
 
             sheet.insertRule('#${containerId} .nv-noData {
                 fill: ${textColour} !important;
+                transform: translate(-15px, 0px);
             }', sheet.cssRules.length);
 
             sheet.insertRule('#${containerId} .nvd3 .nv-bar.dim {

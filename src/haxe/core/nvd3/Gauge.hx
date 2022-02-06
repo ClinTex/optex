@@ -9,5 +9,6 @@ extern class Gauge {
     public function setOptions(o:Dynamic):Dynamic;
     public function setMinValue(v:Float):Void;
     public function set(v:Float):Void;
+    public function setTextField(v:Dynamic):Void;
     public function update(b:Bool):Void;
 }

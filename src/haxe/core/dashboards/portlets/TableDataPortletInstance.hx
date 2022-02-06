@@ -1,5 +1,6 @@
 package core.dashboards.portlets;
 
+import js.lib.Reflect;
 import core.data.GenericTable;
 import haxe.ui.events.UIEvent;
 import haxe.ui.data.ArrayDataSource;
@@ -56,9 +57,11 @@ class TableDataPortletInstance extends PortletInstance {
             for (key in filter.keys()) {
                 var filterValue = filter.get(key);
                 var safeKey = key.replace(" ", "_");
-                var value = Reflect.field(item, safeKey);
-                if (value != filterValue) {
-                    use = false;
+                if (Reflect.hasField(item, safeKey)) {
+                    var value = Reflect.field(item, safeKey);
+                    if (value != filterValue) {
+                        use = false;
+                    }
                 }
             }
             return use;

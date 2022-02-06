@@ -1,7 +1,7 @@
 package core.dashboards.portlets;
 
 import core.data.GenericTable;
-import core.graphs.ColorCalculator;
+import core.graphs.ColorCalculator_OLD;
 import core.graphs.HorizontalBarGraph;
 import core.graphs.MarkerFunctions;
 import core.util.FunctionDetails;
@@ -29,6 +29,7 @@ class HorizontalBarGraphPortletInstance extends PortletInstance {
 
     private override function onConfigChanged() {
         _bar.showLegend = configBool("showLegend", true);
+        _bar.noDataLabel = config("noDataLabel", "");
     }
 
     public override function clearData() {
@@ -56,7 +57,7 @@ class HorizontalBarGraphPortletInstance extends PortletInstance {
         _bar.selectBarFromData(value);
     }
 
-    private function getColourCalculator():ColorCalculator {
+    private function getColourCalculator():ColorCalculator_OLD {
         var s = config("colorCalculator");
         if (s == null || s.trim() == "") {
             return null;

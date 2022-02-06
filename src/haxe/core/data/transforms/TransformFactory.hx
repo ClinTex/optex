@@ -4,7 +4,7 @@ using StringTools;
 
 class TransformFactory {
     public static function getTransform(id:String):ITransform {
-        var id = id.replace("-", "").replace("_", "");
+        var id = id.replace("-", "").replace("_", "").toLowerCase();
 
         switch (id) {
             case "groupby":

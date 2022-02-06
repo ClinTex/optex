@@ -5818,6 +5818,8 @@ var core_dashboards_DashboardInstance = function() {
 	this._userInputs = new haxe_ds_StringMap();
 	this._filter = new haxe_ds_StringMap();
 	this.onTempFilterChanged = null;
+	this._tableCache = new haxe_ds_StringMap();
+	this._databaseCache = new haxe_ds_StringMap();
 	this._container = new haxe_ui_containers_Box();
 	haxe_ui_containers_Box.call(this);
 	this._container.set_percentWidth(100);
@@ -5865,6 +5867,41 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 	,onFilterChanged: function() {
 		this.refreshAllPortlets();
 	}
+	,_databaseCache: null
+	,getDatabase: function(databaseName) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			if(Object.prototype.hasOwnProperty.call(_gthis._databaseCache.h,databaseName)) {
+				resolve(_gthis._databaseCache.h[databaseName]);
+				return;
+			}
+			core_data_DatabaseManager.get_instance().getDatabase(databaseName).then(function(db) {
+				_gthis._databaseCache.h[databaseName] = db;
+				resolve(db);
+			});
+		});
+	}
+	,_tableCache: null
+	,fetchTableData: function(databaseName,tableName) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var key = databaseName + "." + tableName;
+			if(Object.prototype.hasOwnProperty.call(_gthis._tableCache.h,key)) {
+				var table = _gthis._tableCache.h[key];
+				var copy = table.clone(true);
+				resolve(copy);
+				return;
+			}
+			_gthis.getDatabase(databaseName).then(function(db) {
+				var table = db.getTable(tableName);
+				table.fetch().then(function(_) {
+					var copy = table.clone(true);
+					_gthis._tableCache.h[key] = copy;
+					resolve(copy);
+				});
+			});
+		});
+	}
 	,onTempFilterChanged: null
 	,_filter: null
 	,filter: null
@@ -5875,7 +5912,7 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 		if(Object.prototype.hasOwnProperty.call(this._filter.h,field) && this._filter.h[field] == value) {
 			return;
 		}
-		haxe_Log.trace("adding filter item: " + field + " = " + (value == null ? "null" : Std.string(value)),{ fileName : "../../haxe/core/dashboards/DashboardInstance.hx", lineNumber : 72, className : "core.dashboards.DashboardInstance", methodName : "addFilterItem"});
+		haxe_Log.trace("adding filter item: " + field + " = " + (value == null ? "null" : Std.string(value)),{ fileName : "../../haxe/core/dashboards/DashboardInstance.hx", lineNumber : 111, className : "core.dashboards.DashboardInstance", methodName : "addFilterItem"});
 		this._filter.h[field] = value;
 		var _g = 0;
 		var _g1 = this.get_portlets();
@@ -5897,7 +5934,7 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 		if(Object.prototype.hasOwnProperty.call(this._userInputs.h,inputId) && this._userInputs.h[inputId] == value) {
 			return;
 		}
-		haxe_Log.trace("adding using input item: " + inputId + " = " + (value == null ? "null" : Std.string(value)),{ fileName : "../../haxe/core/dashboards/DashboardInstance.hx", lineNumber : 94, className : "core.dashboards.DashboardInstance", methodName : "addUserInputItem"});
+		haxe_Log.trace("adding using input item: " + inputId + " = " + (value == null ? "null" : Std.string(value)),{ fileName : "../../haxe/core/dashboards/DashboardInstance.hx", lineNumber : 133, className : "core.dashboards.DashboardInstance", methodName : "addUserInputItem"});
 		this._userInputs.h[inputId] = value;
 		var _g = 0;
 		var _g1 = this.get_portlets();
@@ -5911,7 +5948,7 @@ core_dashboards_DashboardInstance.prototype = $extend(haxe_ui_containers_Box.pro
 		if(Object.prototype.hasOwnProperty.call(this._filter.h,field) == false) {
 			return;
 		}
-		haxe_Log.trace("removing filter item: " + field,{ fileName : "../../haxe/core/dashboards/DashboardInstance.hx", lineNumber : 105, className : "core.dashboards.DashboardInstance", methodName : "removeFilterItem"});
+		haxe_Log.trace("removing filter item: " + field,{ fileName : "../../haxe/core/dashboards/DashboardInstance.hx", lineNumber : 144, className : "core.dashboards.DashboardInstance", methodName : "removeFilterItem"});
 		var _this = this._filter;
 		if(Object.prototype.hasOwnProperty.call(_this.h,field)) {
 			delete(_this.h[field]);
@@ -5966,7 +6003,6 @@ var core_dashboards_Portlet = function() {
 	this._title = null;
 	this._waitForFilterItem = null;
 	this._table = null;
-	this._database = null;
 	this._additionalConfigParams = new haxe_ds_StringMap();
 	haxe_ui_containers_VBox.call(this);
 	this.addClass("card");
@@ -6023,7 +6059,6 @@ core_dashboards_Portlet.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 			this._instance.clearData();
 		}
 	}
-	,_database: null
 	,_table: null
 	,_waitForFilterItem: null
 	,refreshData: function() {
@@ -6040,16 +6075,13 @@ core_dashboards_Portlet.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 				return;
 			}
 		}
-		core_data_DatabaseManager.get_instance().getDatabase(this._databaseName).then(function(db) {
-			_gthis._database = db;
-			_gthis._table = _gthis._database.getTable(_gthis._tableName);
-			_gthis._table.fetch().then(function(data) {
-				var _gthis1 = _gthis._table;
-				var _gthis2 = _gthis._transformList;
-				var tmp = _gthis.get_dashboardInstance().get_filter();
-				_gthis._table = _gthis1.transform(_gthis2,tmp);
-				_gthis._instance.onDataRefreshed(_gthis._table);
-			});
+		this.get_dashboardInstance().fetchTableData(this._databaseName,this._tableName).then(function(table) {
+			_gthis._table = table;
+			var _gthis1 = _gthis._table;
+			var _gthis2 = _gthis._transformList;
+			var tmp = _gthis.get_dashboardInstance().get_filter();
+			_gthis._table = _gthis1.transform(_gthis2,tmp);
+			_gthis._instance.onDataRefreshed(_gthis._table);
 		});
 	}
 	,parseConfigData: function() {
@@ -6413,6 +6445,7 @@ core_dashboards_portlets_BarGraphPortletInstance.prototype = $extend(core_dashbo
 	,__class__: core_dashboards_portlets_BarGraphPortletInstance
 });
 var core_dashboards_portlets_FieldValuePortletInstance = function() {
+	this._colorCalculator = null;
 	core_dashboards_portlets_PortletInstance.call(this);
 	this.set_horizontalAlign("center");
 	var box = new haxe_ui_containers_VBox();
@@ -6434,9 +6467,47 @@ core_dashboards_portlets_FieldValuePortletInstance.prototype = $extend(core_dash
 	,_valueLabel: null
 	,clearData: function() {
 		this._valueLabel.set_text("-");
+		this._valueLabel.get_customStyle().color = null;
+		var _this = this._valueLabel;
+		_this.invalidateComponent("style",false);
 	}
+	,_colorCalculator: null
 	,onConfigChanged: function() {
 		this._promptLabel.set_text(this.config("prompt"));
+		var promptFontSize = this.configFloat("promptFontSize",-1);
+		if(promptFontSize > 0) {
+			this._promptLabel.get_customStyle().fontSize = promptFontSize;
+			var _this = this._promptLabel;
+			_this.invalidateComponent("style",false);
+		}
+		var valueFontSize = this.configFloat("valueFontSize",-1);
+		if(valueFontSize > 0) {
+			this._valueLabel.get_customStyle().fontSize = valueFontSize;
+			var _this = this._valueLabel;
+			_this.invalidateComponent("style",false);
+		}
+		var colorCalculator = this.config("colorCalculator");
+		if(colorCalculator != null) {
+			haxe_Log.trace("------------------> " + colorCalculator,{ fileName : "../../haxe/core/dashboards/portlets/FieldValuePortletInstance.hx", lineNumber : 61, className : "core.dashboards.portlets.FieldValuePortletInstance", methodName : "onConfigChanged"});
+			var details = new core_util_FunctionDetails(colorCalculator);
+			this._colorCalculator = core_util_color_ColorCalculatorFactory.getColorCalculator(details.name);
+			this._colorCalculator.configure(details.params);
+			haxe_Log.trace(details.name,{ fileName : "../../haxe/core/dashboards/portlets/FieldValuePortletInstance.hx", lineNumber : 65, className : "core.dashboards.portlets.FieldValuePortletInstance", methodName : "onConfigChanged"});
+			haxe_Log.trace(details.params,{ fileName : "../../haxe/core/dashboards/portlets/FieldValuePortletInstance.hx", lineNumber : 66, className : "core.dashboards.portlets.FieldValuePortletInstance", methodName : "onConfigChanged"});
+		}
+	}
+	,applyColor: function() {
+		if(this._colorCalculator == null) {
+			return;
+		}
+		var data = parseFloat(this._valueLabel.get_text());
+		var col = this._colorCalculator.getColor(data);
+		if(col != null) {
+			var tmp = haxe_ui_util_Color.fromString(col);
+			this._valueLabel.get_customStyle().color = haxe_ui_util_Color.toInt(tmp);
+			var _this = this._valueLabel;
+			_this.invalidateComponent("style",false);
+		}
 	}
 	,onDataRefreshed: function(table) {
 		var fieldType = table.getFieldType(table.getFieldIndex(this.config("fieldName")));
@@ -6449,6 +6520,7 @@ core_dashboards_portlets_FieldValuePortletInstance.prototype = $extend(core_dash
 			value = Math.round(value * Math.pow(10,precision)) / Math.pow(10,precision);
 		}
 		this._valueLabel.set_text(Std.string(value));
+		this.applyColor();
 	}
 	,registerBehaviours: function() {
 		core_dashboards_portlets_PortletInstance.prototype.registerBehaviours.call(this);
@@ -6506,7 +6578,8 @@ core_dashboards_portlets_GaugeGraphPortletInstance.prototype = $extend(core_dash
 		value *= userInput1;
 		value *= userInput2;
 		value *= userInput3;
-		haxe_Log.trace(parseFloat(table.records[0].getFieldValue(valueField)),{ fileName : "../../haxe/core/dashboards/portlets/GaugeGraphPortletInstance.hx", lineNumber : 43, className : "core.dashboards.portlets.GaugeGraphPortletInstance", methodName : "onDataRefreshed", customParams : [userInput1,userInput2,userInput3,value]});
+		value /= 1000;
+		haxe_Log.trace(parseFloat(table.records[0].getFieldValue(valueField)),{ fileName : "../../haxe/core/dashboards/portlets/GaugeGraphPortletInstance.hx", lineNumber : 44, className : "core.dashboards.portlets.GaugeGraphPortletInstance", methodName : "onDataRefreshed", customParams : [userInput1,userInput2,userInput3,value]});
 		this._gauge.setValue(value);
 	}
 	,hasSize: null
@@ -6562,6 +6635,7 @@ core_dashboards_portlets_HorizontalBarGraphPortletInstance.prototype = $extend(c
 	_bar: null
 	,onConfigChanged: function() {
 		this._bar.set_showLegend(this.configBool("showLegend",true));
+		this._bar.set_noDataLabel(this.config("noDataLabel",""));
 	}
 	,clearData: function() {
 		this._bar.set_data([]);
@@ -6831,7 +6905,7 @@ core_dashboards_portlets_TableDataPortletInstance.prototype = $extend(core_dashb
 		var safeField = StringTools.replace(field," ","_");
 		var value = Reflect.field(selectedItem,safeField);
 		this.get_dashboardInstance().addFilterItem(field,value);
-		haxe_Log.trace(selectedItem,{ fileName : "../../haxe/core/dashboards/portlets/TableDataPortletInstance.hx", lineNumber : 48, className : "core.dashboards.portlets.TableDataPortletInstance", methodName : "onTableSelectionChanged"});
+		haxe_Log.trace(selectedItem,{ fileName : "../../haxe/core/dashboards/portlets/TableDataPortletInstance.hx", lineNumber : 49, className : "core.dashboards.portlets.TableDataPortletInstance", methodName : "onTableSelectionChanged"});
 	}
 	,onFilterChanged: function(filter) {
 		var ds = this._table.get_dataSource();
@@ -6847,9 +6921,11 @@ core_dashboards_portlets_TableDataPortletInstance.prototype = $extend(core_dashb
 				var key = key_keys[key_current++];
 				var filterValue = filter.h[key];
 				var safeKey = StringTools.replace(key," ","_");
-				var value = Reflect.field(item,safeKey);
-				if(value != filterValue) {
-					use = false;
+				if(Object.prototype.hasOwnProperty.call(item,safeKey)) {
+					var value = Reflect.field(item,safeKey);
+					if(value != filterValue) {
+						use = false;
+					}
 				}
 			}
 			return use;
@@ -9659,7 +9735,7 @@ var core_data_transforms_TransformFactory = function() { };
 $hxClasses["core.data.transforms.TransformFactory"] = core_data_transforms_TransformFactory;
 core_data_transforms_TransformFactory.__name__ = "core.data.transforms.TransformFactory";
 core_data_transforms_TransformFactory.getTransform = function(id) {
-	var id1 = StringTools.replace(StringTools.replace(id,"-",""),"_","");
+	var id1 = StringTools.replace(StringTools.replace(id,"-",""),"_","").toLowerCase();
 	switch(id1) {
 	case "addrow":
 		return new core_data_transforms_AddRow();
@@ -9733,8 +9809,10 @@ var core_graphs_BarGraph = function() {
 	this._data = [];
 	this.getMarkerValueY = null;
 	this.markerBehind = false;
+	this._barToSelect = null;
 	this._selectedBarIndex = -1;
 	this._colourCalculator = null;
+	this._noDataLabel = "";
 	this._showLegend = true;
 	this.labelRotation = 0;
 	this.markerColour = "#ffffff";
@@ -9775,6 +9853,21 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 		}
 		return value;
 	}
+	,_noDataLabel: null
+	,get_noDataLabel: function() {
+		return this._noDataLabel;
+	}
+	,set_noDataLabel: function(value) {
+		if(value == this._noDataLabel) {
+			return value;
+		}
+		this._noDataLabel = value;
+		if(this._chart != null) {
+			this._chart.noData(value);
+			this._chart.update();
+		}
+		return value;
+	}
 	,onReady: function() {
 		var _gthis = this;
 		haxe_ui_core_Component.prototype.onReady.call(this);
@@ -9800,7 +9893,7 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 			_gthis._chart.reduceXTicks(false);
 			_gthis._chart.rotateLabels(_gthis.labelRotation);
 			_gthis._chart.showControls(false);
-			_gthis._chart.noData("");
+			_gthis._chart.noData(_gthis.get_noDataLabel());
 			_gthis._chart.showLegend(_gthis.get_showLegend());
 			_gthis._chart.tooltip.enabled(false);
 			if(_gthis._colourCalculator != null) {
@@ -9821,6 +9914,9 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 				}
 				_gthis.selectBar(index);
 			});
+			if(_gthis._barToSelect != null) {
+				_gthis.selectBar(_gthis._barToSelect);
+			}
 			return _gthis._chart;
 		});
 		if(!(this._layout == null || this._layoutLocked == true)) {
@@ -9839,7 +9935,12 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 		return value;
 	}
 	,_selectedBarIndex: null
+	,_barToSelect: null
 	,selectBar: function(barIndex) {
+		if(this._container == null) {
+			this._barToSelect = barIndex;
+			return;
+		}
 		var barCount = this._data.length;
 		var dataCount = this._data[0].values.length;
 		this._selectedBarIndex = barIndex;
@@ -9867,6 +9968,7 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 				el.classList.add("dim");
 			}
 		});
+		this._barToSelect = null;
 	}
 	,selectBarFromData: function(value) {
 		var series = this._data[0].values;
@@ -10069,15 +10171,15 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 		return new core_graphs_BarGraph();
 	}
 	,__class__: core_graphs_BarGraph
-	,__properties__: $extend(haxe_ui_core_Component.prototype.__properties__,{set_data:"set_data",get_data:"get_data",set_colourCalculator:"set_colourCalculator",get_colourCalculator:"get_colourCalculator",set_showLegend:"set_showLegend",get_showLegend:"get_showLegend"})
+	,__properties__: $extend(haxe_ui_core_Component.prototype.__properties__,{set_data:"set_data",get_data:"get_data",set_colourCalculator:"set_colourCalculator",get_colourCalculator:"get_colourCalculator",set_noDataLabel:"set_noDataLabel",get_noDataLabel:"get_noDataLabel",set_showLegend:"set_showLegend",get_showLegend:"get_showLegend"})
 });
-var core_graphs_ColorCalculator = function() {
+var core_graphs_ColorCalculator_$OLD = function() {
 	this._colorsReverse = null;
 	this._colors = null;
 };
-$hxClasses["core.graphs.ColorCalculator"] = core_graphs_ColorCalculator;
-core_graphs_ColorCalculator.__name__ = "core.graphs.ColorCalculator";
-core_graphs_ColorCalculator.prototype = {
+$hxClasses["core.graphs.ColorCalculator_OLD"] = core_graphs_ColorCalculator_$OLD;
+core_graphs_ColorCalculator_$OLD.__name__ = "core.graphs.ColorCalculator_OLD";
+core_graphs_ColorCalculator_$OLD.prototype = {
 	_colors: null
 	,_colorsReverse: null
 	,_scheme: null
@@ -10096,16 +10198,16 @@ core_graphs_ColorCalculator.prototype = {
 	,get: function(data,index,graphInfo) {
 		return null;
 	}
-	,__class__: core_graphs_ColorCalculator
+	,__class__: core_graphs_ColorCalculator_$OLD
 	,__properties__: {set_scheme:"set_scheme",get_scheme:"get_scheme"}
 };
 var core_graphs_ValueBasedColourCalculator = function() {
-	core_graphs_ColorCalculator.call(this);
+	core_graphs_ColorCalculator_$OLD.call(this);
 };
 $hxClasses["core.graphs.ValueBasedColourCalculator"] = core_graphs_ValueBasedColourCalculator;
 core_graphs_ValueBasedColourCalculator.__name__ = "core.graphs.ValueBasedColourCalculator";
-core_graphs_ValueBasedColourCalculator.__super__ = core_graphs_ColorCalculator;
-core_graphs_ValueBasedColourCalculator.prototype = $extend(core_graphs_ColorCalculator.prototype,{
+core_graphs_ValueBasedColourCalculator.__super__ = core_graphs_ColorCalculator_$OLD;
+core_graphs_ValueBasedColourCalculator.prototype = $extend(core_graphs_ColorCalculator_$OLD.prototype,{
 	get: function(data,index,graphInfo) {
 		var max = graphInfo.valueMax;
 		var value = Reflect.field(data,graphInfo.valueField);
@@ -10120,13 +10222,13 @@ core_graphs_ValueBasedColourCalculator.prototype = $extend(core_graphs_ColorCalc
 });
 var core_graphs_ThresholdBasedColourCalculator = function(threshold) {
 	this.threshold = 50;
-	core_graphs_ColorCalculator.call(this);
+	core_graphs_ColorCalculator_$OLD.call(this);
 	this.threshold = threshold;
 };
 $hxClasses["core.graphs.ThresholdBasedColourCalculator"] = core_graphs_ThresholdBasedColourCalculator;
 core_graphs_ThresholdBasedColourCalculator.__name__ = "core.graphs.ThresholdBasedColourCalculator";
-core_graphs_ThresholdBasedColourCalculator.__super__ = core_graphs_ColorCalculator;
-core_graphs_ThresholdBasedColourCalculator.prototype = $extend(core_graphs_ColorCalculator.prototype,{
+core_graphs_ThresholdBasedColourCalculator.__super__ = core_graphs_ColorCalculator_$OLD;
+core_graphs_ThresholdBasedColourCalculator.prototype = $extend(core_graphs_ColorCalculator_$OLD.prototype,{
 	threshold: null
 	,get: function(data,index,graphInfo) {
 		var v = data[graphInfo.yAxisField];
@@ -10148,17 +10250,31 @@ core_graphs_GaugeGraph.__super__ = haxe_ui_core_Component;
 core_graphs_GaugeGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 	_container: null
 	,_gauge: null
+	,_textfield: null
 	,onReady: function() {
 		haxe_ui_core_Component.prototype.onReady.call(this);
 		this._container = window.document.createElement("canvas");
+		this._container.style.opacity = ".7";
 		this.element.appendChild(this._container);
+		this._textfield = window.document.createElement("div");
+		this._textfield.style.position = "absolute";
+		this._textfield.style.left = "0px";
+		this._textfield.style.bottom = "10px";
+		this._textfield.style.textAlign = "center";
+		this._textfield.style.width = "100%";
+		this._textfield.style.fontSize = "26px";
+		this._textfield.style.color = "#9292a0";
+		this.element.appendChild(this._textfield);
 		this.invalidateComponent();
-		var opts = { angle : 0, lineWidth : 0.44, radiusScale : 1, pointer : { length : 0.5, strokeWidth : 0.035, color_OLD : "#cacad1", color : "#00000000"}, limitMax : false, limitMin : false, colorStart : "#ff0000", colorStop : "#4b80a3", OLD_colorStop : "#5bb3bd", strokeColor : "#24243a", generateGradient : true, highDpiSupport : true};
+		var opts = { angle : 0, lineWidth : 0.44, radiusScale : 1, pointer : { length : 0.5, strokeWidth : 0.035, color_OLD : "#cacad1", color : "#00000000"}, limitMax : false, limitMin : false, colorStart : "#ff0000", colorStop : "#1f77b4", OLD_colorStop : "#5bb3bdBF", strokeColor : "#24243a", generateGradient : true, highDpiSupport : true};
+		var percentColors = [[0.0,"#448844"],[0.35,"#448844"],[0.36,"#ffbf00"],[0.45,"#ffbf00"],[0.46,"#ff4444"],[1.0,"#ff4444"]];
+		opts.percentColors = percentColors;
 		this._gauge = new Gauge(this._container).setOptions(opts);
-		this._gauge.maxValue = 20000;
+		this._gauge.maxValue = 20.;
 		this._gauge.setMinValue(0);
 		this._gauge.animationSpeed = 16;
 		this._gauge.set(this._value);
+		this._gauge.setTextField(this._textfield);
 	}
 	,_value: null
 	,setValue: function(value) {
@@ -10227,6 +10343,7 @@ var core_graphs_HorizontalBarGraph = function() {
 	this.markerBehind = false;
 	this._selectedBarIndex = -1;
 	this._colourCalculator = null;
+	this._noDataLabel = "";
 	this._showLegend = true;
 	this.labelRotation = 0;
 	this.markerColour = "#ffffff";
@@ -10267,6 +10384,21 @@ core_graphs_HorizontalBarGraph.prototype = $extend(haxe_ui_core_Component.protot
 		}
 		return value;
 	}
+	,_noDataLabel: null
+	,get_noDataLabel: function() {
+		return this._noDataLabel;
+	}
+	,set_noDataLabel: function(value) {
+		if(value == this._noDataLabel) {
+			return value;
+		}
+		this._noDataLabel = value;
+		if(this._chart != null) {
+			this._chart.noData(value);
+			this._chart.update();
+		}
+		return value;
+	}
 	,onReady: function() {
 		var _gthis = this;
 		haxe_ui_core_Component.prototype.onReady.call(this);
@@ -10290,7 +10422,7 @@ core_graphs_HorizontalBarGraph.prototype = $extend(haxe_ui_core_Component.protot
 			});
 			_gthis._chart.showValues(true);
 			_gthis._chart.showControls(false);
-			_gthis._chart.noData("");
+			_gthis._chart.noData(_gthis.get_noDataLabel());
 			_gthis._chart.showLegend(_gthis.get_showLegend());
 			_gthis._chart.tooltip.enabled(false);
 			if(_gthis._colourCalculator != null) {
@@ -10511,7 +10643,7 @@ core_graphs_HorizontalBarGraph.prototype = $extend(haxe_ui_core_Component.protot
 		sheet.insertRule("#" + containerId + " .nvd3 .nv-y .tick.zero line {\n                stroke: " + this.yAxisColour + ";\n                stroke-opacity: 1;\n            }",sheet.cssRules.length);
 		sheet.insertRule("#" + containerId + " .nvd3 .nv-group {\n                transform: translate(0px, 0px);\n            }",sheet.cssRules.length);
 		sheet.insertRule("#" + containerId + " .nvd3 text {\n                fill: " + this.textColour + ";\n            }",sheet.cssRules.length);
-		sheet.insertRule("#" + containerId + " .nv-noData {\n                fill: " + this.textColour + " !important;\n            }",sheet.cssRules.length);
+		sheet.insertRule("#" + containerId + " .nv-noData {\n                fill: " + this.textColour + " !important;\n                transform: translate(-15px, 0px);\n            }",sheet.cssRules.length);
 		sheet.insertRule("#" + containerId + " .nvd3 .nv-bar.dim {\n                opacity: .2;\n            }",sheet.cssRules.length);
 		sheet.insertRule("#" + containerId + " .nvd3 .nv-axis line {\n                opacity: 0;\n            }",sheet.cssRules.length);
 	}
@@ -10560,7 +10692,7 @@ core_graphs_HorizontalBarGraph.prototype = $extend(haxe_ui_core_Component.protot
 		return new core_graphs_HorizontalBarGraph();
 	}
 	,__class__: core_graphs_HorizontalBarGraph
-	,__properties__: $extend(haxe_ui_core_Component.prototype.__properties__,{set_data:"set_data",get_data:"get_data",set_colourCalculator:"set_colourCalculator",get_colourCalculator:"get_colourCalculator",set_showLegend:"set_showLegend",get_showLegend:"get_showLegend"})
+	,__properties__: $extend(haxe_ui_core_Component.prototype.__properties__,{set_data:"set_data",get_data:"get_data",set_colourCalculator:"set_colourCalculator",get_colourCalculator:"get_colourCalculator",set_noDataLabel:"set_noDataLabel",get_noDataLabel:"get_noDataLabel",set_showLegend:"set_showLegend",get_showLegend:"get_showLegend"})
 });
 var core_graphs_MarkerFunctions = function() { };
 $hxClasses["core.graphs.MarkerFunctions"] = core_graphs_MarkerFunctions;
@@ -10651,7 +10783,9 @@ var core_graphs_ScatterGraph = function() {
 	this._xLabels = null;
 	this.getMarkerValueY = null;
 	this.markerBehind = false;
+	this._pointToSelect = null;
 	this._selectedPointIndex = -1;
+	this._noDataLabel = "";
 	this.markerColour = "#ffffff";
 	this.textColour = "#b4b4b4";
 	this.gridColour = "#181a1b";
@@ -10677,6 +10811,21 @@ core_graphs_ScatterGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 	,gridColour: null
 	,textColour: null
 	,markerColour: null
+	,_noDataLabel: null
+	,get_noDataLabel: function() {
+		return this._noDataLabel;
+	}
+	,set_noDataLabel: function(value) {
+		if(value == this._noDataLabel) {
+			return value;
+		}
+		this._noDataLabel = value;
+		if(this._chart != null) {
+			this._chart.noData(value);
+			this._chart.update();
+		}
+		return value;
+	}
 	,_selectedPointIndex: null
 	,onReady: function() {
 		var _gthis = this;
@@ -10700,7 +10849,7 @@ core_graphs_ScatterGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 			_gthis._chart.xAxis.staggerLabels(false);
 			_gthis._chart.xAxis.rotateLabels(-45);
 			_gthis._chart.tooltip.enabled(false);
-			_gthis._chart.noData("");
+			_gthis._chart.noData(_gthis.get_noDataLabel());
 			_gthis._chart.xAxis.tickValues(_gthis.buildXValues()).tickFormat(function(d) {
 				return _gthis.buildXLabels()[d];
 			});
@@ -10722,6 +10871,9 @@ core_graphs_ScatterGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 					_gthis.drawMarker();
 				},100);
 			});
+			if(_gthis._pointToSelect != null) {
+				_gthis.selectPoint(_gthis._pointToSelect);
+			}
 			_gthis.drawMarker();
 			return _gthis._chart;
 		});
@@ -10745,8 +10897,10 @@ core_graphs_ScatterGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 			el.classList.remove("dim");
 		});
 	}
+	,_pointToSelect: null
 	,selectPoint: function(pointIndex) {
 		if(this._container == null) {
+			this._pointToSelect = pointIndex;
 			return;
 		}
 		this._selectedPointIndex = pointIndex;
@@ -10766,6 +10920,7 @@ core_graphs_ScatterGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 				el.classList.add("dim");
 			}
 		});
+		this._pointToSelect = null;
 	}
 	,selectPointFromData: function(value) {
 		if(this._data == null || this._data[0] == null || this._data[0].values == null) {
@@ -10994,7 +11149,7 @@ core_graphs_ScatterGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 			sheet.insertRule("#" + containerId + " .nvd3 .nv-point.dim {\n                    opacity: .2;\n                }",sheet.cssRules.length);
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
-			haxe_Log.trace(e,{ fileName : "../../haxe/core/graphs/ScatterGraph.hx", lineNumber : 466, className : "core.graphs.ScatterGraph", methodName : "buildColours"});
+			haxe_Log.trace(e,{ fileName : "../../haxe/core/graphs/ScatterGraph.hx", lineNumber : 492, className : "core.graphs.ScatterGraph", methodName : "buildColours"});
 		}
 	}
 	,onThemeChanged: function() {
@@ -11042,7 +11197,7 @@ core_graphs_ScatterGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 		return new core_graphs_ScatterGraph();
 	}
 	,__class__: core_graphs_ScatterGraph
-	,__properties__: $extend(haxe_ui_core_Component.prototype.__properties__,{set_data:"set_data",get_data:"get_data"})
+	,__properties__: $extend(haxe_ui_core_Component.prototype.__properties__,{set_data:"set_data",get_data:"get_data",set_noDataLabel:"set_noDataLabel",get_noDataLabel:"get_noDataLabel"})
 });
 var core_util_FunctionDetails = function(s) {
 	this._s = s;
@@ -11083,6 +11238,71 @@ core_util_FunctionDetails.prototype = {
 	}
 	,__class__: core_util_FunctionDetails
 };
+var core_util_color_IColorCalculator = function() { };
+$hxClasses["core.util.color.IColorCalculator"] = core_util_color_IColorCalculator;
+core_util_color_IColorCalculator.__name__ = "core.util.color.IColorCalculator";
+core_util_color_IColorCalculator.__isInterface__ = true;
+core_util_color_IColorCalculator.prototype = {
+	configure: null
+	,getColor: null
+	,__class__: core_util_color_IColorCalculator
+};
+var core_util_color_ColorCalculator = function() {
+};
+$hxClasses["core.util.color.ColorCalculator"] = core_util_color_ColorCalculator;
+core_util_color_ColorCalculator.__name__ = "core.util.color.ColorCalculator";
+core_util_color_ColorCalculator.__interfaces__ = [core_util_color_IColorCalculator];
+core_util_color_ColorCalculator.prototype = {
+	configure: function(params) {
+	}
+	,getColor: function(data) {
+		return null;
+	}
+	,__class__: core_util_color_ColorCalculator
+};
+var core_util_color_ColorCalculatorFactory = function() { };
+$hxClasses["core.util.color.ColorCalculatorFactory"] = core_util_color_ColorCalculatorFactory;
+core_util_color_ColorCalculatorFactory.__name__ = "core.util.color.ColorCalculatorFactory";
+core_util_color_ColorCalculatorFactory.getColorCalculator = function(id) {
+	var id1 = StringTools.replace(StringTools.replace(id,"-",""),"_","").toLowerCase();
+	if(id1 == "range") {
+		return new core_util_color_RangeColorCalculator();
+	}
+	return null;
+};
+var core_util_color_RangeColorCalculator = function() {
+	core_util_color_ColorCalculator.call(this);
+};
+$hxClasses["core.util.color.RangeColorCalculator"] = core_util_color_RangeColorCalculator;
+core_util_color_RangeColorCalculator.__name__ = "core.util.color.RangeColorCalculator";
+core_util_color_RangeColorCalculator.__super__ = core_util_color_ColorCalculator;
+core_util_color_RangeColorCalculator.prototype = $extend(core_util_color_ColorCalculator.prototype,{
+	_ranges: null
+	,configure: function(params) {
+		this._ranges = [];
+		var n = params.length / 3 | 0;
+		var _g = 0;
+		var _g1 = n;
+		while(_g < _g1) {
+			var i = _g++;
+			this._ranges.push({ start : params[i * 3], end : params[i * 3 + 1], color : params[i * 3 + 2]});
+		}
+	}
+	,getColor: function(data) {
+		var i = data;
+		var _g = 0;
+		var _g1 = this._ranges;
+		while(_g < _g1.length) {
+			var range = _g1[_g];
+			++_g;
+			if(i >= range.start && i <= range.end) {
+				return range.color;
+			}
+		}
+		return null;
+	}
+	,__class__: core_util_color_RangeColorCalculator
+});
 var haxe_ui_backend_DialogBase = function() {
 	this._buttonsCreated = false;
 	this._dialogParent = null;
