@@ -1,0 +1,141 @@
+<dashboard>
+    <layout>
+        <hbox width="100%" height="100%" style="spacing: 20px;">
+            <vsplitter width="100%" height="100%">
+                <hsplitter width="100%" height="100%">
+                    <portlet width="70%" height="100%" type="chart-scatter" title="DR 2.3 - Completed Visits">
+                        <data>
+                            <source database="ClintexPrimaryData"
+                                    table="ICP 1 Data - Patient Visits"
+                                    transform="group-by('Investigator Site')->average('Number Completed Visits')->average('Data Entry Lag (Days)')->average('Expected Number of Visits')->average('Actual Number of Visits')"
+                                    axisX="Investigator Site"
+                                    axisY="Data Entry Lag (Days)"
+                                    size="Number Completed Visits"
+                                    markerFunction="static-y(16)"
+                                    markerBehind="true"
+                                    colorCalculator="threshold:16" />
+                        </data>
+                    </portlet>
+                    <card width="30%" height="100%" text="Predicted Data Entry Lag">
+                        <vbox width="100%" height="100%">
+                            <portlet width="100%" height="100%" type="chart-gauge" border="false" >
+                                <data>
+                                    <source database="ClintexPrimaryData"
+                                    table="ICP 1 Data - Patient Visits"
+                                    transform="filter-by('$Investigator Site')->group-by('Investigator Site')->average('Data Entry Lag (Days)')"
+                                    value="Data Entry Lag (Days)"
+                                    waitForFilterItem="Investigator Site" />
+                                </data>
+                            </portlet>
+                            <spacer height="10" />
+                            <portlet type="field-value" border="false" horizontalAlign="center" >
+                                <data>
+                                    <source database="ClintexPrimaryData"
+                                            table="ICP 1 Data - Patient Visits"
+                                            transform="filter-by('$Investigator Site')->group-by('Investigator Site')->average('Data Entry Lag (Days)')"
+                                            fieldName="Data Entry Lag (Days)"
+                                            waitForFilterItem="Investigator Site"
+                                            prompt="Actual Data Entry Lag" />
+                                </data>
+                            </portlet>
+                        </vbox>
+                    </card>
+                </hsplitter>
+                <card text="Predicitive Modelling" width="100%" height="350">
+                    <hbox width="100%" height="100%" columns="3">
+                        <vbox width="33%" height="100%">
+                            <label text="Expected Number of Visits" horizontalAlign="center" />
+                            <spacer height="10" />
+                            <portlet type="field-value" border="false" horizontalAlign="center" >
+                                <data>
+                                    <source database="ClintexPrimaryData"
+                                            table="ICP 1 Data - Patient Visits"
+                                            transform="filter-by('$Investigator Site')->group-by('Investigator Site')->average('Expected Number of Visits')"
+                                            waitForFilterItem="Investigator Site"
+                                            fieldName="Expected Number of Visits"
+                                            prompt="Actual Queries" />
+                                </data>
+                            </portlet>
+                            <portlet type="user-input" border="false" horizontalAlign="center" >
+                                <data>
+                                    <source prompt="Enter Predicted Value:" initialValue="10" userInputId="Predicted Expected Number of Visits"></source>
+                                </data>
+                            </portlet>
+                            <portlet width="100%" height="100%" type="chart-horizontal-bar" border="false">
+                                <data>
+                                    <source database="ClintexPrimaryData"
+                                            table="ICP 1 Data - Patient Visits"
+                                            transform="filter-by('$Investigator Site')->group-by('Investigator Site')->average('Expected Number of Visits')->set-field('Investigator Site', 'Actual')->add-row('Predicted', 'Expected Number of Visits', '$Predicted Expected Number of Visits')"
+                                            axisX="Investigator Site"
+                                            axisY="Expected Number of Visits"
+                                            waitForFilterItem="Investigator Site"
+                                            showLegend="false" />
+                                </data>
+                            </portlet>
+                        </vbox>
+                        <vbox width="34%" height="100%">
+                            <label text="Actual Number of Visits" horizontalAlign="center" />
+                            <spacer height="10" />
+                            <portlet type="field-value" border="false" horizontalAlign="center" >
+                                <data>
+                                    <source database="ClintexPrimaryData"
+                                            table="ICP 1 Data - Patient Visits"
+                                            transform="filter-by('$Investigator Site')->group-by('Investigator Site')->average('Actual Number of Visits')"
+                                            fieldName="Actual Number of Visits"
+                                            waitForFilterItem="Investigator Site"
+                                            prompt="Actual Missed Visits" />
+                                </data>
+                            </portlet>
+                            <portlet type="user-input" border="false" horizontalAlign="center" >
+                                <data>
+                                    <source prompt="Enter Predicted Value:" initialValue="7" userInputId="Predicted Actual Number of Visits"></source>
+                                </data>
+                            </portlet>
+                            <portlet width="100%" height="100%" type="chart-horizontal-bar" border="false">
+                                <data>
+                                    <source database="ClintexPrimaryData"
+                                            table="ICP 1 Data - Patient Visits"
+                                            transform="filter-by('$Investigator Site')->group-by('Investigator Site')->average('Actual Number of Visits')->set-field('Investigator Site', 'Actual')->add-row('Predicted', 'Actual Number of Visits', '$Predicted Actual Number of Visits')"
+                                            axisX="Investigator Site"
+                                            axisY="Actual Number of Visits"
+                                            waitForFilterItem="Investigator Site"
+                                            showLegend="false" />
+                                </data>
+                            </portlet>
+                        </vbox>
+                        <vbox width="33%" height="100%">
+                            <label text="Number Completed Visits" horizontalAlign="center" />
+                            <spacer height="10" />
+                            <portlet type="field-value" border="false" horizontalAlign="center" >
+                                <data>
+                                    <source database="ClintexPrimaryData"
+                                            table="ICP 1 Data - Patient Visits"
+                                            transform="filter-by('$Investigator Site')->group-by('Investigator Site')->average('Number Completed Visits')"
+                                            fieldName="Number Completed Visits"
+                                            waitForFilterItem="Investigator Site"
+                                            prompt="Actual Protocol Deviation Rate" />
+                                </data>
+                            </portlet>
+                            <portlet type="user-input" border="false" horizontalAlign="center" >
+                                <data>
+                                    <source prompt="Enter Predicted Value:" initialValue="7" userInputId="Predicted Number Completed Visits"></source>
+                                </data>
+                            </portlet>
+                            <portlet width="100%" height="100%" type="chart-horizontal-bar" border="false">
+                                <data>
+                                    <source database="ClintexPrimaryData"
+                                            table="ICP 1 Data - Patient Visits"
+                                            transform="filter-by('$Investigator Site')->group-by('Investigator Site')->average('Number Completed Visits')->set-field('Investigator Site', 'Actual')->add-row('Predicted', 'Number Completed Visits', '$Predicted Number Completed Visits')"
+                                            axisX="Investigator Site"
+                                            axisY="Number Completed Visits"
+                                            waitForFilterItem="Investigator Site"
+                                            showLegend="false" />
+                                </data>
+                            </portlet>
+                        </vbox>
+                    </hbox>
+                </card>
+            </vsplitter>
+        </hbox>
+    </layout>
+</dashboard>
