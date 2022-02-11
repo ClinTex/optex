@@ -18,7 +18,7 @@
                     </portlet>
                     <card width="30%" height="100%" text="Predicted Data Entry Lag">
                         <vbox width="100%" height="100%">
-                            <portlet width="100%" height="100%" type="chart-gauge" border="false" >
+                            <portlet width="100%" height="150" type="chart-gauge" border="false" >
                                 <data>
                                     <source database="ClintexPrimaryData"
                                     table="ICP 1 Data - Patient Visits"
@@ -35,6 +35,8 @@
                                             transform="filter-by('$Investigator Site')->group-by('Investigator Site')->average('Data Entry Lag (Days)')"
                                             fieldName="Data Entry Lag (Days)"
                                             waitForFilterItem="Investigator Site"
+                                            valueFontSize="26"
+                                            colorCalculator="range(0, 14, '#448844', 14, 17, '#ffbf00', 17, 100, '#ff4444')"
                                             prompt="Actual Data Entry Lag" />
                                 </data>
                             </portlet>
@@ -44,7 +46,6 @@
                 <card text="Predicitive Modelling" width="100%" height="350">
                     <hbox width="100%" height="100%" columns="3">
                         <vbox width="33%" height="100%">
-                            <label text="Expected Number of Visits" horizontalAlign="center" />
                             <spacer height="10" />
                             <portlet type="field-value" border="false" horizontalAlign="center" >
                                 <data>
@@ -53,9 +54,12 @@
                                             transform="filter-by('$Investigator Site')->group-by('Investigator Site')->average('Expected Number of Visits')"
                                             waitForFilterItem="Investigator Site"
                                             fieldName="Expected Number of Visits"
+                                            valueFontSize="20"
+                                            colorCalculator="range(0, 8.5, '#448844', 8.5, 9, '#ffbf00', 9, 100, '#ff4444')"
                                             prompt="Actual Queries" />
                                 </data>
                             </portlet>
+                            <spacer height="10" />
                             <portlet type="user-input" border="false" horizontalAlign="center" >
                                 <data>
                                     <source prompt="Enter Predicted Value:" initialValue="10" userInputId="Predicted Expected Number of Visits"></source>
@@ -69,12 +73,12 @@
                                             axisX="Investigator Site"
                                             axisY="Expected Number of Visits"
                                             waitForFilterItem="Investigator Site"
+                                            noDataLabel="Select site for details"
                                             showLegend="false" />
                                 </data>
                             </portlet>
                         </vbox>
                         <vbox width="34%" height="100%">
-                            <label text="Actual Number of Visits" horizontalAlign="center" />
                             <spacer height="10" />
                             <portlet type="field-value" border="false" horizontalAlign="center" >
                                 <data>
@@ -83,9 +87,12 @@
                                             transform="filter-by('$Investigator Site')->group-by('Investigator Site')->average('Actual Number of Visits')"
                                             fieldName="Actual Number of Visits"
                                             waitForFilterItem="Investigator Site"
+                                            valueFontSize="20"
+                                            colorCalculator="range(0, 4, '#448844', 4, 5, '#ffbf00', 5, 100, '#ff4444')"
                                             prompt="Actual Missed Visits" />
                                 </data>
                             </portlet>
+                            <spacer height="10" />
                             <portlet type="user-input" border="false" horizontalAlign="center" >
                                 <data>
                                     <source prompt="Enter Predicted Value:" initialValue="7" userInputId="Predicted Actual Number of Visits"></source>
@@ -99,12 +106,12 @@
                                             axisX="Investigator Site"
                                             axisY="Actual Number of Visits"
                                             waitForFilterItem="Investigator Site"
+                                            noDataLabel="Select site for details"
                                             showLegend="false" />
                                 </data>
                             </portlet>
                         </vbox>
                         <vbox width="33%" height="100%">
-                            <label text="Number Completed Visits" horizontalAlign="center" />
                             <spacer height="10" />
                             <portlet type="field-value" border="false" horizontalAlign="center" >
                                 <data>
@@ -113,9 +120,12 @@
                                             transform="filter-by('$Investigator Site')->group-by('Investigator Site')->average('Number Completed Visits')"
                                             fieldName="Number Completed Visits"
                                             waitForFilterItem="Investigator Site"
+                                            valueFontSize="20"
+                                            colorCalculator="range(0, 4, '#448844', 4, 5, '#ffbf00', 5, 100, '#ff4444')"
                                             prompt="Actual Protocol Deviation Rate" />
                                 </data>
                             </portlet>
+                            <spacer height="10" />
                             <portlet type="user-input" border="false" horizontalAlign="center" >
                                 <data>
                                     <source prompt="Enter Predicted Value:" initialValue="7" userInputId="Predicted Number Completed Visits"></source>
@@ -129,6 +139,7 @@
                                             axisX="Investigator Site"
                                             axisY="Number Completed Visits"
                                             waitForFilterItem="Investigator Site"
+                                            noDataLabel="Select site for details"
                                             showLegend="false" />
                                 </data>
                             </portlet>
