@@ -1,0 +1,34 @@
+<sidebar width="450" height="100%">
+    <vbox width="100%" height="100%">
+        <label id="title" text="New User" style="font-size: 22px;color:#888888;" horizontalAlign="right" />
+        <rule />
+
+        <vbox width="100%" height="100%" style="padding: 10px;spacing: 10px;">
+            <frame text="User Details" width="100%">
+                <grid columns="2" width="100%">
+                    <label text="Username" verticalAlign="center" />
+                    <textfield id="userUsernameField" text="uname" placeholder="Enter name" width="100%"/>
+
+                    <label text="Password" verticalAlign="center" />
+                    <textfield id="userPasswordField" text="bob" placeholder="Enter password" width="100%"/>
+
+                    <label text="First Name" verticalAlign="center" />
+                    <textfield id="userFirstNameField" text="tim" placeholder="Enter first name" width="100%"/>
+
+                    <label text="Last Name" verticalAlign="center" />
+                    <textfield id="userLastNameField" text="jim" placeholder="Enter last name" width="100%"/>
+
+                    <label text="Email" verticalAlign="center" />
+                    <textfield id="userEmailField" text="email" placeholder="Enter email address" width="100%"/>
+                </grid> 
+            </frame>    
+
+            <spacer height="100%" />
+
+            <hbox horizontalAlign="right">
+                <button id="cancelButton" text="Cancel" />
+                <button id="createButton" text="Create" />
+            </hbox>
+        </vbox>
+    </vbox>
+</sidebar>    

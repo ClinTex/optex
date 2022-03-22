@@ -87,7 +87,13 @@ module.exports = (env) => {
             },
             hot: true,
             contentBase: path.resolve(__dirname, "./src/ui/" + part),
-            watchContentBase: true
+            watchContentBase: true,
+            watchOptions: {
+            	ignored: [
+            		"**/*.hx",
+            		"**/*.xml"
+            	]
+            }
         },
     }
 }

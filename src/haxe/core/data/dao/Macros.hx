@@ -35,6 +35,7 @@ class Macros {
         toArrayFn.add(macro var data = []);
 
         var primaryKeyGetterExpr = new CodeBuilder();
+        var primaryKeySetterExpr = new CodeBuilder();
         var primaryKeyNameExpr = new CodeBuilder();
         var primaryFieldDefsExpr:Array<Expr> = [];
         var fieldDefsExpr:Array<Expr> = [];
@@ -67,6 +68,7 @@ class Macros {
             if (f.getMetaValueString("field") == "primary") {
                 primaryFieldDefsExpr.push(macro {fieldName: $v{f.name}, fieldType: ${e}});
                 primaryKeyGetterExpr.add(macro return $i{f.name});
+                primaryKeySetterExpr.add(macro return $i{f.name} = value);
                 primaryKeyNameExpr.add(macro return $v{f.name});
             }
             
@@ -107,6 +109,7 @@ class Macros {
         fromArrayFn.add(macro dataChanged = false);
         getFieldValueFn.add(macro return null);
         var primaryKeyGetter = builder.addGetter("primaryKey", macro: Int, primaryKeyGetterExpr.expr);
+        var primaryKeySetter = builder.addSetter("primaryKey", macro: Int, primaryKeySetterExpr.expr);
         var primaryKeyNameGetter = builder.addGetter("primaryKeyName", macro: String, primaryKeyNameExpr.expr);
 
         //////////////////////////////////////////////////////////////////////////////////////////////

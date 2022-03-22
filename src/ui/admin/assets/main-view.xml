@@ -29,37 +29,45 @@
         }
     </style>
 
-    <menu-bar id="mainMenu" width="100%">
-        <menu text="Admin" id="adminMenu">
-            <menu-item id="removeCurrentDatabase" text="Remove Current Database" />
-            <menu-item id="clearAll" text="Clear All" />
-            <menu-item id="transformBrowser" text="Transform Browser" />
-        </menu>
-    </menu-bar>
+    <vbox id="mainContent" width="100%" height="100%" style="padding:0px;spacing:0px;">
+        <menu-bar id="mainMenu" width="100%">
+            <menu text="Admin" id="adminMenu">
+                <menu-item id="removeCurrentDatabase" text="Remove Current Database" />
+                <menu-item id="clearAll" text="Clear All" />
+                <menu-item id="transformBrowser" text="Transform Browser" />
+            </menu>
+            <spacer width="100%" />
+            <menu text="Username" id="userMenu">
+                <menu-item id="myRoles" text="My Roles" />
+                <menu-item id="logout" text="Logout" />
+            </menu>
+        </menu-bar>
 
+        <hbox width="100%" height="100%">
+            <vbox id="mainContent" width="100%" height="100%">
+                <stack id="mainStack" width="100%" height="100%">
+                    <home-view id="homeView" />
+                    <data-view id="dataView" />
+                    <dashboards-view id="dashboardsView" />
+                    <organizations-view id="organizationsView" />
+                    <!--
+                    <portlets-view id="portletsView" />
+                    -->
+                    <settings-view id="settingsView" />
+                </stack>
+            </vbox>
 
-    <hbox width="100%" height="100%">
-        <vbox id="mainContent" width="100%" height="100%">
-            <stack id="mainStack" width="100%" height="100%">
-                <home-view id="homeView" />
-                <data-view id="dataView" />
-                <dashboards-view id="dashboardsView" />
+            <button-bar id="mainButtons" direction="vertical" height="100%" selectedIndex="0" styleName="right-menu with-bottom-button" style="margin-top: -1px" onchange="mainStack.selectedId = this.selectedButton.userData">
+                <button text="Home" userData="homeView" icon="icons/icons8-top-menu-48.png" />
+                <button text="Data" userData="dataView" icon="icons/icons8-data-protection-48.png" />
+                <button text="Dashboards" userData="dashboardsView" icon="icons/icons8-dashboard-layout-48.png" />
+                <button text="Orgs" userData="organizationsView" icon="icons/icons8-data-protection-48.png" />
                 <!--
-                <portlets-view id="portletsView" />
+                <button text="Portlets" userData="portletsView" icon="icons/icons8-laptop-48.png" />
                 -->
-                <settings-view id="settingsView" />
-            </stack>
-        </vbox>
-
-        <button-bar id="mainButtons" direction="vertical" height="100%" selectedIndex="0" styleName="right-menu with-bottom-button" style="margin-top: -1px" onchange="mainStack.selectedId = this.selectedButton.userData">
-            <button text="Home" userData="homeView" icon="icons/icons8-top-menu-48.png" />
-            <button text="Data" userData="dataView" icon="icons/icons8-data-protection-48.png" />
-            <button text="Dashboards" userData="dashboardsView" icon="icons/icons8-dashboard-layout-48.png" />
-            <!--
-            <button text="Portlets" userData="portletsView" icon="icons/icons8-laptop-48.png" />
-            -->
-            <spacer height="100%" />
-            <button text="Settings" userData="settingsView" icon="icons/icons8-services-48.png" />
-        </button-bar>
-    </hbox>
+                <spacer height="100%" />
+                <button text="Settings" userData="settingsView" icon="icons/icons8-services-48.png" />
+            </button-bar>
+        </hbox>
+    </vbox>    
 </vbox>

@@ -9,6 +9,8 @@ class DashboardData implements IBuiltDataObject {
     @:field                     public var layoutData:String;
     @:field                     public var iconId:Int;
     @:field                     public var dashboardGroupId:Int;
+    @:field                     public var organizationId:Int;
+    @:field                     public var creatorUserId:Int;
     
     @:link(dashboardGroupId)    public var group:DashboardGroupData;
     @:link(iconId)              public var icon:IconData;

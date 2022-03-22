@@ -1,0 +1,9 @@
+<dialog title="Login" closable="false">
+    <grid>
+        <label text="Username:" verticalAlign="center" />
+        <textfield text="ihar" />
+
+        <label text="Password:" verticalAlign="center" />
+        <textfield text="123456" password="true"/>
+    </grid>
+</dialog>

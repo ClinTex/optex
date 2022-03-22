@@ -1,5 +1,9 @@
 package;
 
+import haxe.ui.util.Timer;
+import haxe.ui.core.Screen;
+import haxe.ui.containers.dialogs.Dialog.DialogEvent;
+import dialogs.LoginDialog;
 import haxe.ui.containers.Grid;
 import dialogs.TransformBrowserDialog;
 import components.WorkingIndicator;
@@ -20,14 +24,14 @@ import haxe.ui.containers.menus.Menu.MenuEvent;
 import haxe.ui.containers.VBox;
 import core.data.DatabaseManager;
 
-@:build(haxe.ui.ComponentBuilder.build("assets/main-view.xml"))
+//@:build(haxe.ui.ComponentBuilder.build("assets/main-view.xml"))
 class MainView extends VBox {
-    public static var instance:MainView = null;
+    //public static var instance:MainView = null;
 
     public function new() {
         super();
 
-        instance = this;
+        //instance = this;
 
         ComponentClassMap.instance.registerClassName("vbox", Type.getClassName(VBox));
         ComponentClassMap.instance.registerClassName("hbox", Type.getClassName(HBox));
@@ -44,11 +48,57 @@ class MainView extends VBox {
         ComponentClassMap.instance.registerClassName("hsplitter", Type.getClassName(HorizontalSplitter));
         ComponentClassMap.instance.registerClassName("Grid", Type.getClassName(Grid));
 
-        DatabaseManager.instance.init().then(function(r) {
-            trace("database manager ready");
-        });
+        //mainContent.hide();
     }
     
+    public override function onReady() {
+        super.onReady();
+        var working = new WorkingIndicator();
+        working.showWorking();
+        DatabaseManager.instance.init().then(function(r) {
+            trace("database manager ready");
+            working.workComplete();
+            showLogin();
+        });
+    }
+
+    private function showLogin() {
+        var dialog = new LoginDialog();
+        dialog.onDialogClosed = function(e:DialogEvent) {
+            if (e.button == "Login") {
+                startLogin();
+            }
+        }
+        dialog.show();
+    }
+
+    private var _workingLogin:WorkingIndicator;
+    private function startLogin() {
+        var fakeFail = false;
+        _workingLogin = new WorkingIndicator();
+        _workingLogin.showWorking();
+        Timer.delay(function() {
+            if (fakeFail == true) {
+                _workingLogin.workComplete();
+                _workingLogin = null;
+                showLogin();
+            } else {
+                completeLogin();
+            }
+        }, 0);
+    }
+
+    private function completeLogin() {
+        DatabaseManager.instance.start().then(function(r) {
+            _workingLogin.workComplete();
+            _workingLogin = null;
+            Screen.instance.removeComponent(this);
+            var adminView = new AdminView();
+            Screen.instance.addComponent(adminView);
+        });
+    }
+
+    /*
     @:bind(mainMenu, MenuEvent.MENU_SELECTED)
     private function onMenuMenu(e:MenuEvent) {
         switch (e.menuItem.id) {
@@ -61,6 +111,7 @@ class MainView extends VBox {
                 dialog.show();
         }
     }
+    */
 
     private function clearAllDbs() {
         /*
@@ -75,6 +126,7 @@ class MainView extends VBox {
         */
     }
 
+    /*
     @:bind(mainStack, UIEvent.CHANGE)
     private function onMainStackChanged(_) {
         mainButtons.selectedIndex = mainStack.selectedIndex;
@@ -83,4 +135,5 @@ class MainView extends VBox {
     public function changeView(id:String) {
         mainStack.selectedId = id;
     }
+    */
 }

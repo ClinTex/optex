@@ -233,8 +233,6 @@ module {
         public var schema:TableSchema = TableSchema();
         public var data:[[Text]] = [];
 
-        //public var data2:Buffer.Buffer<Buffer.Buffer<Text>> = Buffer.Buffer(0);
-
         public func getName():Text {
             return name;
         };

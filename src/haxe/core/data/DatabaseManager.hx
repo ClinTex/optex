@@ -53,6 +53,16 @@ class DatabaseManager extends EventDispatcher<DatabaseEvent> {
         });
     }
 
+    public function start():Promise<Bool> {
+        return new Promise((resolve, reject) -> {
+            var promises = [internal.start()];
+
+            PromiseUtils.runSequentially(promises, function() {
+                resolve(true);
+            });
+        });
+    }
+
     public function getDatabase(name:String):Promise<Database> {
         return new Promise((resolve, reject) -> {
             CoreData.getDatabaseInfo(name).then(function(databaseDef) {

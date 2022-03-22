@@ -1,0 +1,22 @@
+<sidebar width="450" height="100%">
+    <vbox width="100%" height="100%">
+        <label text="New Organization" style="font-size: 22px;color:#888888;" horizontalAlign="right" />
+        <rule />
+
+        <vbox width="100%" height="100%" style="padding: 10px;spacing: 10px;">
+            <frame text="Organization Details" width="100%">
+                <grid columns="2" width="100%">
+                    <label text="Name" verticalAlign="center" />
+                    <textfield id="orgNameField" placeholder="Enter name" width="100%"/>
+                </grid> 
+            </frame>    
+
+            <spacer height="100%" />
+
+            <hbox horizontalAlign="right">
+                <button id="cancelButton" text="Cancel" />
+                <button id="createButton" text="Create" />
+            </hbox>
+        </vbox>
+    </vbox>
+</sidebar>    

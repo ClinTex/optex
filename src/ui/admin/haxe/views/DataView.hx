@@ -29,9 +29,9 @@ class DataView extends VBox {
     public function new() {
         super();
         instance = this;
-        DatabaseManager.instance.listen(DatabaseEvent.Initialized, function(_) {
+        //DatabaseManager.instance.listen(DatabaseEvent.Initialized, function(_) {
             refresh();
-        });
+        //});
     }
 
     private var _databaseToSelect:String = null;
@@ -166,6 +166,7 @@ class DataView extends VBox {
             n++;
         }
 
+        var recordCount = 0;
         n = 0;
         table.fetch().then(function(data) {
             var ds = new ArrayDataSource<Dynamic>();
@@ -173,11 +174,15 @@ class DataView extends VBox {
                 var item:Dynamic = {};
                 n = 0;
                 for (fd in fieldDefs) {
-                    Reflect.setField(item, safeId(fd.fieldName), d.getFieldValue(fd.fieldName));
+                    var v = d.getFieldValue(fd.fieldName);
+                    if (Std.is(v, String)) {
+                        //v = "string";
+                    }
+                    Reflect.setField(item, safeId(fd.fieldName), Std.string(v));
 
                     var column = cols.get(safeId(fd.fieldName));
                     var columnWidth = colWidths.get(column);
-                    var newWidth = guessStringWidth(Std.string(d.getFieldValue(fd.fieldName)), 9);
+                    var newWidth = guessStringWidth(Std.string(v), 9);
                     if (newWidth > columnWidth) {
                         colWidths.set(column, newWidth);
                     }
@@ -189,6 +194,10 @@ class DataView extends VBox {
         
                 }
                 ds.add(item);
+                recordCount++;
+                if (recordCount > 100) {
+                    break;
+                }
             }
 
             for (column in colWidths.keys()) {

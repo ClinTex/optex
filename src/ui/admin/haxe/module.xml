@@ -6,6 +6,7 @@
         <resource path="core/assets/themes" prefix="themes" />
     </resources>
     <components>
+        <class package="core.components" />
         <class package="core.dashboards" />
         <class package="components" />
         <class package="views" />

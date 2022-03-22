@@ -52,4 +52,17 @@ class GenericData implements IDataObject {
             resolve(true);
         });
     }
+
+    public var primaryKeyName(get, null):String;
+    private function get_primaryKeyName():String {
+        return null;
+    }
+
+    public var primaryKey(get, set):Int;
+    private function get_primaryKey():Int {
+        return -1;
+    }
+    private function set_primaryKey(value:Int):Int {
+        return value;
+    }
 }

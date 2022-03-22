@@ -1,0 +1,34 @@
+<vbox width="100%" height="100%">
+    <hbox width="100%" height="100%">
+        <vbox width="230" height="100%" style="spacing:0;border-right: 1px solid $normal-border-color;padding-right: 1px;">
+            <vbox  width="100%" style="padding:7px;background-color: $solid-background-color;border-bottom:1px solid $normal-border-color;">
+                <textfield placeholder="Filter organizations" width="100%" />
+            </vbox>
+
+            <treeview id="orgsTree" width="100%" height="100%">
+            </treeview>
+
+            <hbox id="bottomButtons" width="100%" height="67" style="padding:0px;spacing:0px;border-top: 1px solid $normal-border-color;padding-top: 1px;border-bottom:1px solid $normal-border-color;padding-bottom:1px;" styleName="bottom-buttons">
+                <button id="addButton" text="Add" width="33%" height="100%" icon="icons/icons8-plus-+-32.png" iconPosition="top" />
+                <component width="1" height="100%" style="background-color: $normal-border-color" />
+                <button text="Update" width="34%" height="100%" icon="icons/icons8-edit-32(1).png" iconPosition="top" />
+                <component width="1" height="100%" style="background-color: $normal-border-color" />
+                <button id="removeButton" text="Delete" width="33%" height="100%" icon="icons/icons8-delete-32.png" iconPosition="top" />
+            </hbox>
+        </vbox>    
+
+        <style>
+            #orgsTree {
+                border: none;
+                background-color: $solid-background-color;
+                border-right: 1px solid $normal-border-color;
+                border: none;
+                border-radius: 0;
+            }
+        </style>
+
+
+        <vbox id="detailsContainer" width="100%" height="100%" style="padding: 10px;">
+         </vbox>
+    </hbox>
+</vbox>

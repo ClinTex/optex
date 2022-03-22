@@ -7,6 +7,8 @@ class DashboardGroupData implements IBuiltDataObject {
     @:field             public var name:String;
     @:field             public var order:Int;
     @:field             public var iconId:Int;
+    @:field             public var organizationId:Int;
+    @:field             public var creatorUserId:Int;
     
     @:link(iconId)      public var icon:IconData;
 }

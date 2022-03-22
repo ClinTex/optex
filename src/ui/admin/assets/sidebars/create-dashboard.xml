@@ -9,11 +9,11 @@
                     <optionbox width="175" id="createNewGroupOption" group="groupOption" text="Create new group" verticalAlign="top" selected="true" />
                     <vbox width="100%">
                         <textfield id="newGroupName" placeholder="Group name" width="100%"/>
-                        <dropdown id="newGroupIcon" width="100%" />
+                        <icon-selector id="newGroupIcon" width="100%" />
                     </vbox>
 
                     <optionbox width="175" id="addToExistingGroupOption" group="groupOption" text="Add to existing group" verticalAlign="center" hidden="true" />
-                    <dropdown id="existingGroupSelector" width="100%" disabled="true" hidden="true" />
+                    <dashboard-group-selector id="existingGroupSelector" width="100%" disabled="true" hidden="true" />
                 </grid> 
             </frame>    
 
@@ -23,9 +23,7 @@
                     <textfield id="dashboardNameField" placeholder="Enter name" width="100%"/>
 
                     <label text="Icon" verticalAlign="center" />
-
-                    <dropdown id="dashboardIconField" width="100%">
-                    </dropdown>
+                    <icon-selector id="dashboardIconField" width="100%" />
 
                     <label text="Template" verticalAlign="center" />
                     <dropdown id="dashboardTemplateField" width="100%">

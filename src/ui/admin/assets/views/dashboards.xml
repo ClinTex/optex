@@ -1,19 +1,19 @@
 <vbox width="100%" height="100%">
     <hbox width="100%" height="100%">
-        <vbox width="200" height="100%" style="spacing:0;border-right: 1px solid #ababab;">
-            <vbox  width="100%" style="padding:7px;background-color: #eeeeee;__padding-right: 1px;border-bottom:1px solid #ababab;border-right:1px solid #ababab">
+        <vbox width="230" height="100%" style="spacing:0;border-right: 1px solid $normal-border-color;padding-right: 1px;">
+            <vbox  width="100%" style="padding:7px;background-color: $solid-background-color;border-bottom:1px solid $normal-border-color;">
                 <textfield placeholder="Filter dashboards" width="100%" />
             </vbox>
 
             <treeview id="dashboardTree" width="100%" height="100%">
             </treeview>
 
-            <hbox width="100%" height="67" style="padding:0px;spacing:0px;border-right: 1px solid #ababab;border-top: 1px solid #ababab;padding-right:1px;padding-top: 1px;border-bottom:1px solid #ababab;padding-bottom:1px;" styleName="bottom-buttons">
+            <hbox id="bottomButtons" width="100%" height="67" style="padding:0px;spacing:0px;border-top: 1px solid $normal-border-color;padding-top: 1px;border-bottom:1px solid $normal-border-color;padding-bottom:1px;" styleName="bottom-buttons">
                 <button id="addDashboardButton" text="Add" width="33%" height="100%" icon="icons/icons8-plus-+-32.png" iconPosition="top" />
-                <component width="1" height="100%" style="background-color: #ababab" />
+                <component width="1" height="100%" style="background-color: $normal-border-color" />
                 <button text="Update" width="34%" height="100%" icon="icons/icons8-edit-32(1).png" iconPosition="top" />
-                <component width="1" height="100%" style="background-color: #ababab" />
-                <button id="removeDashboardButton" text="Remove" width="33%" height="100%" icon="icons/icons8-delete-32.png" iconPosition="top" />
+                <component width="1" height="100%" style="background-color: $normal-border-color" />
+                <button id="removeDashboardButton" text="Delete" width="33%" height="100%" icon="icons/icons8-delete-32.png" iconPosition="top" />
             </hbox>
         </vbox>    
 
@@ -25,11 +25,10 @@
 
             #dashboardTree {
                 border: none;
-                background-color: #eeeeee;
-                border-right: 1px solid #ababab;
+                background-color: $solid-background-color;
+                border-radius: 0;
             }
         </style>
-
 
         <vbox id="detailsContainer" width="100%" height="100%" style="padding: 10px;">
             <tabview id="dashboardDetailsTabs" width="100%" height="100%" tabPosition="bottom">
@@ -49,7 +48,7 @@
                                         <textfield id="dashboardGroupNameField" width="200" />
 
                                         <label text="Icon" verticalAlign="center" />
-                                        <dropdown id="dashboardGroupIconField" width="200" />
+                                        <icon-selector id="dashboardGroupIconField" width="200" />
                                     </grid>
                                 </vbox>
                             </box>
@@ -67,10 +66,10 @@
                                         <textfield id="dashboardNameField" width="200" />
 
                                         <label text="Group" verticalAlign="center" />
-                                        <dropdown id="dashboardGroupField" width="200" />
+                                        <dashboard-group-selector id="dashboardGroupField" width="200" />
 
                                         <label text="Icon" verticalAlign="center" />
-                                        <dropdown id="dashboardIconField" width="200" />
+                                        <icon-selector id="dashboardIconField" width="200" />
                                     </grid>
 
                                     <textarea id="dashboardDataField" width="100%" height="100%"/>
