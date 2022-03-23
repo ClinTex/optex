@@ -1,0 +1,3 @@
+<dialog title="Select Role">
+    <listview id="roleList" width="400" height="200" />
+</dialog>

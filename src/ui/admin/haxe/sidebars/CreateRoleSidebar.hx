@@ -20,15 +20,13 @@ class CreateRoleSidebar extends DataObjectSidebar {
     }
 
     private override function createObject() {
-        /*
-        var userGroup = InternalDB.roles.createObject();
-        userGroup.name = roleNameField.text;
-        userGroup.organizationId = organization.organizationId;
+        var role = InternalDB.roles.createObject();
+        role.name = roleNameField.text;
+        role.organizationId = organization.organizationId;
 
-        InternalDB.userGroups.addObject(userGroup).then(function(r) {
+        InternalDB.roles.addObject(role).then(function(r) {
             createComplete();
             OrganizationsView.instance.populateOrgs();
         });
-        */
     }
 }

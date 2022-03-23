@@ -1,0 +1,3 @@
+<dialog title="Select User">
+    <listview id="userList" width="400" height="200" />
+</dialog>

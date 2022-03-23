@@ -61,7 +61,7 @@
                 <button text="Home" userData="homeView" icon="icons/icons8-top-menu-48.png" />
                 <button text="Data" userData="dataView" icon="icons/icons8-data-protection-48.png" />
                 <button text="Dashboards" userData="dashboardsView" icon="icons/icons8-dashboard-layout-48.png" />
-                <button text="Orgs" userData="organizationsView" icon="icons/icons8-data-protection-48.png" />
+                <button text="Access" userData="organizationsView" icon="icons/icons8-data-protection-48.png" />
                 <!--
                 <button text="Portlets" userData="portletsView" icon="icons/icons8-laptop-48.png" />
                 -->
