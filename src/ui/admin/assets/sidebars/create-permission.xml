@@ -1,0 +1,45 @@
+<sidebar width="450" height="100%">
+    <vbox width="100%" height="100%">
+        <label id="title" text="New Permission" style="font-size: 22px;color:#888888;" horizontalAlign="right" />
+        <rule />
+
+        <vbox width="100%" height="100%" style="padding: 10px;spacing: 10px;">
+            <frame text="Permission Details" width="100%">
+                <grid columns="2" width="100%">
+                    <label text="Resource Type" verticalAlign="center" />
+                    <dropdown id="resourceTypeSelector" width="100%">
+                        <data>
+                            <item text="Organization" resourceType="1" />
+                            <item text="User" resourceType="2" />
+                            <item text="User Group" resourceType="3" />
+                            <item text="Role" resourceType="4" />
+                            <item text="Site" resourceType="5" />
+                            <item text="Dashboard" resourceType="6" />
+                            <item text="Dashboard Group" resourceType="7" />
+                        </data>
+                    </dropdown>
+
+                    <label text="Resource" verticalAlign="center" />
+                    <dropdown id="resourceSelector" width="100%"/>
+
+                    <label text="Action" verticalAlign="center" />
+                    <dropdown id="actionSelector" width="100%">
+                        <data>
+                            <item text="View" actionType="1" />
+                            <item text="Update" actionType="2" />
+                            <item text="Add" actionType="3" />
+                            <item text="Delete" actionType="4" />
+                        </data>
+                    </dropdown>
+                </grid> 
+            </frame>    
+
+            <spacer height="100%" />
+
+            <hbox horizontalAlign="right">
+                <button id="cancelButton" text="Cancel" />
+                <button id="createButton" text="Create" />
+            </hbox>
+        </vbox>
+    </vbox>
+</sidebar>    

@@ -21,8 +21,6 @@
             #orgsTree {
                 border: none;
                 background-color: $solid-background-color;
-                border-right: 1px solid $normal-border-color;
-                border: none;
                 border-radius: 0;
             }
         </style>

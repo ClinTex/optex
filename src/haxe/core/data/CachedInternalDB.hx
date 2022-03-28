@@ -8,9 +8,10 @@ class CachedInternalDB {
     public var dashboards:CachedDataTable<DashboardDataTable, DashboardData, DashboardUtils>;
     public var dashboardGroups:CachedDataTable<DashboardGroupDataTable, DashboardGroupData, NullUtils>;
     public var icons:CachedDataTable<IconDataTable, IconData, NullUtils>;
-    public var roles:CachedDataTable<RoleDataTable, RoleData, NullUtils>;
+    public var roles:CachedDataTable<RoleDataTable, RoleData, RoleUtils>;
     public var permissions:CachedDataTable<PermissionDataTable, PermissionData, NullUtils>;
     public var userGroupLinks:CachedDataTable<UserUserGroupLinkDataTable, UserUserGroupLinkData, NullUtils>;
+    public var userGroupRoleLinks:CachedDataTable<UserGroupRoleLinkDataTable, UserGroupRoleLinkData, NullUtils>;
 
     public function new() {
     }

@@ -29,4 +29,19 @@ class UserGroupUtils {
 
         return users;
     }
+
+    public function roles(userGroupId:Int):Array<RoleData> {
+        var roles = [];
+
+        for (userGroupRoleLink in InternalDB.userGroupRoleLinks.data) {
+            if (userGroupRoleLink.userGroupId == userGroupId) {
+                var role = InternalDB.roles.utils.role(userGroupRoleLink.roleId);
+                if (role != null) {
+                    roles.push(role);
+                }
+            }
+        }
+
+        return roles;
+    }
 }

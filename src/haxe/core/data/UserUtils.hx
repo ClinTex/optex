@@ -27,4 +27,30 @@ class UserUtils {
         }
         return groups;
     }
+
+    public function permissions(userId:Int):Array<PermissionData> {
+        var list = [];
+        for (group in groups(userId)) {
+            var roles = InternalDB.userGroups.utils.roles(group.userGroupId);
+            for (role in roles) {
+                for (permission in InternalDB.roles.utils.permissions(role.roleId)) {
+                    list.push(permission);
+                }
+            }
+        }
+        return list;
+    }
+
+    public function hasPermission(userId:Int, resourceType:Int, resourceId:Int, permissionAction:Int) {
+        var has = false;
+        for (permission in permissions(userId)) {
+            if ((permission.resourceId == resourceId || permission.resourceId == -1)
+                && permission.resourceType == resourceType
+                && permission.permissionAction == permissionAction) {
+                has = true;
+                break;
+            }
+        }
+        return has;
+    }
 }

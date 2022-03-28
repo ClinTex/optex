@@ -1,5 +1,6 @@
 package;
 
+import dialogs.PermissionCheckerDialog;
 import core.data.UserData;
 import haxe.ui.events.UIEvent;
 import dialogs.TransformBrowserDialog;
@@ -38,6 +39,9 @@ class AdminView extends VBox {
                 clearAllDbs();
             case "transformBrowser":
                 var dialog = new TransformBrowserDialog();
+                dialog.show();
+            case "permissionChecker":
+                var dialog = new PermissionCheckerDialog();
                 dialog.show();
         }
     }

@@ -35,6 +35,7 @@
                 <menu-item id="removeCurrentDatabase" text="Remove Current Database" />
                 <menu-item id="clearAll" text="Clear All" />
                 <menu-item id="transformBrowser" text="Transform Browser" />
+                <menu-item id="permissionChecker" text="Permission Checker" />
             </menu>
             <spacer width="100%" />
             <menu text="Username" id="userMenu">

@@ -1,5 +1,8 @@
 package views;
 
+import core.data.ResourceType;
+import sidebars.CreatePermissionSidebar;
+import core.data.RoleData;
 import dialogs.SelectRoleDialog;
 import components.WorkingIndicator;
 import haxe.ui.containers.dialogs.Dialog.DialogEvent;
@@ -20,6 +23,7 @@ import sidebars.CreateOrganizationSidebar;
 import haxe.ui.events.MouseEvent;
 import haxe.ui.Toolkit;
 import haxe.ui.containers.VBox;
+import core.data.ActionType;
 
 @:build(haxe.ui.ComponentBuilder.build("assets/views/organizations.xml"))
 class OrganizationsView extends VBox {
@@ -128,9 +132,19 @@ class OrganizationsView extends VBox {
                 var userGroupNode = userGroupsNode.addNode({text: groupLabel, icon: "themes/optex/user-group-solid.png", org: org, userGroup: userGroup});
                 userGroupNode.userData = "userGroup";
                 var rolesNode = userGroupNode.addNode({text: "Roles", icon: "themes/optex/folder-solid.png", org: org, userGroup: userGroup});
+                refreshUserGroupRoles(rolesNode, orgNode);
                 rolesNode.userData = "userGroupRoles";
                 refreshUserGroupUsers(userGroupNode, orgNode);
             }
+        }
+    }
+
+    public function refreshUserGroupRoles(rolesNode:TreeViewNode, orgNode:TreeViewNode) {
+        var org:OrganizationData = orgNode.data.org;
+        var userGroup:UserGroupData = rolesNode.data.userGroup;
+        for (role in InternalDB.userGroups.utils.roles(userGroup.userGroupId)) {
+            var roleLabel = role.name;
+            var roleNode = rolesNode.addNode({text: roleLabel, icon: "themes/optex/person-solid.png", org: org, role: role, userGroup: userGroup});
         }
     }
 
@@ -157,8 +171,25 @@ class OrganizationsView extends VBox {
         for (role in InternalDB.roles.data) {
             if (role.organizationId == org.organizationId) {
                 var roleLabel = role.name;
-                var roleNode = rolesNode.addNode({text: roleLabel, icon: "themes/optex/person-solid.png"});
+                var roleNode = rolesNode.addNode({text: roleLabel, icon: "themes/optex/person-solid.png", org: org, role: role});
+                roleNode.userData = "rolePermission";
+                refreshRolePermissions(roleNode, orgNode);
             }
+        }
+    }
+
+    public function refreshRolePermissions(roleNode:TreeViewNode, orgNode:TreeViewNode) {
+        var org:OrganizationData = orgNode.data.org;
+        var role:RoleData = roleNode.data.role;
+        for (permission in InternalDB.roles.utils.permissions(role.roleId)) {
+            var permissionLabel = ActionType.toString(permission.permissionAction);
+            var permissionResource = "";
+            if (permission.resourceId == -1) {
+                permissionResource = "Any";
+            }
+            permissionLabel += " " + permissionResource;
+            permissionLabel += " " + ResourceType.toString(permission.resourceType);
+            var permissionNode = roleNode.addNode({text: permissionLabel, icon: "themes/optex/dot.png", org: org, role: role, permission: permission});
         }
     }
 
@@ -241,6 +272,14 @@ class OrganizationsView extends VBox {
                 sidebar.position = "right";
                 sidebar.modal = true;
                 sidebar.show();
+            case "rolePermission":
+                var org:OrganizationData = selectedNode.data.org;
+                var role:RoleData = selectedNode.data.role;
+                var sidebar = new CreatePermissionSidebar();
+                sidebar.role = role;
+                sidebar.position = "right";
+                sidebar.modal = true;
+                sidebar.show();
             case "userGroup":
                 var org:OrganizationData = selectedNode.data.org;
                 var userGroup:UserGroupData = selectedNode.data.userGroup;
@@ -271,16 +310,14 @@ class OrganizationsView extends VBox {
                         if (dialog.selectedRole != null) {
                             var working = new WorkingIndicator();
                             working.showWorking();
-                            /*
 
-                            var link = InternalDB.userGroupLinks.createObject();
-                            link.userId = dialog.selectedUser.userId;
+                            var link = InternalDB.userGroupRoleLinks.createObject();
                             link.userGroupId = userGroup.userGroupId;
-                            InternalDB.userGroupLinks.addObject(link).then(function(r) {
+                            link.roleId = dialog.selectedRole.roleId;
+                            InternalDB.userGroupRoleLinks.addObject(link).then(function(r) {
                                 working.workComplete();
                                 populateOrgs();
                             });
-                            */
                         }
                     }
                 }

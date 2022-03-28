@@ -12,9 +12,10 @@ class InternalDB extends Database {
     public static var dashboards:CachedDataTable<DashboardDataTable, DashboardData, DashboardUtils>;
     public static var dashboardGroups:CachedDataTable<DashboardGroupDataTable, DashboardGroupData, NullUtils>;
     public static var icons:CachedDataTable<IconDataTable, IconData, NullUtils>;
-    public static var roles:CachedDataTable<RoleDataTable, RoleData, NullUtils>;
+    public static var roles:CachedDataTable<RoleDataTable, RoleData, RoleUtils>;
     public static var permissions:CachedDataTable<PermissionDataTable, PermissionData, NullUtils>;
     public static var userGroupLinks:CachedDataTable<UserUserGroupLinkDataTable, UserUserGroupLinkData, NullUtils>;
+    public static var userGroupRoleLinks:CachedDataTable<UserGroupRoleLinkDataTable, UserGroupRoleLinkData, NullUtils>;
 
     private static var _instance:InternalDB = null;
     public static var instance(get, null):InternalDB;
@@ -35,6 +36,7 @@ class InternalDB extends Database {
     private var roleData:RoleDataTable;
     private var permissionData:PermissionDataTable;
     private var userGroupLinkData:UserUserGroupLinkDataTable;
+    private var userGroupRoleLinkData:UserGroupRoleLinkDataTable;
 
     public var caches = new CachedInternalDB();
 
@@ -53,6 +55,7 @@ class InternalDB extends Database {
         roleData = new RoleDataTable();
         permissionData = new PermissionDataTable();
         userGroupLinkData = new UserUserGroupLinkDataTable();
+        userGroupRoleLinkData = new UserGroupRoleLinkDataTable();
         
         registerTable(OrganizationDataTable.TableName, organizationData);
         registerTable(UserDataTable.TableName, userData);
@@ -64,6 +67,7 @@ class InternalDB extends Database {
         registerTable(RoleDataTable.TableName, roleData);
         registerTable(PermissionDataTable.TableName, permissionData);
         registerTable(UserUserGroupLinkDataTable.TableName, userGroupLinkData);
+        registerTable(UserGroupRoleLinkDataTable.TableName, userGroupRoleLinkData);
 
         caches.organizations = new CachedDataTable<OrganizationDataTable, OrganizationData, NullUtils>(organizationData);
         caches.users = new CachedDataTable<UserDataTable, UserData, UserUtils>(userData, new UserUtils());
@@ -72,9 +76,10 @@ class InternalDB extends Database {
         caches.dashboards = new CachedDataTable<DashboardDataTable, DashboardData, DashboardUtils>(dashboardData, new DashboardUtils());
         caches.dashboardGroups = new CachedDataTable<DashboardGroupDataTable, DashboardGroupData, NullUtils>(dashboardGroupData);
         caches.icons = new CachedDataTable<IconDataTable, IconData, NullUtils>(iconData);
-        caches.roles= new CachedDataTable<RoleDataTable, RoleData, NullUtils>(roleData);
+        caches.roles= new CachedDataTable<RoleDataTable, RoleData, RoleUtils>(roleData, new RoleUtils());
         caches.permissions = new CachedDataTable<PermissionDataTable, PermissionData, NullUtils>(permissionData);
         caches.userGroupLinks = new CachedDataTable<UserUserGroupLinkDataTable, UserUserGroupLinkData, NullUtils>(userGroupLinkData);
+        caches.userGroupRoleLinks = new CachedDataTable<UserGroupRoleLinkDataTable, UserGroupRoleLinkData, NullUtils>(userGroupRoleLinkData);
 
         InternalDB.organizations = caches.organizations;
         InternalDB.users = caches.users;
@@ -86,6 +91,7 @@ class InternalDB extends Database {
         InternalDB.roles = caches.roles;
         InternalDB.permissions = caches.permissions;
         InternalDB.userGroupLinks = caches.userGroupLinks;
+        InternalDB.userGroupRoleLinks = caches.userGroupRoleLinks;
     }
 
     public function init():Promise<Bool> {
@@ -100,7 +106,8 @@ class InternalDB extends Database {
                 iconData.init(),
                 roleData.init(),
                 permissionData.init(),
-                userGroupLinkData.init()
+                userGroupLinkData.init(),
+                userGroupRoleLinkData.init()
             ];
 
             PromiseUtils.runSequentially(promises, function() {
@@ -121,7 +128,8 @@ class InternalDB extends Database {
                 caches.icons.fillCache(),
                 caches.roles.fillCache(),
                 caches.permissions.fillCache(),
-                caches.userGroupLinks.fillCache()
+                caches.userGroupLinks.fillCache(),
+                caches.userGroupRoleLinks.fillCache()
             ];
 
             PromiseUtils.runSequentially(promises, function() {
