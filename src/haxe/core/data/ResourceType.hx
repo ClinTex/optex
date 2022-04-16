@@ -8,6 +8,7 @@ class ResourceType {
     public static inline var Site:Int           = 5;
     public static inline var Dashboard:Int      = 6;
     public static inline var DashboardGroup:Int = 7;
+    public static inline var DataSource:Int     = 8;
 
     public static function toString(actionType:Int):String {
         return switch(actionType) {
@@ -18,6 +19,7 @@ class ResourceType {
             case Site: "Site";
             case Dashboard: "Dashboard";
             case DashboardGroup: "Dashboard Group";
+            case DataSource: "Data Source";
             case _: "Unknown";
         }
     }

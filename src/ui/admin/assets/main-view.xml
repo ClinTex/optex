@@ -31,7 +31,7 @@
 
     <vbox id="mainContent" width="100%" height="100%" style="padding:0px;spacing:0px;">
         <menu-bar id="mainMenu" width="100%">
-            <menu text="Admin" id="adminMenu">
+            <menu text="Tools" id="adminMenu">
                 <menu-item id="removeCurrentDatabase" text="Remove Current Database" />
                 <menu-item id="clearAll" text="Clear All" />
                 <menu-item id="transformBrowser" text="Transform Browser" />

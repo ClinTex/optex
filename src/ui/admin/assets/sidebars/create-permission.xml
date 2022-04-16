@@ -16,11 +16,9 @@
                             <item text="Site" resourceType="5" />
                             <item text="Dashboard" resourceType="6" />
                             <item text="Dashboard Group" resourceType="7" />
+                            <item text="Data Source" resourceType="8" />
                         </data>
                     </dropdown>
-
-                    <label text="Resource" verticalAlign="center" />
-                    <dropdown id="resourceSelector" width="100%"/>
 
                     <label text="Action" verticalAlign="center" />
                     <dropdown id="actionSelector" width="100%">
@@ -31,6 +29,9 @@
                             <item text="Delete" actionType="4" />
                         </data>
                     </dropdown>
+
+                    <label text="Resource" verticalAlign="center" />
+                    <dropdown id="resourceSelector" width="100%"/>
                 </grid> 
             </frame>    
 

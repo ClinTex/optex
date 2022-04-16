@@ -1,0 +1,9 @@
+<vbox width="100%" height="100%">
+    <grid>
+        <label text="Name" verticalAlign="center" />
+        <textfield id="layoutNameField" text="" placeholder="Layout name"/>
+    </grid>
+
+    <textarea id="layoutDataField" width="100%" height="100%" />
+    <button id="updateButton" text="Update" horizontalAlign="right" />
+</vbox>

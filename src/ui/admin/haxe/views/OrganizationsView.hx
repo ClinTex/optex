@@ -1,5 +1,13 @@
 package views;
 
+import core.data.LayoutData;
+import panels.LayoutDetailsPanel;
+import sidebars.CreateLayoutSidebar;
+import core.data.PageData;
+import haxe.Json;
+import sidebars.CreateSitePageSidebar;
+import core.data.SiteData;
+import sidebars.CreateSiteSidebar;
 import core.data.ResourceType;
 import sidebars.CreatePermissionSidebar;
 import core.data.RoleData;
@@ -47,13 +55,22 @@ class OrganizationsView extends VBox {
 
     @:bind(orgsTree, UIEvent.CHANGE)
     private function onOrgsTreeSelectionChanged(e:UIEvent) {
-        trace("selection changed");
         var selectedNode = orgsTree.selectedNode;
         if (selectedNode == null) {
             return;
         }
 
+        trace("selection changed - " + selectedNode.userData);
+
         detailsContainer.removeAllComponents();
+        switch (selectedNode.userData) {
+            case "layout":
+                var layout:LayoutData = selectedNode.data.layout;
+                var panel = new LayoutDetailsPanel();
+                panel.layoutDetails = layout;
+                detailsContainer.addComponent(panel);
+        }
+        /*
         if (selectedNode.data.user != null) {
             var user:UserData = selectedNode.data.user;
             var panel = new UserDetailsPanel();
@@ -63,6 +80,7 @@ class OrganizationsView extends VBox {
             var panel = new OrganizationDetailsPanel();
             detailsContainer.addComponent(panel);
         }
+        */
     }
 
     private function canCreateOrgs() {
@@ -88,6 +106,12 @@ class OrganizationsView extends VBox {
             var sitesNode = orgNode.addNode({text: "Sites", icon: "themes/optex/folder-solid.png", org: org});
             sitesNode.userData = "sites";
             sitesNode.expanded = true;
+            refreshSites(sitesNode, orgNode);
+
+            var layoutsNode = orgNode.addNode({text: "Layouts", icon: "themes/optex/folder-solid.png", org: org});
+            layoutsNode.userData = "layouts";
+            layoutsNode.expanded = true;
+            refreshLayouts(layoutsNode, orgNode);
 
             var usersNode = orgNode.addNode({text: "Users", icon: "themes/optex/folder-solid.png", org: org});
             usersNode.userData = "users";
@@ -105,6 +129,56 @@ class OrganizationsView extends VBox {
             refreshOrganizationRoles(rolesNode, orgNode);
         }
         return nodeToSelect;
+    }
+
+    public function refreshSites(sitesNode:TreeViewNode, orgNode:TreeViewNode) {
+        var org:OrganizationData = orgNode.data.org;
+        for (site in InternalDB.sites.data) {
+            if (site.organizationId == org.organizationId) {
+                var siteLabel = site.name;
+                var siteNode = sitesNode.addNode({text: siteLabel, icon: "themes/optex/diagram-project-solid.png", org: org, site: site});
+                siteNode.userData = "site";
+                refreshSitePages(siteNode, orgNode);
+            }
+        }
+    }
+
+    public function refreshLayouts(layoutsNode:TreeViewNode, orgNode:TreeViewNode) {
+        var org:OrganizationData = orgNode.data.org;
+        for (layout in InternalDB.layouts.data) {
+            if (layout.organizationId == org.organizationId) {
+                var layoutLabel = layout.name;
+                var layoutNode = layoutsNode.addNode({text: layoutLabel, icon: "themes/optex/dot.png", org: org, layout: layout});
+                layoutNode.userData = "layout";
+            }
+        }
+    }
+
+    public function refreshSitePages(siteNode:TreeViewNode, orgNode:TreeViewNode) {
+        var site:SiteData = siteNode.data.site;
+        for (page in InternalDB.pages.data) {
+            if (page.siteId == site.siteId && page.parentPageId == -1) {
+                var pageLabel = page.name;
+                var pageIcon = "themes/optex/" + InternalDB.icons.utils.icon(page.iconId).path;
+                var pageNode = siteNode.addNode({text: pageLabel, icon: pageIcon, site: site, page: page});
+                pageNode.userData = "page";
+                refreshSubPages(pageNode, orgNode);
+            }
+        }
+    }
+
+    public function refreshSubPages(pageNode:TreeViewNode, orgNode:TreeViewNode) {
+        var site:SiteData = pageNode.data.site;
+        var parentPage:PageData = pageNode.data.page;
+        for (page in InternalDB.pages.data) {
+            if (page.siteId == site.siteId && page.parentPageId == parentPage.pageId) {
+                var pageLabel = page.name;
+                var pageIcon = "themes/optex/" + InternalDB.icons.utils.icon(page.iconId).path;
+                var pageNode = pageNode.addNode({text: pageLabel, icon: pageIcon, site: site, page: page});
+                pageNode.userData = "page";
+                refreshSubPages(pageNode, orgNode);
+            }
+        }
     }
 
     public function refreshUsers(usersNode:TreeViewNode, orgNode:TreeViewNode) {
@@ -251,9 +325,39 @@ class OrganizationsView extends VBox {
                 sidebar.position = "right";
                 sidebar.modal = true;
                 sidebar.show();
+            case "sites":
+                var org:OrganizationData = selectedNode.data.org;
+                var sidebar = new CreateSiteSidebar();
+                sidebar.organization = org;
+                sidebar.position = "right";
+                sidebar.modal = true;
+                sidebar.show();
+            case "site":
+                var site:SiteData = selectedNode.data.site;
+                var sidebar = new CreateSitePageSidebar();
+                sidebar.site = site;
+                sidebar.position = "right";
+                sidebar.modal = true;
+                sidebar.show();
+            case "page":
+                var site:SiteData = selectedNode.data.site;
+                var page:PageData = selectedNode.data.page;
+                var sidebar = new CreateSitePageSidebar();
+                sidebar.site = site;
+                sidebar.parentPage = page;
+                sidebar.position = "right";
+                sidebar.modal = true;
+                sidebar.show();
             case "users":
                 var org:OrganizationData = selectedNode.data.org;
                 var sidebar = new CreateUserSidebar();
+                sidebar.organization = org;
+                sidebar.position = "right";
+                sidebar.modal = true;
+                sidebar.show();
+            case "layouts":
+                var org:OrganizationData = selectedNode.data.org;
+                var sidebar = new CreateLayoutSidebar();
                 sidebar.organization = org;
                 sidebar.position = "right";
                 sidebar.modal = true;
@@ -284,6 +388,8 @@ class OrganizationsView extends VBox {
                 var org:OrganizationData = selectedNode.data.org;
                 var userGroup:UserGroupData = selectedNode.data.userGroup;
                 var dialog = new SelectUserDialog();
+                dialog.modal = false;
+                dialog.title = "Select user to add to " + userGroup.name;
                 dialog.onDialogClosed = function(e:DialogEvent) {
                     if (e.button == "Select") {
                         if (dialog.selectedUser != null) {

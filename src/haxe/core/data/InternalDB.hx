@@ -11,11 +11,15 @@ class InternalDB extends Database {
     public static var userOrganizationLinks:CachedDataTable<UserOrganizationLinkDataTable, UserOrganizationLinkData, NullUtils>;
     public static var dashboards:CachedDataTable<DashboardDataTable, DashboardData, DashboardUtils>;
     public static var dashboardGroups:CachedDataTable<DashboardGroupDataTable, DashboardGroupData, NullUtils>;
-    public static var icons:CachedDataTable<IconDataTable, IconData, NullUtils>;
+    public static var icons:CachedDataTable<IconDataTable, IconData, IconUtils>;
     public static var roles:CachedDataTable<RoleDataTable, RoleData, RoleUtils>;
     public static var permissions:CachedDataTable<PermissionDataTable, PermissionData, NullUtils>;
     public static var userGroupLinks:CachedDataTable<UserUserGroupLinkDataTable, UserUserGroupLinkData, NullUtils>;
     public static var userGroupRoleLinks:CachedDataTable<UserGroupRoleLinkDataTable, UserGroupRoleLinkData, NullUtils>;
+    public static var sites:CachedDataTable<SiteDataTable, SiteData, SiteUtils>;
+    public static var pages:CachedDataTable<PageDataTable, PageData, PageUtils>;
+    public static var layouts:CachedDataTable<LayoutDataTable, LayoutData, LayoutUtils>;
+    public static var portletInstances:CachedDataTable<PortletInstanceDataTable, PortletInstanceData, PortletInstanceUtils>;
 
     private static var _instance:InternalDB = null;
     public static var instance(get, null):InternalDB;
@@ -37,6 +41,10 @@ class InternalDB extends Database {
     private var permissionData:PermissionDataTable;
     private var userGroupLinkData:UserUserGroupLinkDataTable;
     private var userGroupRoleLinkData:UserGroupRoleLinkDataTable;
+    private var siteData:SiteDataTable;
+    private var pageData:PageDataTable;
+    private var layoutData:LayoutDataTable;
+    private var portletInstanceData:PortletInstanceDataTable;
 
     public var caches = new CachedInternalDB();
 
@@ -56,6 +64,10 @@ class InternalDB extends Database {
         permissionData = new PermissionDataTable();
         userGroupLinkData = new UserUserGroupLinkDataTable();
         userGroupRoleLinkData = new UserGroupRoleLinkDataTable();
+        siteData = new SiteDataTable();
+        pageData = new PageDataTable();
+        layoutData = new LayoutDataTable();
+        portletInstanceData = new PortletInstanceDataTable();
         
         registerTable(OrganizationDataTable.TableName, organizationData);
         registerTable(UserDataTable.TableName, userData);
@@ -68,6 +80,10 @@ class InternalDB extends Database {
         registerTable(PermissionDataTable.TableName, permissionData);
         registerTable(UserUserGroupLinkDataTable.TableName, userGroupLinkData);
         registerTable(UserGroupRoleLinkDataTable.TableName, userGroupRoleLinkData);
+        registerTable(SiteDataTable.TableName, siteData);
+        registerTable(PageDataTable.TableName, pageData);
+        registerTable(LayoutDataTable.TableName, layoutData);
+        registerTable(PortletInstanceDataTable.TableName, portletInstanceData);
 
         caches.organizations = new CachedDataTable<OrganizationDataTable, OrganizationData, NullUtils>(organizationData);
         caches.users = new CachedDataTable<UserDataTable, UserData, UserUtils>(userData, new UserUtils());
@@ -75,11 +91,15 @@ class InternalDB extends Database {
         caches.userOrganizationLinks = new CachedDataTable<UserOrganizationLinkDataTable, UserOrganizationLinkData, NullUtils>(userOrganizationLinkData);
         caches.dashboards = new CachedDataTable<DashboardDataTable, DashboardData, DashboardUtils>(dashboardData, new DashboardUtils());
         caches.dashboardGroups = new CachedDataTable<DashboardGroupDataTable, DashboardGroupData, NullUtils>(dashboardGroupData);
-        caches.icons = new CachedDataTable<IconDataTable, IconData, NullUtils>(iconData);
+        caches.icons = new CachedDataTable<IconDataTable, IconData, IconUtils>(iconData, new IconUtils());
         caches.roles= new CachedDataTable<RoleDataTable, RoleData, RoleUtils>(roleData, new RoleUtils());
         caches.permissions = new CachedDataTable<PermissionDataTable, PermissionData, NullUtils>(permissionData);
         caches.userGroupLinks = new CachedDataTable<UserUserGroupLinkDataTable, UserUserGroupLinkData, NullUtils>(userGroupLinkData);
         caches.userGroupRoleLinks = new CachedDataTable<UserGroupRoleLinkDataTable, UserGroupRoleLinkData, NullUtils>(userGroupRoleLinkData);
+        caches.sites = new CachedDataTable<SiteDataTable, SiteData, SiteUtils>(siteData, new SiteUtils());
+        caches.pages = new CachedDataTable<PageDataTable, PageData, PageUtils>(pageData, new PageUtils());
+        caches.layouts = new CachedDataTable<LayoutDataTable, LayoutData, LayoutUtils>(layoutData, new LayoutUtils());
+        caches.portletInstances = new CachedDataTable<PortletInstanceDataTable, PortletInstanceData, PortletInstanceUtils>(portletInstanceData, new PortletInstanceUtils());
 
         InternalDB.organizations = caches.organizations;
         InternalDB.users = caches.users;
@@ -92,6 +112,10 @@ class InternalDB extends Database {
         InternalDB.permissions = caches.permissions;
         InternalDB.userGroupLinks = caches.userGroupLinks;
         InternalDB.userGroupRoleLinks = caches.userGroupRoleLinks;
+        InternalDB.sites = caches.sites;
+        InternalDB.pages = caches.pages;
+        InternalDB.layouts = caches.layouts;
+        InternalDB.portletInstances = caches.portletInstances;
     }
 
     public function init():Promise<Bool> {
@@ -107,7 +131,11 @@ class InternalDB extends Database {
                 roleData.init(),
                 permissionData.init(),
                 userGroupLinkData.init(),
-                userGroupRoleLinkData.init()
+                userGroupRoleLinkData.init(),
+                siteData.init(),
+                pageData.init(),
+                layoutData.init(),
+                portletInstanceData.init()
             ];
 
             PromiseUtils.runSequentially(promises, function() {
@@ -129,7 +157,11 @@ class InternalDB extends Database {
                 caches.roles.fillCache(),
                 caches.permissions.fillCache(),
                 caches.userGroupLinks.fillCache(),
-                caches.userGroupRoleLinks.fillCache()
+                caches.userGroupRoleLinks.fillCache(),
+                caches.sites.fillCache(),
+                caches.pages.fillCache(),
+                caches.layouts.fillCache(),
+                caches.portletInstances.fillCache()
             ];
 
             PromiseUtils.runSequentially(promises, function() {

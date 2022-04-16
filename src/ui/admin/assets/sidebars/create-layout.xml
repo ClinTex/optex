@@ -1,0 +1,22 @@
+<sidebar width="450" height="100%">
+    <vbox width="100%" height="100%">
+        <label id="title" text="New Layout" style="font-size: 22px;color:#888888;" horizontalAlign="right" />
+        <rule />
+
+        <vbox width="100%" height="100%" style="padding: 10px;spacing: 10px;">
+            <frame text="Layout Details" width="100%">
+                <grid columns="2" width="100%">
+                    <label text="Name" verticalAlign="center" />
+                    <textfield id="layoutNameField" text="" placeholder="Enter layout name" width="100%"/>
+                </grid> 
+            </frame>    
+
+            <spacer height="100%" />
+
+            <hbox horizontalAlign="right">
+                <button id="cancelButton" text="Cancel" />
+                <button id="createButton" text="Create" />
+            </hbox>
+        </vbox>
+    </vbox>
+</sidebar>    

@@ -1,6 +1,6 @@
 <vbox width="100%" height="100%">
     <hbox width="100%" height="100%">
-        <vbox width="230" height="100%" style="spacing:0;border-right: 1px solid $normal-border-color;padding-right: 1px;">
+        <vbox width="300" height="100%" style="spacing:0;border-right: 1px solid $normal-border-color;padding-right: 1px;">
             <vbox  width="100%" style="padding:7px;background-color: $solid-background-color;border-bottom:1px solid $normal-border-color;">
                 <textfield placeholder="Filter organizations" width="100%" />
             </vbox>
@@ -27,6 +27,6 @@
 
 
         <vbox id="detailsContainer" width="100%" height="100%" style="padding: 10px;">
-         </vbox>
+        </vbox>
     </hbox>
 </vbox>
