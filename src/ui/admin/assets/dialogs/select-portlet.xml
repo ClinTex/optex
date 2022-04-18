@@ -1,0 +1,12 @@
+<dialog width="300" height="300" title="Select Portlet">
+    <listview id="portletTypeSelector" width="100%" height="100%" selectedIndex="0">
+        <data>
+            <item text="Nested Portlet" type="nested-portlet" />
+            <item text="Bar Graph" type="bar-graph" />
+            <item text="Line Graph" type="line-graph" />
+            <item text="Site Map" type="site-map" />
+            <item text="Image" type="static-image" />
+            <item text="Quick Filter" type="quick-filter" />
+        </data>
+    </listview>
+</dialog>

@@ -23,6 +23,7 @@ import views.DataView;
 import haxe.ui.containers.menus.Menu.MenuEvent;
 import haxe.ui.containers.VBox;
 import core.data.DatabaseManager;
+import core.components.portlets.PortletContainer;
 
 //@:build(haxe.ui.ComponentBuilder.build("assets/main-view.xml"))
 class MainView extends VBox {
@@ -46,7 +47,8 @@ class MainView extends VBox {
         ComponentClassMap.instance.registerClassName("horizontal-splitter", Type.getClassName(HorizontalSplitter));
         ComponentClassMap.instance.registerClassName("vsplitter", Type.getClassName(VerticalSplitter));
         ComponentClassMap.instance.registerClassName("hsplitter", Type.getClassName(HorizontalSplitter));
-        ComponentClassMap.instance.registerClassName("Grid", Type.getClassName(Grid));
+        ComponentClassMap.instance.registerClassName("grid", Type.getClassName(Grid));
+        ComponentClassMap.instance.registerClassName("portletcontainer", Type.getClassName(PortletContainer));
 
         //mainContent.hide();
     }
@@ -63,6 +65,7 @@ class MainView extends VBox {
     }
 
     private function showLogin() {
+        /*
         var dialog = new LoginDialog();
         dialog.onDialogClosed = function(e:DialogEvent) {
             if (e.button == "Login") {
@@ -70,6 +73,8 @@ class MainView extends VBox {
             }
         }
         dialog.show();
+        */
+        startLogin();
     }
 
     private var _workingLogin:WorkingIndicator;

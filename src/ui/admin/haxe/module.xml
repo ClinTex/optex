@@ -11,4 +11,10 @@
         <class package="components" />
         <class package="views" />
     </components>
+
+    <themes>
+        <optex parent="default">
+            <style resource="themes/optex/portlets.css" />
+        </optex>
+    </themes>
 </module>

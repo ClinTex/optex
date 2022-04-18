@@ -1,5 +1,6 @@
 package views;
 
+import panels.PageDetailsPanel;
 import core.data.LayoutData;
 import panels.LayoutDetailsPanel;
 import sidebars.CreateLayoutSidebar;
@@ -69,6 +70,11 @@ class OrganizationsView extends VBox {
                 var panel = new LayoutDetailsPanel();
                 panel.layoutDetails = layout;
                 detailsContainer.addComponent(panel);
+            case "page":
+                var page:PageData = selectedNode.data.page;
+                var panel = new PageDetailsPanel();
+                panel.pageDetails = page;
+                detailsContainer.addComponent(panel);
         }
         /*
         if (selectedNode.data.user != null) {
@@ -101,7 +107,7 @@ class OrganizationsView extends VBox {
                 nodeToSelect = orgNode;
             }
             */
-            orgNode.expanded = false;
+            orgNode.expanded = true;
 
             var sitesNode = orgNode.addNode({text: "Sites", icon: "themes/optex/folder-solid.png", org: org});
             sitesNode.userData = "sites";
@@ -137,6 +143,7 @@ class OrganizationsView extends VBox {
             if (site.organizationId == org.organizationId) {
                 var siteLabel = site.name;
                 var siteNode = sitesNode.addNode({text: siteLabel, icon: "themes/optex/diagram-project-solid.png", org: org, site: site});
+                siteNode.expanded = true;
                 siteNode.userData = "site";
                 refreshSitePages(siteNode, orgNode);
             }
