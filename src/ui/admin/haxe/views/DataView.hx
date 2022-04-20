@@ -1,5 +1,9 @@
 package views;
 
+import core.data.internal.CoreData;
+import js.html.URL;
+import js.html.Blob;
+import js.Browser;
 import haxe.ui.core.Component;
 import haxe.ui.containers.dialogs.Dialog.DialogButton;
 import haxe.ui.containers.dialogs.MessageBox.MessageBoxType;
@@ -102,6 +106,53 @@ class DataView extends VBox {
         });
     }
 
+    public function exportCurrentTable() {
+        var selectedItem = databaseSelector.selectedItem;
+        if (selectedItem == null) {
+            return;
+        }
+
+        if (tableSelector.selectedItem == null) {
+            return;
+        }
+
+        var sb = new StringBuf();
+        var tableName = _table.info.tableName;
+        var parts = [];
+        for (fieldDef in _table.info.fieldDefinitions) {
+            var fieldString = fieldDef.fieldName + "$$" + fieldDef.fieldType;
+            parts.push(fieldString);
+        }
+        sb.add(parts.join("|"));
+        sb.add("\n");
+
+
+        for (record in _table.records) {
+            parts = [];
+            for (d in record.data) {
+                d = d.replace("\n", "\\n");
+                d = d.replace("\t", "\\t");
+                parts.push(d);
+            }
+            sb.add(parts.join("|"));
+            sb.add("\n");
+        }
+
+        var fileName = tableName + ".csv";
+        var fileContent = sb.toString();
+        var file = new Blob([fileContent], {type: "text/plain"});
+        var link = Browser.document.createAnchorElement();
+        link.setAttribute("href", URL.createObjectURL(file));
+        link.setAttribute("download", fileName);
+        Browser.document.body.append(link);
+        link.click();
+
+        trace(_table.records.length);
+
+        trace(_table.info);
+        trace(sb.toString());
+    }
+
     @:bind(databaseSelector, UIEvent.CHANGE)
     private function onDatabaseSelectorChanged(e:UIEvent) {
         var selectedItem = databaseSelector.selectedItem;
@@ -147,6 +198,20 @@ class DataView extends VBox {
         refreshTableData(selectedItem.table);
     }
 
+    @:bind(deleteSelectedRowButton, MouseEvent.CLICK)
+    private function onDeleteSelectedRowButton(e:MouseEvent) {
+        var selectedItem = dataSourceDataTable.selectedItem;
+        if (selectedItem == null) {
+            return;
+        }
+
+        var hash:String = selectedItem.hash;
+        trace("delete row with hash: " + hash);
+        CoreData.removeTableData(_database.name, _table.name, [hash]).then(function(r) {
+            trace("delete result: " + r);
+        });
+    }
+
     private function refreshTableData(table:GenericTable) {
         dataSourceDataTable.clearContents(true);
 
@@ -165,6 +230,10 @@ class DataView extends VBox {
             }
             n++;
         }
+        var column = dataSourceDataTable.addColumn(safeId("hash"));
+        column.width = 100;
+        colWidths.set(column, column.width);
+        cols.set(column.id, column);
 
         var recordCount = 0;
         n = 0;
@@ -193,6 +262,7 @@ class DataView extends VBox {
                     n++;
         
                 }
+                item.hash = d.hash;
                 ds.add(item);
                 recordCount++;
                 if (recordCount > 100) {

@@ -4570,105 +4570,110 @@ var AdminView = function() {
 	c6.set_id("permissionChecker");
 	c6.set_text("Permission Checker");
 	c2.addComponent(c6);
+	var c7 = new haxe_ui_containers_menus_MenuItem();
+	c7.set_id("exportCurrentTable");
+	c7.set_text("Export Current Table");
+	c2.addComponent(c7);
 	c1.addComponent(c2);
-	var c7 = new haxe_ui_components_Spacer();
-	c7.set_percentWidth(100.);
-	c1.addComponent(c7);
-	var c8 = new haxe_ui_containers_menus_Menu();
-	c8.set_id("userMenu");
-	c8.set_text("Username");
-	var c9 = new haxe_ui_containers_menus_MenuItem();
-	c9.set_id("myRoles");
-	c9.set_text("My Roles");
-	c8.addComponent(c9);
-	var c10 = new haxe_ui_containers_menus_MenuItem();
-	c10.set_id("logout");
-	c10.set_text("Logout");
-	c8.addComponent(c10);
+	var c8 = new haxe_ui_components_Spacer();
+	c8.set_percentWidth(100.);
 	c1.addComponent(c8);
+	var c9 = new haxe_ui_containers_menus_Menu();
+	c9.set_id("userMenu");
+	c9.set_text("Username");
+	var c10 = new haxe_ui_containers_menus_MenuItem();
+	c10.set_id("myRoles");
+	c10.set_text("My Roles");
+	c9.addComponent(c10);
+	var c11 = new haxe_ui_containers_menus_MenuItem();
+	c11.set_id("logout");
+	c11.set_text("Logout");
+	c9.addComponent(c11);
+	c1.addComponent(c9);
 	c0.addComponent(c1);
-	var c11 = new haxe_ui_containers_HBox();
-	c11.set_percentWidth(100.);
-	c11.set_percentHeight(100.);
-	var c12 = new haxe_ui_containers_VBox();
-	c12.set_id("mainContent");
+	var c12 = new haxe_ui_containers_HBox();
 	c12.set_percentWidth(100.);
 	c12.set_percentHeight(100.);
-	var c13 = new haxe_ui_containers_Stack();
-	c13.set_id("mainStack");
+	var c13 = new haxe_ui_containers_VBox();
+	c13.set_id("mainContent");
 	c13.set_percentWidth(100.);
 	c13.set_percentHeight(100.);
-	var c14 = new views_HomeView();
-	c14.set_id("homeView");
+	var c14 = new haxe_ui_containers_Stack();
+	c14.set_id("mainStack");
+	c14.set_percentWidth(100.);
+	c14.set_percentHeight(100.);
+	var c15 = new views_HomeView();
+	c15.set_id("homeView");
+	c14.addComponent(c15);
+	var c16 = new views_DataView();
+	c16.set_id("dataView");
+	c14.addComponent(c16);
+	var c17 = new views_DashboardsView();
+	c17.set_id("dashboardsView");
+	c14.addComponent(c17);
+	var c18 = new views_OrganizationsView();
+	c18.set_id("organizationsView");
+	c14.addComponent(c18);
+	var c19 = new views_SettingsView();
+	c19.set_id("settingsView");
+	c14.addComponent(c19);
 	c13.addComponent(c14);
-	var c15 = new views_DataView();
-	c15.set_id("dataView");
-	c13.addComponent(c15);
-	var c16 = new views_DashboardsView();
-	c16.set_id("dashboardsView");
-	c13.addComponent(c16);
-	var c17 = new views_OrganizationsView();
-	c17.set_id("organizationsView");
-	c13.addComponent(c17);
-	var c18 = new views_SettingsView();
-	c18.set_id("settingsView");
-	c13.addComponent(c18);
 	c12.addComponent(c13);
-	c11.addComponent(c12);
-	var c19 = new haxe_ui_containers_VerticalButtonBar();
-	c19.set_id("mainButtons");
-	c19.set_percentHeight(100.);
-	c19.set_styleNames("right-menu with-bottom-button");
-	c19.set_styleString("margin-top: -1px");
-	c19.set_selectedIndex(0);
-	var c20 = new haxe_ui_components_Button();
-	c20.set_text("Home");
-	c20.userData = "homeView";
-	c20.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-top-menu-48.png"));
-	c19.addComponent(c20);
+	var c20 = new haxe_ui_containers_VerticalButtonBar();
+	c20.set_id("mainButtons");
+	c20.set_percentHeight(100.);
+	c20.set_styleNames("right-menu with-bottom-button");
+	c20.set_styleString("margin-top: -1px");
+	c20.set_selectedIndex(0);
 	var c21 = new haxe_ui_components_Button();
-	c21.set_text("Data");
-	c21.userData = "dataView";
-	c21.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-data-protection-48.png"));
-	c19.addComponent(c21);
+	c21.set_text("Home");
+	c21.userData = "homeView";
+	c21.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-top-menu-48.png"));
+	c20.addComponent(c21);
 	var c22 = new haxe_ui_components_Button();
-	c22.set_text("Dashboards");
-	c22.userData = "dashboardsView";
-	c22.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-dashboard-layout-48.png"));
-	c19.addComponent(c22);
+	c22.set_text("Data");
+	c22.userData = "dataView";
+	c22.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-data-protection-48.png"));
+	c20.addComponent(c22);
 	var c23 = new haxe_ui_components_Button();
-	c23.set_text("Access");
-	c23.userData = "organizationsView";
-	c23.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-data-protection-48.png"));
-	c19.addComponent(c23);
-	var c24 = new haxe_ui_components_Spacer();
-	c24.set_percentHeight(100.);
-	c19.addComponent(c24);
-	var c25 = new haxe_ui_components_Button();
-	c25.set_text("Settings");
-	c25.userData = "settingsView";
-	c25.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-services-48.png"));
-	c19.addComponent(c25);
-	c11.addComponent(c19);
-	c0.addComponent(c11);
+	c23.set_text("Dashboards");
+	c23.userData = "dashboardsView";
+	c23.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-dashboard-layout-48.png"));
+	c20.addComponent(c23);
+	var c24 = new haxe_ui_components_Button();
+	c24.set_text("Access");
+	c24.userData = "organizationsView";
+	c24.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-data-protection-48.png"));
+	c20.addComponent(c24);
+	var c25 = new haxe_ui_components_Spacer();
+	c25.set_percentHeight(100.);
+	c20.addComponent(c25);
+	var c26 = new haxe_ui_components_Button();
+	c26.set_text("Settings");
+	c26.userData = "settingsView";
+	c26.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-services-48.png"));
+	c20.addComponent(c26);
+	c12.addComponent(c20);
+	c0.addComponent(c12);
 	this.addComponent(c0);
-	c19.registerEvent("change",function(event) {
-		var __this__ = c19;
-		var userMenu = c8;
+	c20.registerEvent("change",function(event) {
+		var __this__ = c20;
+		var userMenu = c9;
 		var transformBrowser = c5;
-		var settingsView = c18;
+		var settingsView = c19;
 		var removeCurrentDatabase = c3;
 		var permissionChecker = c6;
-		var organizationsView = c17;
-		var myRoles = c9;
-		var mainStack = c13;
+		var organizationsView = c18;
+		var myRoles = c10;
+		var mainStack = c14;
 		var mainMenu = c1;
-		var mainContent = c12;
-		var mainButtons = c19;
-		var logout = c10;
-		var homeView = c14;
-		var dataView = c15;
-		var dashboardsView = c16;
+		var mainContent = c13;
+		var mainButtons = c20;
+		var logout = c11;
+		var homeView = c15;
+		var exportCurrentTable = c7;
+		var dataView = c16;
+		var dashboardsView = c17;
 		var clearAll = c4;
 		var adminMenu = c2;
 		mainStack.set_selectedId(__this__.get_selectedButton().userData);
@@ -4678,21 +4683,22 @@ var AdminView = function() {
 	this.set_styleNames("default-background");
 	this.set_styleString("padding:0px;spacing:0px;");
 	this.bindingRoot = true;
-	this.userMenu = c8;
+	this.userMenu = c9;
 	this.transformBrowser = c5;
-	this.settingsView = c18;
+	this.settingsView = c19;
 	this.removeCurrentDatabase = c3;
 	this.permissionChecker = c6;
-	this.organizationsView = c17;
-	this.myRoles = c9;
-	this.mainStack = c13;
+	this.organizationsView = c18;
+	this.myRoles = c10;
+	this.mainStack = c14;
 	this.mainMenu = c1;
-	this.mainContent = c12;
-	this.mainButtons = c19;
-	this.logout = c10;
-	this.homeView = c14;
-	this.dataView = c15;
-	this.dashboardsView = c16;
+	this.mainContent = c13;
+	this.mainButtons = c20;
+	this.logout = c11;
+	this.homeView = c15;
+	this.exportCurrentTable = c7;
+	this.dataView = c16;
+	this.dashboardsView = c17;
 	this.clearAll = c4;
 	this.adminMenu = c2;
 	AdminView.instance = this;
@@ -4726,6 +4732,9 @@ AdminView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 		switch(e.menuItem.get_id()) {
 		case "clearAll":
 			this.clearAllDbs();
+			break;
+		case "exportCurrentTable":
+			views_DataView.instance.exportCurrentTable();
 			break;
 		case "permissionChecker":
 			var dialog = new dialogs_PermissionCheckerDialog();
@@ -4780,6 +4789,7 @@ AdminView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,mainButtons: null
 	,logout: null
 	,homeView: null
+	,exportCurrentTable: null
 	,dataView: null
 	,dashboardsView: null
 	,clearAll: null
@@ -8956,6 +8966,23 @@ core_data_CachedDataTable.prototype = {
 			});
 		});
 	}
+	,removeObject: function(o,refreshCache) {
+		if(refreshCache == null) {
+			refreshCache = true;
+		}
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis._table.removeObject(o).then(function(r) {
+				if(r == true && refreshCache == true) {
+					_gthis.fillCache().then(function(r) {
+						resolve(r);
+					});
+				} else {
+					resolve(r);
+				}
+			});
+		});
+	}
 	,nextPrimaryKey: null
 	,get_nextPrimaryKey: function() {
 		var n = -1;
@@ -9003,14 +9030,16 @@ core_data_dao_IDataObject.prototype = {
 	get_primaryKey: null
 	,set_primaryKey: null
 	,get_primaryKeyName: null
+	,get_hash: null
 	,primaryKeyName: null
+	,hash: null
 	,fromArray: null
 	,toArray: null
 	,getFieldValue: null
 	,update: null
 	,add: null
 	,__class__: core_data_dao_IDataObject
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey"}
+	,__properties__: {get_hash:"get_hash",get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey"}
 };
 var core_data_dao_IBuiltDataObject = function() { };
 $hxClasses["core.data.dao.IBuiltDataObject"] = core_data_dao_IBuiltDataObject;
@@ -9018,6 +9047,7 @@ core_data_dao_IBuiltDataObject.__name__ = "core.data.dao.IBuiltDataObject";
 core_data_dao_IBuiltDataObject.__isInterface__ = true;
 core_data_dao_IBuiltDataObject.__interfaces__ = [core_data_dao_IDataObject];
 var core_data_DashboardData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -9029,6 +9059,9 @@ core_data_DashboardData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
+		if(data.length > core_data_DashboardData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
 		this.set_dashboardId(core_data_utils_ConversionUtils.fromString(data[0],2));
 		this.set_name(core_data_utils_ConversionUtils.fromString(data[1],1));
 		this.set_order(core_data_utils_ConversionUtils.fromString(data[2],2));
@@ -9093,6 +9126,11 @@ core_data_DashboardData.prototype = {
 			return this.get_icon();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_dashboardId: null
 	,get_dashboardId: function() {
@@ -9286,7 +9324,7 @@ core_data_DashboardData.prototype = {
 		});
 	}
 	,__class__: core_data_DashboardData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_icon:"set_icon",get_icon:"get_icon",set_group:"set_group",get_group:"get_group",set_creatorUserId:"set_creatorUserId",get_creatorUserId:"get_creatorUserId",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_dashboardGroupId:"set_dashboardGroupId",get_dashboardGroupId:"get_dashboardGroupId",set_iconId:"set_iconId",get_iconId:"get_iconId",set_layoutData:"set_layoutData",get_layoutData:"get_layoutData",set_order:"set_order",get_order:"get_order",set_name:"set_name",get_name:"get_name",set_dashboardId:"set_dashboardId",get_dashboardId:"get_dashboardId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_icon:"set_icon",get_icon:"get_icon",set_group:"set_group",get_group:"get_group",set_creatorUserId:"set_creatorUserId",get_creatorUserId:"get_creatorUserId",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_dashboardGroupId:"set_dashboardGroupId",get_dashboardGroupId:"get_dashboardGroupId",set_iconId:"set_iconId",get_iconId:"get_iconId",set_layoutData:"set_layoutData",get_layoutData:"get_layoutData",set_order:"set_order",get_order:"get_order",set_name:"set_name",get_name:"get_name",set_dashboardId:"set_dashboardId",get_dashboardId:"get_dashboardId",get_hash:"get_hash"}
 };
 var core_data_dao_IDataTable = function() { };
 $hxClasses["core.data.dao.IDataTable"] = core_data_dao_IDataTable;
@@ -9300,6 +9338,7 @@ core_data_dao_IDataTable.prototype = {
 	,fetch: null
 	,updateObject: null
 	,addObject: null
+	,removeObject: null
 	,createObject: null
 	,__class__: core_data_dao_IDataTable
 };
@@ -9349,7 +9388,7 @@ core_data_DashboardDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "dashboarddata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"dashboarddata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"dashboarddata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "dashboarddata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -9362,6 +9401,7 @@ core_data_DashboardDataTable.prototype = {
 						++_g;
 						var record = new core_data_DashboardData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.DashboardDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -9427,7 +9467,7 @@ core_data_DashboardDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "dashboarddata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_DashboardData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"dashboarddata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"dashboarddata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "dashboarddata" + " failed to update object (" + e;
@@ -9448,6 +9488,13 @@ core_data_DashboardDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "dashboarddata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"dashboarddata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "dashboarddata" + " failed to add object (" + e;
@@ -9456,6 +9503,25 @@ core_data_DashboardDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "dashboarddata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "dashboarddata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"dashboarddata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "dashboarddata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "dashboarddata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -9629,6 +9695,7 @@ core_data_DashboardDataTable.prototype = {
 	,__class__: core_data_DashboardDataTable
 };
 var core_data_DashboardGroupData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -9640,6 +9707,9 @@ core_data_DashboardGroupData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
+		if(data.length > core_data_DashboardGroupData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
 		this.set_dashboardGroupId(core_data_utils_ConversionUtils.fromString(data[0],2));
 		this.set_name(core_data_utils_ConversionUtils.fromString(data[1],1));
 		this.set_order(core_data_utils_ConversionUtils.fromString(data[2],2));
@@ -9687,6 +9757,11 @@ core_data_DashboardGroupData.prototype = {
 			return this.get_icon();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_dashboardGroupId: null
 	,get_dashboardGroupId: function() {
@@ -9844,7 +9919,7 @@ core_data_DashboardGroupData.prototype = {
 		});
 	}
 	,__class__: core_data_DashboardGroupData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_icon:"set_icon",get_icon:"get_icon",set_creatorUserId:"set_creatorUserId",get_creatorUserId:"get_creatorUserId",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_iconId:"set_iconId",get_iconId:"get_iconId",set_order:"set_order",get_order:"get_order",set_name:"set_name",get_name:"get_name",set_dashboardGroupId:"set_dashboardGroupId",get_dashboardGroupId:"get_dashboardGroupId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_icon:"set_icon",get_icon:"get_icon",set_creatorUserId:"set_creatorUserId",get_creatorUserId:"get_creatorUserId",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_iconId:"set_iconId",get_iconId:"get_iconId",set_order:"set_order",get_order:"get_order",set_name:"set_name",get_name:"get_name",set_dashboardGroupId:"set_dashboardGroupId",get_dashboardGroupId:"get_dashboardGroupId",get_hash:"get_hash"}
 };
 var core_data_DashboardGroupDataTable = function() {
 	this.batchSize = 5000;
@@ -9871,7 +9946,7 @@ core_data_DashboardGroupDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "dashboardgroupdata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"dashboardgroupdata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"dashboardgroupdata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "dashboardgroupdata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -9884,6 +9959,7 @@ core_data_DashboardGroupDataTable.prototype = {
 						++_g;
 						var record = new core_data_DashboardGroupData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.DashboardGroupDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -9949,7 +10025,7 @@ core_data_DashboardGroupDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "dashboardgroupdata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_DashboardGroupData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"dashboardgroupdata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"dashboardgroupdata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "dashboardgroupdata" + " failed to update object (" + e;
@@ -9970,6 +10046,13 @@ core_data_DashboardGroupDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "dashboardgroupdata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"dashboardgroupdata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "dashboardgroupdata" + " failed to add object (" + e;
@@ -9978,6 +10061,25 @@ core_data_DashboardGroupDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "dashboardgroupdata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "dashboardgroupdata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"dashboardgroupdata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "dashboardgroupdata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "dashboardgroupdata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -10347,8 +10449,14 @@ core_data_GenericData.__interfaces__ = [core_data_dao_IDataObject];
 core_data_GenericData.prototype = {
 	table: null
 	,data: null
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
+	}
 	,fromArray: function(data) {
 		this.data = [];
+		this._hash = data.pop();
 		var _g = 0;
 		while(_g < data.length) {
 			var d = data[_g];
@@ -10393,7 +10501,7 @@ core_data_GenericData.prototype = {
 		return value;
 	}
 	,__class__: core_data_GenericData
-	,__properties__: {set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",get_primaryKeyName:"get_primaryKeyName"}
+	,__properties__: {set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",get_primaryKeyName:"get_primaryKeyName",get_hash:"get_hash"}
 };
 var core_data_GenericTable = function(name) {
 	this.batchSize = 5000;
@@ -10574,7 +10682,7 @@ core_data_GenericTable.prototype = {
 				if(params.transformId == null) {
 					var tmp = "" + _gthis.db.name + "." + _gthis.name;
 					core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-					core_data.getTableData(_gthis.db.name,_gthis.name,params.start,params.end).then(function(frag) {
+					core_data.getAllTableData(_gthis.db.name,_gthis.name).then(function(frag) {
 						var tmp = "" + _gthis.db.name + "." + _gthis.name + " data retrieved (" + frag.count + " of " + frag.total;
 						core_data_dao_Logger.get_instance().log(tmp + ")");
 						var records = [];
@@ -10658,6 +10766,14 @@ core_data_GenericTable.prototype = {
 		});
 	}
 	,addObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				resolve(true);
+			});
+		});
+	}
+	,removeObject: function(object) {
 		var _gthis = this;
 		return new Promise(function(resolve,reject) {
 			_gthis.init().then(function(r) {
@@ -10812,6 +10928,7 @@ core_data_GenericTable.prototype = {
 	,__properties__: {get_recordCount:"get_recordCount"}
 };
 var core_data_IconData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -10823,7 +10940,10 @@ core_data_IconData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
-		this.set_iconId(core_data_utils_ConversionUtils.fromString(data[0],2));
+		if(data.length > core_data_IconData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
+		this.set_iconId(core_data_utils_ConversionUtils.fromString(data[0],3));
 		this.set_name(core_data_utils_ConversionUtils.fromString(data[1],1));
 		this.set_path(core_data_utils_ConversionUtils.fromString(data[2],1));
 		this.dataChanged = false;
@@ -10848,6 +10968,11 @@ core_data_IconData.prototype = {
 			return this.get_path();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_iconId: null
 	,get_iconId: function() {
@@ -10957,7 +11082,7 @@ core_data_IconData.prototype = {
 		});
 	}
 	,__class__: core_data_IconData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_path:"set_path",get_path:"get_path",set_name:"set_name",get_name:"get_name",set_iconId:"set_iconId",get_iconId:"get_iconId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_path:"set_path",get_path:"get_path",set_name:"set_name",get_name:"get_name",set_iconId:"set_iconId",get_iconId:"get_iconId",get_hash:"get_hash"}
 };
 var core_data_IconDataTable = function() {
 	this.batchSize = 5000;
@@ -10969,7 +11094,7 @@ core_data_IconDataTable.prototype = {
 	addDefaultData: function() {
 		var _gthis = this;
 		return new Promise(function(resolve,reject) {
-			var icons = [_gthis.createObject([1,"database","database-solid.png"]),_gthis.createObject([2,"directions","directions-solid.png"]),_gthis.createObject([3,"dot","dot.png"]),_gthis.createObject([4,"exclamation","exclamation-solid.png"]),_gthis.createObject([5,"exclamation (triangle)","exclamation-triangle-solid.png"]),_gthis.createObject([6,"map marker","map-marker-alt-solid.png"]),_gthis.createObject([7,"search","search-solid.png"]),_gthis.createObject([8,"tachometer","tachometer-alt-solid.png"])];
+			var icons = [_gthis.createObject([-1,"database","database-solid.png"]),_gthis.createObject([-1,"directions","directions-solid.png"]),_gthis.createObject([-1,"dot","dot.png"]),_gthis.createObject([-1,"exclamation","exclamation-solid.png"]),_gthis.createObject([-1,"exclamation (triangle)","exclamation-triangle-solid.png"]),_gthis.createObject([-1,"map marker","map-marker-alt-solid.png"]),_gthis.createObject([-1,"search","search-solid.png"]),_gthis.createObject([-1,"tachometer","tachometer-alt-solid.png"])];
 			_gthis.addObjects(icons).then(function(r) {
 				resolve(true);
 			});
@@ -10993,7 +11118,7 @@ core_data_IconDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "icondata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"icondata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"icondata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "icondata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -11006,6 +11131,7 @@ core_data_IconDataTable.prototype = {
 						++_g;
 						var record = new core_data_IconData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.IconDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -11071,7 +11197,7 @@ core_data_IconDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "icondata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_IconData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"icondata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"icondata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "icondata" + " failed to update object (" + e;
@@ -11092,6 +11218,13 @@ core_data_IconDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "icondata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"icondata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "icondata" + " failed to add object (" + e;
@@ -11100,6 +11233,25 @@ core_data_IconDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "icondata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "icondata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"icondata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "icondata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "icondata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -11490,6 +11642,7 @@ core_data_InternalDB.prototype = $extend(core_data_dao_Database.prototype,{
 	,__class__: core_data_InternalDB
 });
 var core_data_LayoutData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -11501,6 +11654,9 @@ core_data_LayoutData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
+		if(data.length > core_data_LayoutData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
 		this.set_layoutId(core_data_utils_ConversionUtils.fromString(data[0],2));
 		this.set_organizationId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.set_name(core_data_utils_ConversionUtils.fromString(data[2],1));
@@ -11531,6 +11687,11 @@ core_data_LayoutData.prototype = {
 			return this.get_layoutData();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_layoutId: null
 	,get_layoutId: function() {
@@ -11652,7 +11813,7 @@ core_data_LayoutData.prototype = {
 		});
 	}
 	,__class__: core_data_LayoutData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_layoutData:"set_layoutData",get_layoutData:"get_layoutData",set_name:"set_name",get_name:"get_name",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_layoutId:"set_layoutId",get_layoutId:"get_layoutId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_layoutData:"set_layoutData",get_layoutData:"get_layoutData",set_name:"set_name",get_name:"get_name",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_layoutId:"set_layoutId",get_layoutId:"get_layoutId",get_hash:"get_hash"}
 };
 var core_data_LayoutDataTable = function() {
 	this.batchSize = 5000;
@@ -11679,7 +11840,7 @@ core_data_LayoutDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "layoutdata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"layoutdata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"layoutdata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "layoutdata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -11692,6 +11853,7 @@ core_data_LayoutDataTable.prototype = {
 						++_g;
 						var record = new core_data_LayoutData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.LayoutDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -11757,7 +11919,7 @@ core_data_LayoutDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "layoutdata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_LayoutData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"layoutdata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"layoutdata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "layoutdata" + " failed to update object (" + e;
@@ -11778,6 +11940,13 @@ core_data_LayoutDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "layoutdata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"layoutdata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "layoutdata" + " failed to add object (" + e;
@@ -11786,6 +11955,25 @@ core_data_LayoutDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "layoutdata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "layoutdata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"layoutdata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "layoutdata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "layoutdata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -11987,6 +12175,7 @@ core_data_NullUtils.prototype = {
 	__class__: core_data_NullUtils
 };
 var core_data_OrganizationData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -11998,7 +12187,10 @@ core_data_OrganizationData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
-		this.set_organizationId(core_data_utils_ConversionUtils.fromString(data[0],2));
+		if(data.length > core_data_OrganizationData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
+		this.set_organizationId(core_data_utils_ConversionUtils.fromString(data[0],3));
 		this.set_name(core_data_utils_ConversionUtils.fromString(data[1],1));
 		this.dataChanged = false;
 	}
@@ -12018,6 +12210,11 @@ core_data_OrganizationData.prototype = {
 			return this.get_name();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_organizationId: null
 	,get_organizationId: function() {
@@ -12115,7 +12312,7 @@ core_data_OrganizationData.prototype = {
 		});
 	}
 	,__class__: core_data_OrganizationData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_name:"set_name",get_name:"get_name",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_name:"set_name",get_name:"get_name",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",get_hash:"get_hash"}
 };
 var core_data_OrganizationDataTable = function() {
 	this.batchSize = 5000;
@@ -12142,7 +12339,7 @@ core_data_OrganizationDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "organizationdata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"organizationdata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"organizationdata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "organizationdata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -12155,6 +12352,7 @@ core_data_OrganizationDataTable.prototype = {
 						++_g;
 						var record = new core_data_OrganizationData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.OrganizationDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -12220,7 +12418,7 @@ core_data_OrganizationDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "organizationdata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_OrganizationData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"organizationdata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"organizationdata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "organizationdata" + " failed to update object (" + e;
@@ -12241,6 +12439,13 @@ core_data_OrganizationDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "organizationdata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"organizationdata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "organizationdata" + " failed to add object (" + e;
@@ -12249,6 +12454,25 @@ core_data_OrganizationDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "organizationdata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "organizationdata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"organizationdata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "organizationdata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "organizationdata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -12422,6 +12646,7 @@ core_data_OrganizationDataTable.prototype = {
 	,__class__: core_data_OrganizationDataTable
 };
 var core_data_PageData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -12433,6 +12658,9 @@ core_data_PageData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
+		if(data.length > core_data_PageData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
 		this.set_pageId(core_data_utils_ConversionUtils.fromString(data[0],2));
 		this.set_parentPageId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.set_siteId(core_data_utils_ConversionUtils.fromString(data[2],2));
@@ -12473,6 +12701,11 @@ core_data_PageData.prototype = {
 			return this.get_name();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_pageId: null
 	,get_pageId: function() {
@@ -12618,7 +12851,7 @@ core_data_PageData.prototype = {
 		});
 	}
 	,__class__: core_data_PageData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_name:"set_name",get_name:"get_name",set_iconId:"set_iconId",get_iconId:"get_iconId",set_layoutId:"set_layoutId",get_layoutId:"get_layoutId",set_siteId:"set_siteId",get_siteId:"get_siteId",set_parentPageId:"set_parentPageId",get_parentPageId:"get_parentPageId",set_pageId:"set_pageId",get_pageId:"get_pageId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_name:"set_name",get_name:"get_name",set_iconId:"set_iconId",get_iconId:"get_iconId",set_layoutId:"set_layoutId",get_layoutId:"get_layoutId",set_siteId:"set_siteId",get_siteId:"get_siteId",set_parentPageId:"set_parentPageId",get_parentPageId:"get_parentPageId",set_pageId:"set_pageId",get_pageId:"get_pageId",get_hash:"get_hash"}
 };
 var core_data_PageDataTable = function() {
 	this.batchSize = 5000;
@@ -12645,7 +12878,7 @@ core_data_PageDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "pagedata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"pagedata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"pagedata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "pagedata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -12658,6 +12891,7 @@ core_data_PageDataTable.prototype = {
 						++_g;
 						var record = new core_data_PageData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.PageDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -12723,7 +12957,7 @@ core_data_PageDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "pagedata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_PageData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"pagedata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"pagedata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "pagedata" + " failed to update object (" + e;
@@ -12744,6 +12978,13 @@ core_data_PageDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "pagedata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"pagedata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "pagedata" + " failed to add object (" + e;
@@ -12752,6 +12993,25 @@ core_data_PageDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "pagedata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "pagedata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"pagedata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "pagedata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "pagedata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -12932,6 +13192,7 @@ core_data_PageUtils.prototype = {
 	__class__: core_data_PageUtils
 };
 var core_data_PermissionData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -12943,6 +13204,9 @@ core_data_PermissionData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
+		if(data.length > core_data_PermissionData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
 		this.set_permissionId(core_data_utils_ConversionUtils.fromString(data[0],2));
 		this.set_roleId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.set_resourceId(core_data_utils_ConversionUtils.fromString(data[2],2));
@@ -12978,6 +13242,11 @@ core_data_PermissionData.prototype = {
 			return this.get_permissionAction();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_permissionId: null
 	,get_permissionId: function() {
@@ -13111,7 +13380,7 @@ core_data_PermissionData.prototype = {
 		});
 	}
 	,__class__: core_data_PermissionData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_permissionAction:"set_permissionAction",get_permissionAction:"get_permissionAction",set_resourceType:"set_resourceType",get_resourceType:"get_resourceType",set_resourceId:"set_resourceId",get_resourceId:"get_resourceId",set_roleId:"set_roleId",get_roleId:"get_roleId",set_permissionId:"set_permissionId",get_permissionId:"get_permissionId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_permissionAction:"set_permissionAction",get_permissionAction:"get_permissionAction",set_resourceType:"set_resourceType",get_resourceType:"get_resourceType",set_resourceId:"set_resourceId",get_resourceId:"get_resourceId",set_roleId:"set_roleId",get_roleId:"get_roleId",set_permissionId:"set_permissionId",get_permissionId:"get_permissionId",get_hash:"get_hash"}
 };
 var core_data_PermissionDataTable = function() {
 	this.batchSize = 5000;
@@ -13138,7 +13407,7 @@ core_data_PermissionDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "permissiondata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"permissiondata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"permissiondata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "permissiondata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -13151,6 +13420,7 @@ core_data_PermissionDataTable.prototype = {
 						++_g;
 						var record = new core_data_PermissionData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.PermissionDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -13216,7 +13486,7 @@ core_data_PermissionDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "permissiondata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_PermissionData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"permissiondata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"permissiondata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "permissiondata" + " failed to update object (" + e;
@@ -13237,6 +13507,13 @@ core_data_PermissionDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "permissiondata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"permissiondata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "permissiondata" + " failed to add object (" + e;
@@ -13245,6 +13522,25 @@ core_data_PermissionDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "permissiondata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "permissiondata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"permissiondata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "permissiondata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "permissiondata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -13418,6 +13714,7 @@ core_data_PermissionDataTable.prototype = {
 	,__class__: core_data_PermissionDataTable
 };
 var core_data_PortletInstanceData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -13429,6 +13726,9 @@ core_data_PortletInstanceData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
+		if(data.length > core_data_PortletInstanceData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
 		this.set_portletInstanceId(core_data_utils_ConversionUtils.fromString(data[0],2));
 		this.set_pageId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.set_portletData(core_data_utils_ConversionUtils.fromString(data[2],1));
@@ -13459,6 +13759,11 @@ core_data_PortletInstanceData.prototype = {
 			return this.get_layoutData();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_portletInstanceId: null
 	,get_portletInstanceId: function() {
@@ -13580,7 +13885,7 @@ core_data_PortletInstanceData.prototype = {
 		});
 	}
 	,__class__: core_data_PortletInstanceData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_layoutData:"set_layoutData",get_layoutData:"get_layoutData",set_portletData:"set_portletData",get_portletData:"get_portletData",set_pageId:"set_pageId",get_pageId:"get_pageId",set_portletInstanceId:"set_portletInstanceId",get_portletInstanceId:"get_portletInstanceId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_layoutData:"set_layoutData",get_layoutData:"get_layoutData",set_portletData:"set_portletData",get_portletData:"get_portletData",set_pageId:"set_pageId",get_pageId:"get_pageId",set_portletInstanceId:"set_portletInstanceId",get_portletInstanceId:"get_portletInstanceId",get_hash:"get_hash"}
 };
 var core_data_PortletInstanceDataTable = function() {
 	this.batchSize = 5000;
@@ -13607,7 +13912,7 @@ core_data_PortletInstanceDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "portletinstancedata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"portletinstancedata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"portletinstancedata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "portletinstancedata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -13620,6 +13925,7 @@ core_data_PortletInstanceDataTable.prototype = {
 						++_g;
 						var record = new core_data_PortletInstanceData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.PortletInstanceDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -13685,7 +13991,7 @@ core_data_PortletInstanceDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "portletinstancedata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_PortletInstanceData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"portletinstancedata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"portletinstancedata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "portletinstancedata" + " failed to update object (" + e;
@@ -13706,6 +14012,13 @@ core_data_PortletInstanceDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "portletinstancedata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"portletinstancedata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "portletinstancedata" + " failed to add object (" + e;
@@ -13714,6 +14027,25 @@ core_data_PortletInstanceDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "portletinstancedata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "portletinstancedata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"portletinstancedata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "portletinstancedata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "portletinstancedata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -13919,6 +14251,7 @@ core_data_ResourceType.toString = function(actionType) {
 	}
 };
 var core_data_RoleData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -13930,6 +14263,9 @@ core_data_RoleData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
+		if(data.length > core_data_RoleData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
 		this.set_roleId(core_data_utils_ConversionUtils.fromString(data[0],2));
 		this.set_name(core_data_utils_ConversionUtils.fromString(data[1],1));
 		this.set_organizationId(core_data_utils_ConversionUtils.fromString(data[2],2));
@@ -13955,6 +14291,11 @@ core_data_RoleData.prototype = {
 			return this.get_organizationId();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_roleId: null
 	,get_roleId: function() {
@@ -14064,7 +14405,7 @@ core_data_RoleData.prototype = {
 		});
 	}
 	,__class__: core_data_RoleData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_name:"set_name",get_name:"get_name",set_roleId:"set_roleId",get_roleId:"get_roleId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_name:"set_name",get_name:"get_name",set_roleId:"set_roleId",get_roleId:"get_roleId",get_hash:"get_hash"}
 };
 var core_data_RoleDataTable = function() {
 	this.batchSize = 5000;
@@ -14091,7 +14432,7 @@ core_data_RoleDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "roledata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"roledata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"roledata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "roledata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -14104,6 +14445,7 @@ core_data_RoleDataTable.prototype = {
 						++_g;
 						var record = new core_data_RoleData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.RoleDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -14169,7 +14511,7 @@ core_data_RoleDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "roledata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_RoleData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"roledata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"roledata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "roledata" + " failed to update object (" + e;
@@ -14190,6 +14532,13 @@ core_data_RoleDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "roledata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"roledata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "roledata" + " failed to add object (" + e;
@@ -14198,6 +14547,25 @@ core_data_RoleDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "roledata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "roledata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"roledata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "roledata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "roledata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -14405,6 +14773,7 @@ core_data_RoleUtils.prototype = {
 	,__class__: core_data_RoleUtils
 };
 var core_data_SiteData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -14416,6 +14785,9 @@ core_data_SiteData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
+		if(data.length > core_data_SiteData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
 		this.set_siteId(core_data_utils_ConversionUtils.fromString(data[0],2));
 		this.set_organizationId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.set_name(core_data_utils_ConversionUtils.fromString(data[2],1));
@@ -14441,6 +14813,11 @@ core_data_SiteData.prototype = {
 			return this.get_name();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_siteId: null
 	,get_siteId: function() {
@@ -14550,7 +14927,7 @@ core_data_SiteData.prototype = {
 		});
 	}
 	,__class__: core_data_SiteData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_name:"set_name",get_name:"get_name",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_siteId:"set_siteId",get_siteId:"get_siteId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_name:"set_name",get_name:"get_name",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_siteId:"set_siteId",get_siteId:"get_siteId",get_hash:"get_hash"}
 };
 var core_data_SiteDataTable = function() {
 	this.batchSize = 5000;
@@ -14577,7 +14954,7 @@ core_data_SiteDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "sitedata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"sitedata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"sitedata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "sitedata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -14590,6 +14967,7 @@ core_data_SiteDataTable.prototype = {
 						++_g;
 						var record = new core_data_SiteData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.SiteDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -14655,7 +15033,7 @@ core_data_SiteDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "sitedata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_SiteData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"sitedata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"sitedata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "sitedata" + " failed to update object (" + e;
@@ -14676,6 +15054,13 @@ core_data_SiteDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "sitedata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"sitedata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "sitedata" + " failed to add object (" + e;
@@ -14684,6 +15069,25 @@ core_data_SiteDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "sitedata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "sitedata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"sitedata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "sitedata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "sitedata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -14864,6 +15268,7 @@ core_data_SiteUtils.prototype = {
 	__class__: core_data_SiteUtils
 };
 var core_data_UserData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -14875,13 +15280,16 @@ core_data_UserData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
-		this.set_userId(core_data_utils_ConversionUtils.fromString(data[0],2));
+		if(data.length > core_data_UserData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
+		this.set_userId(core_data_utils_ConversionUtils.fromString(data[0],3));
 		this.set_username(core_data_utils_ConversionUtils.fromString(data[1],1));
 		this.set_password(core_data_utils_ConversionUtils.fromString(data[2],1));
 		this.set_firstName(core_data_utils_ConversionUtils.fromString(data[3],1));
 		this.set_lastName(core_data_utils_ConversionUtils.fromString(data[4],1));
 		this.set_emailAddress(core_data_utils_ConversionUtils.fromString(data[5],1));
-		this.set_isAdmin(core_data_utils_ConversionUtils.fromString(data[6],3));
+		this.set_isAdmin(core_data_utils_ConversionUtils.fromString(data[6],4));
 		this.dataChanged = false;
 	}
 	,toArray: function() {
@@ -14920,6 +15328,11 @@ core_data_UserData.prototype = {
 			return this.get_isAdmin();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_userId: null
 	,get_userId: function() {
@@ -15077,7 +15490,7 @@ core_data_UserData.prototype = {
 		});
 	}
 	,__class__: core_data_UserData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_isAdmin:"set_isAdmin",get_isAdmin:"get_isAdmin",set_emailAddress:"set_emailAddress",get_emailAddress:"get_emailAddress",set_lastName:"set_lastName",get_lastName:"get_lastName",set_firstName:"set_firstName",get_firstName:"get_firstName",set_password:"set_password",get_password:"get_password",set_username:"set_username",get_username:"get_username",set_userId:"set_userId",get_userId:"get_userId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_isAdmin:"set_isAdmin",get_isAdmin:"get_isAdmin",set_emailAddress:"set_emailAddress",get_emailAddress:"get_emailAddress",set_lastName:"set_lastName",get_lastName:"get_lastName",set_firstName:"set_firstName",get_firstName:"get_firstName",set_password:"set_password",get_password:"get_password",set_username:"set_username",get_username:"get_username",set_userId:"set_userId",get_userId:"get_userId",get_hash:"get_hash"}
 };
 var core_data_UserDataTable = function() {
 	this.batchSize = 5000;
@@ -15104,7 +15517,7 @@ core_data_UserDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "userdata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"userdata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"userdata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "userdata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -15117,6 +15530,7 @@ core_data_UserDataTable.prototype = {
 						++_g;
 						var record = new core_data_UserData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.UserDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -15182,7 +15596,7 @@ core_data_UserDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "userdata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_UserData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"userdata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"userdata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "userdata" + " failed to update object (" + e;
@@ -15203,6 +15617,13 @@ core_data_UserDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "userdata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"userdata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "userdata" + " failed to add object (" + e;
@@ -15211,6 +15632,25 @@ core_data_UserDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "userdata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "userdata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"userdata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "userdata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "userdata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -15384,6 +15824,7 @@ core_data_UserDataTable.prototype = {
 	,__class__: core_data_UserDataTable
 };
 var core_data_UserGroupData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -15395,7 +15836,10 @@ core_data_UserGroupData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
-		this.set_userGroupId(core_data_utils_ConversionUtils.fromString(data[0],2));
+		if(data.length > core_data_UserGroupData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
+		this.set_userGroupId(core_data_utils_ConversionUtils.fromString(data[0],3));
 		this.set_name(core_data_utils_ConversionUtils.fromString(data[1],1));
 		this.set_organizationId(core_data_utils_ConversionUtils.fromString(data[2],2));
 		this.dataChanged = false;
@@ -15420,6 +15864,11 @@ core_data_UserGroupData.prototype = {
 			return this.get_organizationId();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_userGroupId: null
 	,get_userGroupId: function() {
@@ -15529,7 +15978,7 @@ core_data_UserGroupData.prototype = {
 		});
 	}
 	,__class__: core_data_UserGroupData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_name:"set_name",get_name:"get_name",set_userGroupId:"set_userGroupId",get_userGroupId:"get_userGroupId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_name:"set_name",get_name:"get_name",set_userGroupId:"set_userGroupId",get_userGroupId:"get_userGroupId",get_hash:"get_hash"}
 };
 var core_data_UserGroupDataTable = function() {
 	this.batchSize = 5000;
@@ -15556,7 +16005,7 @@ core_data_UserGroupDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "usergroupdata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"usergroupdata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"usergroupdata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "usergroupdata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -15569,6 +16018,7 @@ core_data_UserGroupDataTable.prototype = {
 						++_g;
 						var record = new core_data_UserGroupData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.UserGroupDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -15634,7 +16084,7 @@ core_data_UserGroupDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "usergroupdata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_UserGroupData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"usergroupdata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"usergroupdata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "usergroupdata" + " failed to update object (" + e;
@@ -15655,6 +16105,13 @@ core_data_UserGroupDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "usergroupdata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"usergroupdata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "usergroupdata" + " failed to add object (" + e;
@@ -15663,6 +16120,25 @@ core_data_UserGroupDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "usergroupdata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "usergroupdata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"usergroupdata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "usergroupdata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "usergroupdata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -15836,6 +16312,7 @@ core_data_UserGroupDataTable.prototype = {
 	,__class__: core_data_UserGroupDataTable
 };
 var core_data_UserGroupRoleLinkData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -15847,7 +16324,10 @@ core_data_UserGroupRoleLinkData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
-		this.set_userGroupId(core_data_utils_ConversionUtils.fromString(data[0],2));
+		if(data.length > core_data_UserGroupRoleLinkData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
+		this.set_userGroupId(core_data_utils_ConversionUtils.fromString(data[0],3));
 		this.set_roleId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.dataChanged = false;
 	}
@@ -15867,6 +16347,11 @@ core_data_UserGroupRoleLinkData.prototype = {
 			return this.get_roleId();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_userGroupId: null
 	,get_userGroupId: function() {
@@ -15964,7 +16449,7 @@ core_data_UserGroupRoleLinkData.prototype = {
 		});
 	}
 	,__class__: core_data_UserGroupRoleLinkData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_roleId:"set_roleId",get_roleId:"get_roleId",set_userGroupId:"set_userGroupId",get_userGroupId:"get_userGroupId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_roleId:"set_roleId",get_roleId:"get_roleId",set_userGroupId:"set_userGroupId",get_userGroupId:"get_userGroupId",get_hash:"get_hash"}
 };
 var core_data_UserGroupRoleLinkDataTable = function() {
 	this.batchSize = 5000;
@@ -15991,7 +16476,7 @@ core_data_UserGroupRoleLinkDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "usergrouprolelinkdata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"usergrouprolelinkdata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"usergrouprolelinkdata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "usergrouprolelinkdata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -16004,6 +16489,7 @@ core_data_UserGroupRoleLinkDataTable.prototype = {
 						++_g;
 						var record = new core_data_UserGroupRoleLinkData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.UserGroupRoleLinkDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -16069,7 +16555,7 @@ core_data_UserGroupRoleLinkDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "usergrouprolelinkdata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_UserGroupRoleLinkData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"usergrouprolelinkdata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"usergrouprolelinkdata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "usergrouprolelinkdata" + " failed to update object (" + e;
@@ -16090,6 +16576,13 @@ core_data_UserGroupRoleLinkDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "usergrouprolelinkdata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"usergrouprolelinkdata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "usergrouprolelinkdata" + " failed to add object (" + e;
@@ -16098,6 +16591,25 @@ core_data_UserGroupRoleLinkDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "usergrouprolelinkdata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "usergrouprolelinkdata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"usergrouprolelinkdata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "usergrouprolelinkdata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "usergrouprolelinkdata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -16324,6 +16836,7 @@ core_data_UserGroupUtils.prototype = {
 	,__class__: core_data_UserGroupUtils
 };
 var core_data_UserOrganizationLinkData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -16335,6 +16848,9 @@ core_data_UserOrganizationLinkData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
+		if(data.length > core_data_UserOrganizationLinkData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
 		this.set_userId(core_data_utils_ConversionUtils.fromString(data[0],2));
 		this.set_organizationId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.dataChanged = false;
@@ -16355,6 +16871,11 @@ core_data_UserOrganizationLinkData.prototype = {
 			return this.get_organizationId();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_userId: null
 	,get_userId: function() {
@@ -16452,7 +16973,7 @@ core_data_UserOrganizationLinkData.prototype = {
 		});
 	}
 	,__class__: core_data_UserOrganizationLinkData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_userId:"set_userId",get_userId:"get_userId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_organizationId:"set_organizationId",get_organizationId:"get_organizationId",set_userId:"set_userId",get_userId:"get_userId",get_hash:"get_hash"}
 };
 var core_data_UserOrganizationLinkDataTable = function() {
 	this.batchSize = 5000;
@@ -16479,7 +17000,7 @@ core_data_UserOrganizationLinkDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "userorganizationlinkdata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"userorganizationlinkdata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"userorganizationlinkdata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "userorganizationlinkdata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -16492,6 +17013,7 @@ core_data_UserOrganizationLinkDataTable.prototype = {
 						++_g;
 						var record = new core_data_UserOrganizationLinkData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.UserOrganizationLinkDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -16557,7 +17079,7 @@ core_data_UserOrganizationLinkDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "userorganizationlinkdata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_UserOrganizationLinkData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"userorganizationlinkdata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"userorganizationlinkdata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "userorganizationlinkdata" + " failed to update object (" + e;
@@ -16578,6 +17100,13 @@ core_data_UserOrganizationLinkDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "userorganizationlinkdata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"userorganizationlinkdata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "userorganizationlinkdata" + " failed to add object (" + e;
@@ -16586,6 +17115,25 @@ core_data_UserOrganizationLinkDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "userorganizationlinkdata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "userorganizationlinkdata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"userorganizationlinkdata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "userorganizationlinkdata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "userorganizationlinkdata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -16759,6 +17307,7 @@ core_data_UserOrganizationLinkDataTable.prototype = {
 	,__class__: core_data_UserOrganizationLinkDataTable
 };
 var core_data_UserUserGroupLinkData = function() {
+	this._hash = null;
 	this.dataChanged = false;
 	this.links = new haxe_ds_StringMap();
 };
@@ -16770,7 +17319,10 @@ core_data_UserUserGroupLinkData.prototype = {
 	,links: null
 	,dataChanged: null
 	,fromArray: function(data) {
-		this.set_userId(core_data_utils_ConversionUtils.fromString(data[0],2));
+		if(data.length > core_data_UserUserGroupLinkData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
+		this.set_userId(core_data_utils_ConversionUtils.fromString(data[0],3));
 		this.set_userGroupId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.dataChanged = false;
 	}
@@ -16790,6 +17342,11 @@ core_data_UserUserGroupLinkData.prototype = {
 			return this.get_userGroupId();
 		}
 		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
 	}
 	,_userId: null
 	,get_userId: function() {
@@ -16887,7 +17444,7 @@ core_data_UserUserGroupLinkData.prototype = {
 		});
 	}
 	,__class__: core_data_UserUserGroupLinkData
-	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_userGroupId:"set_userGroupId",get_userGroupId:"get_userGroupId",set_userId:"set_userId",get_userId:"get_userId"}
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_userGroupId:"set_userGroupId",get_userGroupId:"get_userGroupId",set_userId:"set_userId",get_userId:"get_userId",get_hash:"get_hash"}
 };
 var core_data_UserUserGroupLinkDataTable = function() {
 	this.batchSize = 5000;
@@ -16914,7 +17471,7 @@ core_data_UserUserGroupLinkDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				var tmp = "" + _gthis.db.name + "." + "userusergrouplinkdata";
 				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
-				core_data.getTableData(_gthis.db.name,"userusergrouplinkdata",params.start,params.end).then(function(frag) {
+				core_data.getAllTableData(_gthis.db.name,"userusergrouplinkdata").then(function(frag) {
 					var tmp = "" + _gthis.db.name + "." + "userusergrouplinkdata" + " data retrieved (" + frag.count + " of " + frag.total;
 					core_data_dao_Logger.get_instance().log(tmp + ")");
 					var records = [];
@@ -16927,6 +17484,7 @@ core_data_UserUserGroupLinkDataTable.prototype = {
 						++_g;
 						var record = new core_data_UserUserGroupLinkData();
 						record.table = _gthis;
+						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.UserUserGroupLinkDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -16992,7 +17550,7 @@ core_data_UserUserGroupLinkDataTable.prototype = {
 			_gthis.init().then(function(r) {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "userusergrouplinkdata" + " updating object - " + Std.string(object.toArray()));
 				var primaryKeyName = core_data_UserUserGroupLinkData.PrimaryFieldDefinitions[0].fieldName;
-				core_data.updateTableData(_gthis.db.name,"userusergrouplinkdata",primaryKeyName,Std.string(object.get_primaryKey()),object.toArray()).then(function(r) {
+				core_data.updateTableData(_gthis.db.name,"userusergrouplinkdata",object.get_hash(),object.toArray()).then(function(r) {
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "userusergrouplinkdata" + " failed to update object (" + e;
@@ -17013,6 +17571,13 @@ core_data_UserUserGroupLinkDataTable.prototype = {
 				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "userusergrouplinkdata" + " adding object - " + Std.string(object.toArray()));
 				var data = object.toArray();
 				core_data.addTableData(_gthis.db.name,"userusergrouplinkdata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
 					resolve(true);
 				}).catch(function(e) {
 					var tmp = "" + _gthis.db.name + "." + "userusergrouplinkdata" + " failed to add object (" + e;
@@ -17021,6 +17586,25 @@ core_data_UserUserGroupLinkDataTable.prototype = {
 				});
 			}).catch(function(e) {
 				var tmp = "" + _gthis.db.name + "." + "userusergrouplinkdata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "userusergrouplinkdata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"userusergrouplinkdata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "userusergrouplinkdata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "userusergrouplinkdata" + " failed to remove object (" + e;
 				core_data_dao_Logger.get_instance().error(tmp + ")");
 				reject(e);
 			});
@@ -17265,6 +17849,25 @@ core_data_UserUtils.prototype = {
 		}
 		return has;
 	}
+	,cascadeRemove: function(userId) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var promises = [];
+			var _g = 0;
+			var _g1 = core_data_InternalDB.userOrganizationLinks.data;
+			while(_g < _g1.length) {
+				var link = _g1[_g];
+				++_g;
+				if(link.get_userId() == userId) {
+					promises.push(core_data_InternalDB.userOrganizationLinks.removeObject(link));
+				}
+			}
+			promises.push(core_data_InternalDB.users.removeObject(_gthis.user(userId)));
+			core_data_utils_PromiseUtils.runSequentially(promises,function() {
+				resolve(true);
+			});
+		});
+	}
 	,__class__: core_data_UserUtils
 };
 var core_data_dao_Logger = function() {
@@ -17297,14 +17900,18 @@ core_data_internal_FieldType.toString = function(v) {
 	case 2:
 		return "number";
 	case 3:
+		return "autoincrementnumber";
+	case 4:
 		return "boolean";
 	}
 	return "unknown";
 };
 core_data_internal_FieldType.fromString = function(v) {
 	switch(v) {
-	case "boolean":
+	case "autoincrementnumber":
 		return 3;
+	case "boolean":
+		return 4;
 	case "number":
 		return 2;
 	case "string":
@@ -17455,7 +18062,7 @@ core_data_parsers_CSVDataParser.prototype = $extend(core_data_parsers_DataParser
 			++_g;
 			fd.fieldType = 1;
 			if(boolFields_h[fd.fieldName] == true) {
-				fd.fieldType = 3;
+				fd.fieldType = 4;
 			}
 			if(numberFields_h[fd.fieldName] == true) {
 				fd.fieldType = 2;
@@ -17511,7 +18118,7 @@ core_data_transforms_AddRow.prototype = $extend(core_data_transforms_Transform.p
 			case 2:
 				data.push(0);
 				break;
-			case 3:
+			case 4:
 				data.push(false);
 				break;
 			default:
@@ -17725,6 +18332,8 @@ core_data_utils_ConversionUtils.fromString = function(value,type) {
 	case 2:
 		return parseFloat(value);
 	case 3:
+		return parseFloat(value);
+	case 4:
 		return value == "true";
 	default:
 		return value;
@@ -53891,11 +54500,11 @@ sidebars_CreateUserSidebar.prototype = $extend(sidebars_DataObjectSidebar.protot
 		user.set_lastName(this.userLastNameField.get_text());
 		user.set_emailAddress(this.userEmailField.get_text());
 		user.set_isAdmin(false);
-		var userLink = core_data_InternalDB.userOrganizationLinks.createObject();
-		userLink.set_userId(user.get_userId());
-		userLink.set_organizationId(this.organization.get_organizationId());
-		core_data_InternalDB.userOrganizationLinks.addObject(userLink).then(function(r) {
-			core_data_InternalDB.users.addObject(user).then(function(r) {
+		core_data_InternalDB.users.addObject(user).then(function(r) {
+			var userLink = core_data_InternalDB.userOrganizationLinks.createObject();
+			userLink.set_userId(user.get_userId());
+			userLink.set_organizationId(_gthis.organization.get_organizationId());
+			core_data_InternalDB.userOrganizationLinks.addObject(userLink).then(function(r) {
 				_gthis.createComplete();
 				views_OrganizationsView.instance.populateOrgs();
 			});
@@ -54961,6 +55570,10 @@ var views_DataView = function() {
 	c17.set_styleString("border:none;");
 	c17.set_virtual(false);
 	c16.addComponent(c17);
+	var c18 = new haxe_ui_components_Button();
+	c18.set_id("deleteSelectedRowButton");
+	c18.set_text("Delete Selected Row");
+	c16.addComponent(c18);
 	c0.addComponent(c16);
 	this.addComponent(c0);
 	this.set_percentWidth(100.);
@@ -54969,6 +55582,7 @@ var views_DataView = function() {
 	this.tableSelector = c5;
 	this.removeDataButton = c15;
 	this.detailsContainer = c16;
+	this.deleteSelectedRowButton = c18;
 	this.databaseSelector = c3;
 	this.dataSourceDataTable = c17;
 	this.addDataButton = c11;
@@ -54985,6 +55599,12 @@ var views_DataView = function() {
 		c.registerEvent("change",$bind(this,this.onTableSelectorChange));
 	} else {
 		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "tableSelector" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "views.DataView", methodName : "new"});
+	}
+	var c = this.deleteSelectedRowButton;
+	if(c != null) {
+		c.registerEvent("click",$bind(this,this.onDeleteSelectedRowButton));
+	} else {
+		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "deleteSelectedRowButton" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "views.DataView", methodName : "new"});
 	}
 	var c = this.addDataButton;
 	if(c != null) {
@@ -55066,6 +55686,57 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 			_gthis.refresh();
 		});
 	}
+	,exportCurrentTable: function() {
+		var selectedItem = this.databaseSelector.get_selectedItem();
+		if(selectedItem == null) {
+			return;
+		}
+		if(this.tableSelector.get_selectedItem() == null) {
+			return;
+		}
+		var sb_b = "";
+		var tableName = this._table.info.tableName;
+		var parts = [];
+		var _g = 0;
+		var _g1 = this._table.info.fieldDefinitions;
+		while(_g < _g1.length) {
+			var fieldDef = _g1[_g];
+			++_g;
+			var fieldString = fieldDef.fieldName + "$$" + fieldDef.fieldType;
+			parts.push(fieldString);
+		}
+		sb_b += Std.string(parts.join("|"));
+		sb_b += "\n";
+		var _g = 0;
+		var _g1 = this._table.records;
+		while(_g < _g1.length) {
+			var record = _g1[_g];
+			++_g;
+			parts = [];
+			var _g2 = 0;
+			var _g3 = record.data;
+			while(_g2 < _g3.length) {
+				var d = _g3[_g2];
+				++_g2;
+				d = StringTools.replace(d,"\n","\\n");
+				d = StringTools.replace(d,"\t","\\t");
+				parts.push(d);
+			}
+			sb_b += Std.string(parts.join("|"));
+			sb_b += "\n";
+		}
+		var fileName = tableName + ".csv";
+		var fileContent = sb_b;
+		var file = new Blob([fileContent],{ type : "text/plain"});
+		var link = window.document.createElement("a");
+		link.setAttribute("href",URL.createObjectURL(file));
+		link.setAttribute("download",fileName);
+		window.document.body.append(link);
+		link.click();
+		haxe_Log.trace(this._table.records.length,{ fileName : "haxe/views/DataView.hx", lineNumber : 150, className : "views.DataView", methodName : "exportCurrentTable"});
+		haxe_Log.trace(this._table.info,{ fileName : "haxe/views/DataView.hx", lineNumber : 152, className : "views.DataView", methodName : "exportCurrentTable"});
+		haxe_Log.trace(sb_b,{ fileName : "haxe/views/DataView.hx", lineNumber : 153, className : "views.DataView", methodName : "exportCurrentTable"});
+	}
 	,onDatabaseSelectorChanged: function(e) {
 		var _gthis = this;
 		var selectedItem = this.databaseSelector.get_selectedItem();
@@ -55103,6 +55774,17 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 		this._table = selectedItem.table;
 		this.refreshTableData(selectedItem.table);
 	}
+	,onDeleteSelectedRowButton: function(e) {
+		var selectedItem = this.dataSourceDataTable.get_selectedItem();
+		if(selectedItem == null) {
+			return;
+		}
+		var hash = selectedItem.hash;
+		haxe_Log.trace("delete row with hash: " + hash,{ fileName : "haxe/views/DataView.hx", lineNumber : 209, className : "views.DataView", methodName : "onDeleteSelectedRowButton"});
+		core_data.removeTableData(this._database.name,this._table.name,[hash]).then(function(r) {
+			haxe_Log.trace("delete result: " + Std.string(r),{ fileName : "haxe/views/DataView.hx", lineNumber : 211, className : "views.DataView", methodName : "onDeleteSelectedRowButton"});
+		});
+	}
 	,refreshTableData: function(table) {
 		var _gthis = this;
 		this.dataSourceDataTable.clearContents(true);
@@ -55126,6 +55808,12 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 			}
 			n += 1;
 		}
+		var column = this.dataSourceDataTable.addColumn(StringTools.replace(StringTools.replace("hash","\"","")," ","_"));
+		column.set_width(100);
+		var value = column.get_width();
+		colWidths.set(column,value);
+		var key = column.get_id();
+		cols_h[key] = column;
 		var recordCount = 0;
 		n = 0;
 		table.fetch().then(function(data) {
@@ -55159,6 +55847,7 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 					}
 					n += 1;
 				}
+				item.hash = d.get_hash();
 				ds.add(item);
 				recordCount += 1;
 				if(recordCount > 100) {
@@ -55235,6 +55924,7 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,tableSelector: null
 	,removeDataButton: null
 	,detailsContainer: null
+	,deleteSelectedRowButton: null
 	,databaseSelector: null
 	,dataSourceDataTable: null
 	,addDataButton: null
@@ -55397,6 +56087,12 @@ var views_OrganizationsView = function() {
 	} else {
 		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "orgsTree" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "views.OrganizationsView", methodName : "new"});
 	}
+	var c = this.removeButton;
+	if(c != null) {
+		c.registerEvent("click",$bind(this,this.onRemoveButton));
+	} else {
+		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "removeButton" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "views.OrganizationsView", methodName : "new"});
+	}
 	var c = this.addButton;
 	if(c != null) {
 		c.registerEvent("click",$bind(this,this.onAddButton));
@@ -55420,7 +56116,7 @@ views_OrganizationsView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 		if(selectedNode == null) {
 			return;
 		}
-		haxe_Log.trace("selection changed - " + Std.string(selectedNode.userData),{ fileName : "haxe/views/OrganizationsView.hx", lineNumber : 64, className : "views.OrganizationsView", methodName : "onOrgsTreeSelectionChanged"});
+		haxe_Log.trace("selection changed - " + Std.string(selectedNode.userData),{ fileName : "haxe/views/OrganizationsView.hx", lineNumber : 66, className : "views.OrganizationsView", methodName : "onOrgsTreeSelectionChanged"});
 		this.detailsContainer.removeAllComponents();
 		switch(selectedNode.userData) {
 		case "layout":
@@ -55555,6 +56251,7 @@ views_OrganizationsView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 					if(user.get_userId() == userLink.get_userId()) {
 						var userLabel = user.get_username() + " (" + user.get_firstName() + " " + user.get_lastName() + ")";
 						var userNode = usersNode.addNode({ text : userLabel, icon : "themes/optex/user-solid.png", org : org, user : user});
+						userNode.userData = "user";
 						var groupsNode = userNode.addNode({ text : "Groups", icon : "themes/optex/folder-solid.png", org : org, user : user});
 						this.refreshUsersGroups(groupsNode,orgNode);
 						var rolesNode = userNode.addNode({ text : "Roles", icon : "themes/optex/folder-solid.png", org : org, user : user});
@@ -55675,13 +56372,37 @@ views_OrganizationsView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 			});
 		}
 	}
+	,onRemoveButton: function(e) {
+		var _gthis = this;
+		var selectedNode = this.orgsTree.get_selectedNode();
+		if(selectedNode == null) {
+			return;
+		}
+		haxe_Log.trace(selectedNode.userData,{ fileName : "haxe/views/OrganizationsView.hx", lineNumber : 331, className : "views.OrganizationsView", methodName : "onRemoveButton"});
+		if(selectedNode.userData == "user") {
+			var user = selectedNode.get_data().user;
+			var message = "Are you sure you wish to the delete the user '" + user.get_username() + "'\n\nThis cannot be undone";
+			haxe_ui_containers_dialogs_Dialogs.messageBox(message,"Config Removal","question",true,function(button) {
+				var larr = haxe_ui_containers_dialogs_DialogButton.toString(button).split("|");
+				if(larr.indexOf(haxe_ui_containers_dialogs_DialogButton.toString("{{dialog.yes}}")) != -1) {
+					var working = new components_WorkingIndicator();
+					working.showWorking();
+					core_data_InternalDB.users.utils.cascadeRemove(user.get_userId()).then(function(r) {
+						working.workComplete();
+						haxe_Log.trace("remove complete",{ fileName : "haxe/views/OrganizationsView.hx", lineNumber : 342, className : "views.OrganizationsView", methodName : "onRemoveButton"});
+						_gthis.populateOrgs();
+					});
+				}
+			});
+		}
+	}
 	,onAddButton: function(e) {
 		var _gthis = this;
 		var selectedNode = this.orgsTree.get_selectedNode();
 		if(selectedNode == null) {
 			return;
 		}
-		haxe_Log.trace(selectedNode.userData,{ fileName : "haxe/views/OrganizationsView.hx", lineNumber : 328, className : "views.OrganizationsView", methodName : "onAddButton"});
+		haxe_Log.trace(selectedNode.userData,{ fileName : "haxe/views/OrganizationsView.hx", lineNumber : 357, className : "views.OrganizationsView", methodName : "onAddButton"});
 		switch(selectedNode.userData) {
 		case "layouts":
 			var org = selectedNode.get_data().org;
@@ -55937,8 +56658,8 @@ core_data_DashboardGroupData.LinkedFields = [{ tableName : "icondata", fieldName
 core_data_DashboardGroupDataTable.TableName = "dashboardgroupdata";
 core_data_DatabaseEvent.Initialized = "dbInitialized";
 core_data_IconData.TableName = "icondata";
-core_data_IconData.FieldDefinitions = [{ fieldName : "iconId", fieldType : 2},{ fieldName : "name", fieldType : 1},{ fieldName : "path", fieldType : 1}];
-core_data_IconData.PrimaryFieldDefinitions = [{ fieldName : "iconId", fieldType : 2}];
+core_data_IconData.FieldDefinitions = [{ fieldName : "iconId", fieldType : 3},{ fieldName : "name", fieldType : 1},{ fieldName : "path", fieldType : 1}];
+core_data_IconData.PrimaryFieldDefinitions = [{ fieldName : "iconId", fieldType : 3}];
 core_data_IconData.LinkedFields = [];
 core_data_IconDataTable.TableName = "icondata";
 core_data_LayoutData.TableName = "layoutdata";
@@ -55947,8 +56668,8 @@ core_data_LayoutData.PrimaryFieldDefinitions = [{ fieldName : "layoutId", fieldT
 core_data_LayoutData.LinkedFields = [];
 core_data_LayoutDataTable.TableName = "layoutdata";
 core_data_OrganizationData.TableName = "organizationdata";
-core_data_OrganizationData.FieldDefinitions = [{ fieldName : "organizationId", fieldType : 2},{ fieldName : "name", fieldType : 1}];
-core_data_OrganizationData.PrimaryFieldDefinitions = [{ fieldName : "organizationId", fieldType : 2}];
+core_data_OrganizationData.FieldDefinitions = [{ fieldName : "organizationId", fieldType : 3},{ fieldName : "name", fieldType : 1}];
+core_data_OrganizationData.PrimaryFieldDefinitions = [{ fieldName : "organizationId", fieldType : 3}];
 core_data_OrganizationData.LinkedFields = [];
 core_data_OrganizationDataTable.TableName = "organizationdata";
 core_data_PageData.TableName = "pagedata";
@@ -55985,18 +56706,18 @@ core_data_SiteData.PrimaryFieldDefinitions = [{ fieldName : "siteId", fieldType 
 core_data_SiteData.LinkedFields = [];
 core_data_SiteDataTable.TableName = "sitedata";
 core_data_UserData.TableName = "userdata";
-core_data_UserData.FieldDefinitions = [{ fieldName : "userId", fieldType : 2},{ fieldName : "username", fieldType : 1},{ fieldName : "password", fieldType : 1},{ fieldName : "firstName", fieldType : 1},{ fieldName : "lastName", fieldType : 1},{ fieldName : "emailAddress", fieldType : 1},{ fieldName : "isAdmin", fieldType : 3}];
-core_data_UserData.PrimaryFieldDefinitions = [{ fieldName : "userId", fieldType : 2}];
+core_data_UserData.FieldDefinitions = [{ fieldName : "userId", fieldType : 3},{ fieldName : "username", fieldType : 1},{ fieldName : "password", fieldType : 1},{ fieldName : "firstName", fieldType : 1},{ fieldName : "lastName", fieldType : 1},{ fieldName : "emailAddress", fieldType : 1},{ fieldName : "isAdmin", fieldType : 4}];
+core_data_UserData.PrimaryFieldDefinitions = [{ fieldName : "userId", fieldType : 3}];
 core_data_UserData.LinkedFields = [];
 core_data_UserDataTable.TableName = "userdata";
 core_data_UserGroupData.TableName = "usergroupdata";
-core_data_UserGroupData.FieldDefinitions = [{ fieldName : "userGroupId", fieldType : 2},{ fieldName : "name", fieldType : 1},{ fieldName : "organizationId", fieldType : 2}];
-core_data_UserGroupData.PrimaryFieldDefinitions = [{ fieldName : "userGroupId", fieldType : 2}];
+core_data_UserGroupData.FieldDefinitions = [{ fieldName : "userGroupId", fieldType : 3},{ fieldName : "name", fieldType : 1},{ fieldName : "organizationId", fieldType : 2}];
+core_data_UserGroupData.PrimaryFieldDefinitions = [{ fieldName : "userGroupId", fieldType : 3}];
 core_data_UserGroupData.LinkedFields = [];
 core_data_UserGroupDataTable.TableName = "usergroupdata";
 core_data_UserGroupRoleLinkData.TableName = "usergrouprolelinkdata";
-core_data_UserGroupRoleLinkData.FieldDefinitions = [{ fieldName : "userGroupId", fieldType : 2},{ fieldName : "roleId", fieldType : 2}];
-core_data_UserGroupRoleLinkData.PrimaryFieldDefinitions = [{ fieldName : "userGroupId", fieldType : 2}];
+core_data_UserGroupRoleLinkData.FieldDefinitions = [{ fieldName : "userGroupId", fieldType : 3},{ fieldName : "roleId", fieldType : 2}];
+core_data_UserGroupRoleLinkData.PrimaryFieldDefinitions = [{ fieldName : "userGroupId", fieldType : 3}];
 core_data_UserGroupRoleLinkData.LinkedFields = [];
 core_data_UserGroupRoleLinkDataTable.TableName = "usergrouprolelinkdata";
 core_data_UserOrganizationLinkData.TableName = "userorganizationlinkdata";
@@ -56005,14 +56726,15 @@ core_data_UserOrganizationLinkData.PrimaryFieldDefinitions = [{ fieldName : "use
 core_data_UserOrganizationLinkData.LinkedFields = [];
 core_data_UserOrganizationLinkDataTable.TableName = "userorganizationlinkdata";
 core_data_UserUserGroupLinkData.TableName = "userusergrouplinkdata";
-core_data_UserUserGroupLinkData.FieldDefinitions = [{ fieldName : "userId", fieldType : 2},{ fieldName : "userGroupId", fieldType : 2}];
-core_data_UserUserGroupLinkData.PrimaryFieldDefinitions = [{ fieldName : "userId", fieldType : 2}];
+core_data_UserUserGroupLinkData.FieldDefinitions = [{ fieldName : "userId", fieldType : 3},{ fieldName : "userGroupId", fieldType : 2}];
+core_data_UserUserGroupLinkData.PrimaryFieldDefinitions = [{ fieldName : "userId", fieldType : 3}];
 core_data_UserUserGroupLinkData.LinkedFields = [];
 core_data_UserUserGroupLinkDataTable.TableName = "userusergrouplinkdata";
 core_data_internal_FieldType.Unknown = 0;
 core_data_internal_FieldType.String = 1;
 core_data_internal_FieldType.Number = 2;
-core_data_internal_FieldType.Boolean = 3;
+core_data_internal_FieldType.AutoIncrementNumber = 3;
+core_data_internal_FieldType.Boolean = 4;
 core_graphs_BarGraphEvent.BAR_SELECTED = "barSelected";
 core_graphs_BarGraphEvent.BAR_UNSELECTED = "barUnselected";
 core_graphs_BarGraph.nextId = 0;

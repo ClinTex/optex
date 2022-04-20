@@ -26,6 +26,7 @@ type Result =
    errorCode: nat;
    errorText: text;
    errored: bool;
+   resultIds: vec vec text;
  };
 type DatabaseInfo = 
  record {
@@ -34,17 +35,16 @@ type DatabaseInfo =
  };
 service : {
   addTableData: (text, text, vec vec text) -> (Result);
-  applyTableTransform: (text, text, text, vec vec text) ->
-   (TableFragment) query;
   createDatabase: (text) -> (Result);
   createTable: (text, text, vec TableFieldInfo) -> (Result);
+  getAllTableData: (text, text) -> (TableFragment) query;
   getDatabaseInfo: (text) -> (DatabaseInfo) query;
-  getTableData: (text, text, nat, nat) -> (TableFragment) query;
   getTableInfo: (text, text) -> (TableInfo) query;
   hasDatabase: (text) -> (bool) query;
   hasTable: (text, text) -> (bool) query;
   listDatabases: () -> (vec DatabaseInfo) query;
   removeDatabase: (text) -> (Result);
   removeTable: (text, text) -> (Result);
-  updateTableData: (text, text, text, text, vec text) -> (Result);
+  removeTableData: (text, text, vec text) -> (Result);
+  updateTableData: (text, text, text, vec text) -> (Result);
 }

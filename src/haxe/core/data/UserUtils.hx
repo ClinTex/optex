@@ -1,5 +1,8 @@
 package core.data;
 
+import js.lib.Promise;
+import core.data.utils.PromiseUtils;
+
 class UserUtils {
     public function new() {
     }
@@ -52,5 +55,20 @@ class UserUtils {
             }
         }
         return has;
+    }
+
+    public function cascadeRemove(userId):Promise<Bool> {
+        return new Promise((resolve, reject) -> {
+            var promises = [];
+            for (link in InternalDB.userOrganizationLinks.data) {
+                if (link.userId == userId) {
+                    promises.push(InternalDB.userOrganizationLinks.removeObject(link));
+                }
+            }
+            promises.push(InternalDB.users.removeObject(user(userId)));
+            PromiseUtils.runSequentially(promises, function() {
+                resolve(true);
+            });
+        });
     }
 }

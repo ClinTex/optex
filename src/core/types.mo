@@ -3,5 +3,7 @@ module {
         errorText:Text;
         errorCode:Nat;
         errored:Bool;
+
+        resultIds:[[Text]];
     };
 }

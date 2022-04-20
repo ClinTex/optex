@@ -5,6 +5,7 @@ import js.lib.Promise;
 interface IDataObject {
     var primaryKey(get, set):Int;
     var primaryKeyName(get, null):String;
+    var hash(get, null):String;
 
     function fromArray(data:Array<String>):Void;
     function toArray():Array<String>;

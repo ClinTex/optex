@@ -26,12 +26,12 @@ class CreateUserSidebar extends DataObjectSidebar {
         user.emailAddress = userEmailField.text;
         user.isAdmin = false;
 
-        var userLink = InternalDB.userOrganizationLinks.createObject();
-        userLink.userId = user.userId;
-        userLink.organizationId = organization.organizationId;
-
-        InternalDB.userOrganizationLinks.addObject(userLink).then(function(r) {
-            InternalDB.users.addObject(user).then(function(r) {
+        InternalDB.users.addObject(user).then(function(r) {
+            var userLink = InternalDB.userOrganizationLinks.createObject();
+            userLink.userId = user.userId;
+            userLink.organizationId = organization.organizationId;
+            
+            InternalDB.userOrganizationLinks.addObject(userLink).then(function(r) {
                 createComplete();
                 OrganizationsView.instance.populateOrgs();
             });

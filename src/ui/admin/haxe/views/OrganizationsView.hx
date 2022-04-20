@@ -1,5 +1,7 @@
 package views;
 
+import haxe.ui.containers.dialogs.MessageBox.MessageBoxType;
+import haxe.ui.containers.dialogs.Dialogs;
 import panels.PageDetailsPanel;
 import core.data.LayoutData;
 import panels.LayoutDetailsPanel;
@@ -196,6 +198,7 @@ class OrganizationsView extends VBox {
                     if (user.userId == userLink.userId) {
                         var userLabel = user.username + " (" + user.firstName + " " + user.lastName  + ")";
                         var userNode = usersNode.addNode({text: userLabel, icon: "themes/optex/user-solid.png", org: org, user: user});
+                        userNode.userData = "user";
                         var groupsNode = userNode.addNode({text: "Groups", icon: "themes/optex/folder-solid.png", org: org, user: user});
                         refreshUsersGroups(groupsNode, orgNode);
                         var rolesNode = userNode.addNode({text: "Roles", icon: "themes/optex/folder-solid.png", org: org, user: user});
@@ -315,6 +318,32 @@ class OrganizationsView extends VBox {
             Toolkit.callLater(function() {
                 orgsTree.selectedNode = nodeToSelect;
             });
+        }
+    }
+
+    @:bind(removeButton, MouseEvent.CLICK)
+    private function onRemoveButton(e:MouseEvent) {
+        var selectedNode = orgsTree.selectedNode;
+        if (selectedNode == null) {
+            return;
+        }
+
+        trace(selectedNode.userData);
+        switch (selectedNode.userData) {
+            case "user":
+                var user:UserData = selectedNode.data.user;
+                var message = "Are you sure you wish to the delete the user '" + user.username + "'\n\nThis cannot be undone";
+                Dialogs.messageBox(message, "Config Removal", MessageBoxType.TYPE_QUESTION, true, function(button) {
+                    if (button == DialogButton.YES) {
+                        var working = new WorkingIndicator();
+                        working.showWorking();
+                        InternalDB.users.utils.cascadeRemove(user.userId).then(function(r) {
+                            working.workComplete();
+                            trace("remove complete");
+                            populateOrgs();
+                        });
+                    }
+                });
         }
     }
 

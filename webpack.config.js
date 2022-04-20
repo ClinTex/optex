@@ -21,7 +21,7 @@ function initCanisterIds() {
     const network =
         process.env.DFX_NETWORK ||
         (process.env.NODE_ENV === "production" ? "ic" : "local");
-
+    console.log("Canster network: " + network);
     canisters = network === "local" ? localCanisters : prodCanisters;
 
     for (const canister in canisters) {

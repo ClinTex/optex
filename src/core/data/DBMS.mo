@@ -1,10 +1,11 @@
-import Text "mo:base/Text";
-import Map "mo:base/HashMap";
-import Array "mo:base/Array";
-import Buffer "mo:base/Buffer";
-import Int "mo:base/Int";
+import Text     "mo:base/Text";
+import Map      "mo:base/TrieMap";
+import Array    "mo:base/Array";
+import Buffer   "mo:base/Buffer";
+import Int      "mo:base/Int";
+import Nat32    "mo:base/Nat32";
 
-import Debug "mo:base/Debug";
+import Debug    "mo:base/Debug";
 
 module {
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16,10 +17,11 @@ module {
     };
 
     public module FieldType {
-        public let Unknown = 0;
-        public let String = 1;
-        public let Number = 2;
-        public let Boolean = 3;
+        public let Unknown              = 0;
+        public let String               = 1;
+        public let Number               = 2;
+        public let AutoIncrementNumber  = 3;
+        public let Boolean              = 4;
 
         public func debugPrint(value:Int):Text {
             if (value == Unknown) {
@@ -30,6 +32,9 @@ module {
             };
             if (value == Number) {
                 return "number";
+            };
+            if (value == AutoIncrementNumber) {
+                return "number (auto increment)";
             };
             if (value == Boolean) {
                 return "boolean";
@@ -66,7 +71,7 @@ module {
     // DatabaseManager
     ////////////////////////////////////////////////////////////////////////////////////////////////
     public class DatabaseManager() {
-        public var databases = Map.HashMap<Text, Database>(0, Text.equal, Text.hash);
+        public var databases = Map.TrieMap<Text, Database>(Text.equal, Text.hash);
 
         public func createDatabase(name:Text):Database {
             var db = Database(name);
@@ -128,7 +133,7 @@ module {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     public class Database(databaseName:Text) {
         var name:Text = databaseName;
-        var tables = Map.HashMap<Text, Table>(0, Text.equal, Text.hash);
+        var tables = Map.TrieMap<Text, Table>(Text.equal, Text.hash);
 
         public func getName():Text {
             return databaseName;
@@ -231,7 +236,8 @@ module {
     public class Table(tableName:Text) {
         var name:Text = tableName;
         public var schema:TableSchema = TableSchema();
-        public var data:[[Text]] = [];
+        var data = Map.TrieMap<Text, [Text]>(Text.equal, Text.hash);
+        var autoIncrement = Map.TrieMap<Text, Nat32>(Text.equal, Text.hash);
 
         public func getName():Text {
             return name;
@@ -241,83 +247,72 @@ module {
             return schema;
         };
 
-        public func addRow(values:[Text]) {
-            data := Array.append(data, [values]);
-        };
-
-        public func addRows(rows:[[Text]]) {
-            for (r in rows.vals()) {
-                addRow(r);
+        private func getNextAutoNumber(fieldName:Text):Nat32 {
+            var autoNumber:Nat32 = 0;
+            switch (autoIncrement.get(fieldName)) {
+                case null { };
+                case (?val) {
+                    autoNumber := val;
+                };
             };
+
+            autoNumber := autoNumber + 1;
+            autoIncrement.put(fieldName, autoNumber);
+
+            return autoNumber;
         };
 
-        public func getRow(index:Nat):[Text] {
-            return data[index];
+        public func addRow(values:[Text]):[Text] {
+            var recordString = "";
+            var finalValues:[Text] = [];
+            var resultIds:[Text] = [];
+
+            var n:Nat = 0;
+            for (fd in schema.fieldDefinitions.vals()) {
+                var v:Text = "";
+                if (fd.fieldType == FieldType.AutoIncrementNumber) {
+                    var autoNumber:Nat32 = getNextAutoNumber(fd.fieldName);
+                    v := Nat32.toText(autoNumber);
+                    resultIds := Array.append(resultIds, [v]);
+                } else {
+                    v := values[n];
+                };
+                n := n + 1;
+                recordString := recordString # "_" # v;
+                finalValues := Array.append(finalValues, [v]);
+            };
+            
+            var hash:Text = Nat32.toText(Text.hash(recordString));
+            finalValues := Array.append(finalValues, [hash]);
+            data.put(hash, finalValues);
+
+            return resultIds;
         };
 
-        public func getPage(page:Nat, pageSize:Nat):TableFragment {
-            var start:Nat = (page - 1) * pageSize;
-            var end:Nat = start + (page * pageSize);
-            return getRows(start, end);
+        public func addRows(rows:[[Text]]):[[Text]] {
+            var resultIds:[[Text]] = [];
+            for (r in rows.vals()) {
+                var rowIds = addRow(r);
+                resultIds := Array.append(resultIds, [rowIds]);
+            };
+            return resultIds;
         };
 
-        public func getRows(start:Nat, end:Nat):TableFragment {
+        public func getAllRows():TableFragment {
             if (data.size() == 0) {
                 return EmptyTableFragment;
             };
 
-            var actualEnd:Nat = end;
-            if (actualEnd > Int.abs(data.size() - 1)) {
-                actualEnd := Int.abs(data.size() - 1);
-            };
-
             var fieldDefinitions:[TableFragmentField] = [];
             for (fd in schema.fieldDefinitions.vals()) {
                 fieldDefinitions := Array.append(fieldDefinitions, [{ fieldName = fd.fieldName; fieldType = fd.fieldType; }]);
             };
 
-            var n = start;
             var fragmentData:[[Text]] = [];
             var count:Int = 0;
-            while (n <= actualEnd) {
-                fragmentData := Array.append(fragmentData, [data[n]]);
-                n := n + 1;
+            for (row in data.vals()) {
+                fragmentData := Array.append(fragmentData, [row]);
                 count := count + 1;
-            };
-
-            var f:TableFragment = {
-                fieldDefinitions = fieldDefinitions;
-                total = data.size();
-                count = count;
-                data = fragmentData;
-            };
-            return f;
-        };
-
-        public func getAllRows(start:Nat, end:Nat):TableFragment {
-            return getRows(0, data.size() - 1);
-        };
-
-        public func getAllData():[[Text]] {
-            return data;
-        };
-
-        public func findRows(fieldName:Text, fieldValue:Text):TableFragment {
-            var fieldDefinitions:[TableFragmentField] = [];
-            for (fd in schema.fieldDefinitions.vals()) {
-                fieldDefinitions := Array.append(fieldDefinitions, [{ fieldName = fd.fieldName; fieldType = fd.fieldType; }]);
-            };
-
-            var fragmentData:[[Text]] = [];
-            var count:Int = 0;
-            var fieldIndex = schema.fieldIndex(fieldName);
-            var x = fieldIndex;
-            if (fieldIndex > -1) {
-                for (d in data.vals()) {
-                    if (d[Int.abs(x)] == fieldValue) {
-                        fragmentData := Array.append(fragmentData, [d]);
-                    };
-                };
             };
 
             var f:TableFragment = {
@@ -341,23 +336,42 @@ module {
             };
         };
 
-        public func updateData(fieldName:Text, fieldValue:Text, newData:[Text]) {
-            var fieldIndex = schema.fieldIndex(fieldName);
-            var x = fieldIndex;
-            var updatedData:[[Text]] = [];
+        public func updateRow(hash:Text, newValues:[Text]) {
+            var recordString = "";
+            var finalValues:[Text] = [];
 
-            if (fieldIndex > -1) {
-                for (d in data.vals()) {
-                    var r = d;
-                    if (d[Int.abs(x)] == fieldValue) {
-                        r := newData;
-                    };
-
-                    updatedData := Array.append(updatedData, [r]);
+            var currentValues:[Text] = [];
+            switch (data.get(hash)) {
+                case null { };
+                case (?val) {
+                    currentValues := val;
                 };
             };
 
-            data := updatedData;
+            var n:Nat = 0;
+            for (fd in schema.fieldDefinitions.vals()) {
+                var v:Text = "";
+                v := newValues[n];
+                n := n + 1;
+                recordString := recordString # "_" # v;
+                finalValues := Array.append(finalValues, [v]);
+            };
+
+            data.delete(hash);
+
+            var newHash:Text = Nat32.toText(Text.hash(recordString));
+            finalValues := Array.append(finalValues, [newHash]);
+            data.put(newHash, finalValues);
+        };
+
+        public func deleteRow(hash:Text) {
+            data.delete(hash);
+        };
+
+        public func deleteRows(hash:[Text]) {
+            for (h in hash.vals()) {
+                deleteRow(h);
+            };
         };
 
         public func debugPrint() {

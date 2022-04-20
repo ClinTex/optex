@@ -6,6 +6,7 @@ typedef CoreResult = {
     var errored:Bool;
     var errorCode:Int;
     var errorText:String;
+    var resultIds:Array<Array<String>>;
 }
 
 typedef DatabaseInfo = {
@@ -28,7 +29,8 @@ class FieldType {
     public static inline var Unknown:Int = 0;
     public static inline var String:Int = 1;
     public static inline var Number:Int = 2;
-    public static inline var Boolean:Int = 3;
+    public static inline var AutoIncrementNumber:Int = 3;
+    public static inline var Boolean:Int = 4;
 
     public static function toString(v:Int):String {
         switch (v) {
@@ -36,6 +38,8 @@ class FieldType {
                 return "string";
             case Number:
                 return "number";
+            case AutoIncrementNumber:
+                return "autoincrementnumber";
             case Boolean:
                 return "boolean";
         }
@@ -48,6 +52,8 @@ class FieldType {
                 return String;
             case "number":
                 return Number;
+            case "autoincrementnumber":
+                return AutoIncrementNumber;
             case "boolean":
                 return Boolean;
         }
@@ -77,9 +83,11 @@ extern class CoreData {
     static function getTableInfo(databaseName:String, tableName:String):Promise<TableInfo>;
 
     static function addTableData(databaseName:String, tableName:String, data:Array<Array<String>>):Promise<CoreResult>;
-    static function getTableData(databaseName:String, tableName:String, start:Int, end:Int):Promise<TableFragment>;
-    static function updateTableData(databaseName:String, tableName:String, fieldName:String, fieldValue:String, newData:Array<String>):Promise<CoreResult>;
+    static function getAllTableData(databaseName:String, tableName:String):Promise<TableFragment>;
+    static function updateTableData(databaseName:String, tableName:String, rowHash:String, newData:Array<String>):Promise<CoreResult>;
+    static function removeTableData(databaseName:String, tableName:String, rowHashes:Array<String>):Promise<CoreResult>;
 
     static function applyTableTransform(databaseName:String, tableName:String, transformId:String, parameters:Array<Array<String>>):Promise<TableFragment>;
-    static function test1(databaseName:String, tableName:String, fieldName:String):Promise<TableFragment>;
+    static function test1():Promise<String>;
+    static function test2():Promise<String>;
 }

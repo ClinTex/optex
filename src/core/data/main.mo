@@ -1,12 +1,11 @@
-import Text  "mo:base/Text";
-import Map   "mo:base/HashMap";
-import Array "mo:base/Array";
-import Int   "mo:base/Int";
-import Nat   "mo:base/Nat";
+import Text     "mo:base/Text";
+import Map      "mo:base/HashMap";
+import Array    "mo:base/Array";
+import Int      "mo:base/Int";
+import Nat      "mo:base/Nat";
 
-import Types      "../types";
-import DBMS       "DBMS";
-import Transforms "Transforms";
+import Types    "../types";
+import DBMS     "DBMS";
 
 actor Data {
     let DatabaseManager = DBMS.DatabaseManager();
@@ -28,6 +27,7 @@ actor Data {
                 errored = true;
                 errorCode = DBMS.ErrorCode.AlreadyExists;
                 errorText = "database '" # databaseName # "' already exists";
+                resultIds = [];
             };
         };
 
@@ -37,6 +37,7 @@ actor Data {
             errored = false;
             errorText = "";
             errorCode = 0;
+            resultIds = [];
         };
     };
 
@@ -46,6 +47,7 @@ actor Data {
                 errored = true;
                 errorCode = DBMS.ErrorCode.DoesNotExist;
                 errorText = "database '" # databaseName # "' does not exist";
+                resultIds = [];
             };
         };
 
@@ -55,6 +57,7 @@ actor Data {
             errored = false;
             errorText = "";
             errorCode = 0;
+            resultIds = [];
         };
     };
 
@@ -76,6 +79,7 @@ actor Data {
                     errored = true;
                     errorCode = DBMS.ErrorCode.DoesNotExist;
                     errorText = "database '" # databaseName # "' does not exist";
+                    resultIds = [];
                 };
             };
             case (?db) {
@@ -84,6 +88,7 @@ actor Data {
                         errored = true;
                         errorCode = DBMS.ErrorCode.AlreadyExists;
                         errorText = "table '" # tableName # "' already exists";
+                        resultIds = [];
                     };
                 };
                 var table = db.createTable(tableName, fieldDefinitions);
@@ -91,6 +96,7 @@ actor Data {
                     errored = false;
                     errorText = "";
                     errorCode = 0;
+                    resultIds = [];
                 };
             };
         };
@@ -103,6 +109,7 @@ actor Data {
                     errored = true;
                     errorCode = DBMS.ErrorCode.DoesNotExist;
                     errorText = "database '" # databaseName # "' does not exist";
+                    resultIds = [];
                 };
             };
             case (?db) {
@@ -111,6 +118,7 @@ actor Data {
                         errored = true;
                         errorCode = DBMS.ErrorCode.DoesNotExist;
                         errorText = "table '" # tableName # "' does not exist";
+                        resultIds = [];
                     };
                 };
                 var table = db.removeTable(tableName);
@@ -118,6 +126,7 @@ actor Data {
                     errored = false;
                     errorText = "";
                     errorCode = 0;
+                    resultIds = [];
                 };
             };
         };
@@ -175,6 +184,7 @@ actor Data {
                     errored = true;
                     errorCode = DBMS.ErrorCode.DoesNotExist;
                     errorText = "database '" # databaseName # "' does not exist";
+                    resultIds = [];
                 };
             };
             case (?db) {
@@ -184,16 +194,18 @@ actor Data {
                             errored = true;
                             errorCode = DBMS.ErrorCode.DoesNotExist;
                             errorText = "table '" # tableName # "' does not exist";
+                            resultIds = [];
                         };
                     };
 
                     case (?table) {
-                        table.addRows(data);
+                        var resultIds = table.addRows(data);
 
                         return {
                             errored = false;
                             errorText = "";
                             errorCode = 0;
+                            resultIds = resultIds;
                         };
                     };
                 };
@@ -201,7 +213,7 @@ actor Data {
         };
     };
 
-    public query func getTableData(databaseName:Text, tableName:Text, start:Nat, end:Nat):async DBMS.TableFragment {
+    public query func getAllTableData(databaseName:Text, tableName:Text):async DBMS.TableFragment {
         switch(DatabaseManager.getDatabase(databaseName)) {
             case null {
                 return {
@@ -223,22 +235,23 @@ actor Data {
                     };
 
                     case (?table) {
-                        return table.getRows(start, end);
+                        return table.getAllRows();
                     };
                 };
             };
         };
     };
 
-    public shared(msg) func updateTableData(databaseName:Text, tableName:Text, fieldName:Text, fieldValue:Text, newData:[Text]):async Types.Result {
+    public shared(msg) func updateTableData(databaseName:Text, tableName:Text, rowHash:Text, newData:[Text]):async Types.Result {
         switch (DatabaseManager.getDatabaseTable(databaseName, tableName)) {
             case null { };
             case (?table) {
-                table.updateData(fieldName, fieldValue, newData);
+                table.updateRow(rowHash, newData);
                 return {
                     errored = false;
                     errorText = "";
                     errorCode = 0;
+                    resultIds = [];
                 };
             };
         };
@@ -247,20 +260,29 @@ actor Data {
             errored = true;
             errorText = "Could not update data";
             errorCode = 2000;
+            resultIds = [];
         };
     };
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    // Transformations
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    public query func applyTableTransform(databaseName:Text, tableName:Text, transformId:Text, parameters:[[Text]]):async DBMS.TableFragment {
+    public shared(msg) func removeTableData(databaseName:Text, tableName:Text, rowHashes:[Text]):async Types.Result {
         switch (DatabaseManager.getDatabaseTable(databaseName, tableName)) {
             case null { };
             case (?table) {
-                return Transforms.Create(transformId)(table, parameters);
+                table.deleteRows(rowHashes);
+                return {
+                    errored = false;
+                    errorText = "";
+                    errorCode = 0;
+                    resultIds = [];
+                };
             };
         };
 
-        return DBMS.EmptyTableFragment;
+        return {
+            errored = true;
+            errorText = "Could not delete data";
+            errorCode = 2000;
+            resultIds = [];
+        };
     };
 };

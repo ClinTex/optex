@@ -43,6 +43,8 @@ class AdminView extends VBox {
             case "permissionChecker":
                 var dialog = new PermissionCheckerDialog();
                 dialog.show();
+            case "exportCurrentTable":
+                DataView.instance.exportCurrentTable();
         }
     }
 

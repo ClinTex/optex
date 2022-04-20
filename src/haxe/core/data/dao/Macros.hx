@@ -28,9 +28,12 @@ class Macros {
         }
         
         var fromArrayFn = builder.addFunction("fromArray", null, [{name: "data", type: macro: Array<String>}]);
+        fromArrayFn.add(macro if (data.length > FieldDefinitions.length) this._hash = data.pop());
         var toArrayFn = builder.addFunction("toArray", null, null, macro: Array<String>);
         var setLinkObjectFn = builder.addFunction("setLinkObject", null, [{name: "fieldId", type: macro: String}, {name: "object", type: macro: Any}]);
         var getFieldValueFn = builder.addFunction("getFieldValue", null, [{name: "fieldId", type: macro: String}], macro: Any);
+        builder.addVar("_hash", macro: String, macro null);
+        var hashGetter = builder.addGetter("hash", macro: String, macro return _hash);
         
         toArrayFn.add(macro var data = []);
 
@@ -59,6 +62,9 @@ class Macros {
             });
             
             var e = toFieldType(f.type);
+            if (f.hasMeta("autoIncrement")) {
+                e = macro core.data.internal.CoreData.FieldType.AutoIncrementNumber;
+            }
             fromArrayFn.add(macro $i{f.name} = core.data.utils.ConversionUtils.fromString(data[$v{n}], ${e}));
             toArrayFn.add(macro data.push(core.data.utils.ConversionUtils.toString($i{f.name})));
             getFieldValueFn.add(macro if (fieldId == $v{f.name}) return $i{f.name});
@@ -213,7 +219,7 @@ class Macros {
                 }
                 init().then(function(r) {
                     core.data.dao.Logger.instance.log("" + db.name + "." + $v{tableName} + " retrieving table data");
-                    core.data.internal.CoreData.getTableData(db.name, $v{tableName}, params.start, params.end).then(function(frag) {
+                    core.data.internal.CoreData.getAllTableData(db.name, $v{tableName}).then(function(frag) {
                         core.data.dao.Logger.instance.log("" + db.name + "." + $v{tableName} + " data retrieved (" + frag.count + " of " + frag.total + ")");
                         var records = [];
                         var linkInfoMap:Map<String, Array<String>> = [];
@@ -221,6 +227,7 @@ class Macros {
                         for (rawRecord in frag.data) {
                             var record = new $typePath();
                             record.table = this;
+                            trace("----------------> " + rawRecord);
                             record.fromArray(rawRecord);
                             records.push(record);
                             
@@ -277,7 +284,7 @@ class Macros {
                 init().then(function(r) {
                     core.data.dao.Logger.instance.log(db.name + "." + $v{tableName} + " updating object - " + object.toArray());
                     var primaryKeyName = $i{typeName}.PrimaryFieldDefinitions[0].fieldName;
-                    core.data.internal.CoreData.updateTableData(db.name, $v{tableName}, primaryKeyName, core.data.utils.ConversionUtils.toString(object.primaryKey), object.toArray()).then(function(r) {
+                    core.data.internal.CoreData.updateTableData(db.name, $v{tableName}, object.hash, object.toArray()).then(function(r) {
                         resolve(true);
                     }).catchError(function(e) {
                         core.data.dao.Logger.instance.error("" + db.name + "." + $v{tableName} + " failed to update object (" + e + ")");
@@ -299,6 +306,14 @@ class Macros {
                     core.data.dao.Logger.instance.log(db.name + "." + $v{tableName} + " adding object - " + object.toArray());
                     var data = object.toArray();
                     core.data.internal.CoreData.addTableData(db.name, $v{tableName}, [data]).then(function(r) {
+                        var newPrimaryKey = null;
+                        if (r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+                            newPrimaryKey = r.resultIds[0][0];
+                        }
+
+                        if (newPrimaryKey != null) {
+                            object.primaryKey = Std.parseInt(newPrimaryKey);
+                        }
                         resolve(true);
                     }).catchError(function(e) {
                         core.data.dao.Logger.instance.error("" + db.name + "." + $v{tableName} + " failed to add object (" + e + ")");
@@ -313,6 +328,26 @@ class Macros {
         
         //////////////////////////////////////////////////////////////////////////////////////////////
         
+        var removeObjectFn = builder.addFunction("removeObject", null, [{name: "object", type: macro: $complexType}], macro: js.lib.Promise<Bool>);
+        removeObjectFn.add(macro {
+            return new js.lib.Promise((resolve, reject) -> {
+                init().then(function(r) {
+                    core.data.dao.Logger.instance.log(db.name + "." + $v{tableName} + " removing object - hash: " + object.hash);
+                    core.data.internal.CoreData.removeTableData(db.name, $v{tableName}, [object.hash]).then(function(r) {
+                        resolve(true);
+                    }).catchError(function(e) {
+                        core.data.dao.Logger.instance.error("" + db.name + "." + $v{tableName} + " failed to remove object (" + e + ")");
+                        reject(e);
+                    });
+                }).catchError(function(e) {
+                    core.data.dao.Logger.instance.error("" + db.name + "." + $v{tableName} + " failed to remove object (" + e + ")");
+                    reject(e);
+                });
+            });
+        });
+
+        //////////////////////////////////////////////////////////////////////////////////////////////
+
         var createObjectFn = builder.addFunction("createObject", null, [{name: "data", type: macro: Array<Any>, value: macro null}], macro: $complexType);
         createObjectFn.add(macro {
             var record = new $typePath();

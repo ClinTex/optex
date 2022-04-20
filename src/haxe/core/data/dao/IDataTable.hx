@@ -18,5 +18,6 @@ interface IDataTable<T> {
     function fetch(params:FetchParams = null):Promise<Array<T>>;
     function updateObject(object:T):Promise<Bool>;
     function addObject(object:T):Promise<Bool>;
+    function removeObject(object:T):Promise<Bool>;
     function createObject(data:Array<Any> = null):T;
 }

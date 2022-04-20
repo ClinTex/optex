@@ -15,6 +15,8 @@ class ConversionUtils {
                 value == "true";
             case FieldType.Number:
                 Std.parseFloat(value);
+            case FieldType.AutoIncrementNumber:
+                Std.parseFloat(value);
             case _:
                 value;
         }

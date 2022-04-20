@@ -12,9 +12,16 @@ class GenericData implements IDataObject {
     
     public function new() {
     }
-    
+
+    private var _hash:String;
+    public var hash(get, null):String;
+    private function get_hash():String {
+        return _hash;
+    }
+
     public function fromArray(data:Array<Any>):Void {
         this.data = [];
+        _hash = data.pop();
         for (d in data) {
             this.data.push(ConversionUtils.toString(d));
         }

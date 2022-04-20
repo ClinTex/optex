@@ -36,6 +36,7 @@
                 <menu-item id="clearAll" text="Clear All" />
                 <menu-item id="transformBrowser" text="Transform Browser" />
                 <menu-item id="permissionChecker" text="Permission Checker" />
+                <menu-item id="exportCurrentTable" text="Export Current Table" />
             </menu>
             <spacer width="100%" />
             <menu text="Username" id="userMenu">

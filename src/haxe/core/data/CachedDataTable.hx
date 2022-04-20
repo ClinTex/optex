@@ -57,6 +57,20 @@ class CachedDataTable<T:IDataTable<O>, O:IDataObject, U> {
         });
     }
 
+    public function removeObject(o:O, refreshCache:Bool = true):Promise<Bool> {
+        return new Promise((resolve, reject) -> {
+            _table.removeObject(o).then(function(r) {
+                if (r == true && refreshCache == true) {
+                    fillCache().then(function(r) {
+                        resolve(r);
+                    });
+                } else {
+                    resolve(r);
+                }
+            });
+        });
+    }
+
     public var nextPrimaryKey(get, null):Int;
     private function get_nextPrimaryKey():Int {
         var n = -1;

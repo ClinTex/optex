@@ -200,7 +200,7 @@ class GenericTable implements IDataTable<GenericData> {
             init().then(function(r) {
                 if (params.transformId == null) {
                     Logger.instance.log("" + db.name + "." + this.name + " retrieving table data");
-                    CoreData.getTableData(db.name, this.name, params.start, params.end).then(function(frag) {
+                    CoreData.getAllTableData(db.name, this.name).then(function(frag) {
                         Logger.instance.log("" + db.name + "." + this.name + " data retrieved (" + frag.count + " of " + frag.total + ")");
                         var records = [];
                         for (rawRecord in frag.data) {
@@ -265,6 +265,14 @@ class GenericTable implements IDataTable<GenericData> {
     }
     
     public function addObject(object:GenericData):Promise<Bool> {
+        return new Promise((resolve, reject) -> {
+            init().then(function(r) {
+                resolve(true);
+            });
+        });
+    }
+
+    public function removeObject(object:GenericData):Promise<Bool> {
         return new Promise((resolve, reject) -> {
             init().then(function(r) {
                 resolve(true);
