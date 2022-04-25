@@ -1,3 +1,4 @@
 <vbox>
     <button text="Org details" />
+    <textfield id="orgNameField" />
 </vbox>

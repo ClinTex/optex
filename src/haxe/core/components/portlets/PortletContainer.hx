@@ -1,5 +1,6 @@
 package core.components.portlets;
 
+import haxe.Json;
 import haxe.ui.containers.dialogs.Dialog.DialogButton;
 import haxe.ui.components.Button;
 import haxe.ui.containers.HBox;
@@ -8,6 +9,8 @@ import haxe.ui.components.Image;
 import haxe.ui.events.MouseEvent;
 import core.components.dialogs.GenericPortletConfigDialog;
 import haxe.ui.containers.dialogs.Dialog.DialogEvent;
+import core.data.PortletInstancePortletData;
+import core.data.PortletInstanceLayoutData;
 
 class PortletContainer extends Box {
     private var _portletContent:Box;
@@ -31,7 +34,28 @@ class PortletContainer extends Box {
         button.onClick = onConfigurePortletInstance;
         _controls.addComponent(button);
         _controls.horizontalAlign = "right";
+        _controls.opacity = .5;
+        _controls.hide();
         addComponent(_controls);
+
+        onMouseOver = function(_) {
+            if (_editable) {
+                _controls.show();
+            }
+        }
+        onMouseOut = function(_) {
+            if (_editable) {
+                _controls.hide();
+            }
+        }
+
+        _controls.onMouseOver = function(_) {
+            _controls.opacity = 1;
+        }
+
+        _controls.onMouseOut = function(_) {
+            _controls.opacity = .5;
+        }
     }
 
     private function onRemovePortletInstance(_) {
@@ -40,6 +64,7 @@ class PortletContainer extends Box {
 
     private function onConfigurePortletInstance(_) {
         var dialog = new GenericPortletConfigDialog();
+        dialog.portletConfigJsonField.text = _portletInstance.portletDetails.portletData;
         dialog.onDialogClosed = function(event:DialogEvent) {
             if (event.button == DialogButton.APPLY) {
                 if (_portletInstance != null) {
@@ -57,16 +82,27 @@ class PortletContainer extends Box {
     }
     private function set_portletInstance(value:PortletInstance):PortletInstance {
         _portletInstance = value;
+
         _portletContent.removeAllComponents();
         if (_portletInstance != null) {
+            if (_portletInstance.instanceData == null) {
+                _portletInstance.instanceData = new PortletInstancePortletData();
+            }
+            _portletInstance.instanceData.portletClassName = _portletInstance.className;
+    
+            if (_portletInstance.layoutData == null) {
+                _portletInstance.layoutData = new PortletInstanceLayoutData();
+            }
+            _portletInstance.layoutData.portletContainerId = this.id;
+    
             _portletContent.addComponent(_portletInstance);
             if (_editable) {
-                _controls.show();
+                //_controls.show();
             }
         } else {
             if (_editable) {
                 addPortletAssignUI();
-                _controls.hide();
+                //_controls.hide();
             }
         }
         return value;

@@ -1,5 +1,7 @@
 package panels;
 
+import core.data.PortletInstanceData;
+import core.components.portlets.PortletInstance;
 import core.components.portlets.PortletEvent;
 import haxe.ui.containers.dialogs.Dialog.DialogEvent;
 import dialogs.SelectPortletDialog;
@@ -34,10 +36,10 @@ class PageDetailsPanel extends VBox {
         var dialog = new SelectPortletDialog();
         dialog.onDialogClosed = function(e:DialogEvent) {
             if (e.button == "Select") {
-                var selectedType = dialog.portletTypeSelector.selectedItem.type;
-                trace("selected: " + selectedType);
+                var selectedClassName = dialog.portletTypeSelector.selectedItem.className;
+                trace("selected: " + selectedClassName);
 
-                var portletInstance = PortletFactory.instance.createInstance(selectedType);
+                var portletInstance = PortletFactory.instance.createInstance(selectedClassName);
                 pageLayoutPreview.assignPortletInstance(portletContainerId, portletInstance);
             }
         }
@@ -52,51 +54,37 @@ class PageDetailsPanel extends VBox {
 
 		var layout:LayoutData = InternalDB.layouts.utils.layout(pageDetails.layoutId);
 		pageLayoutPreview.layoutData = layout.layoutData;
-
-        /*
-		var portletContainers = pageLayoutPreview.findComponents("portlet-container", Box, 0xffffff);
-		for (portletContainer in portletContainers) {
-			var image = new Image();
-			image.resource = "icons/icons8-plus-+-32.png";
-			image.verticalAlign = "center";
-			image.horizontalAlign = "center";
-			image.userData = portletContainer.id;
-            image.styleString = "cursor:pointer;";
-			image.onClick = onAddImageClick;
-			portletContainer.addComponent(image);
-		}
-        */
+        pageLayoutPreview.assignPortletInstancesFromPage(pageDetails.pageId);
 	}
 
-	private function onAddImageClick(e:MouseEvent) {
-        var portletContainerId:String = e.target.userData;
-        trace(portletContainerId);
-
-        var dialog = new SelectPortletDialog();
-        dialog.onDialogClosed = function(e:DialogEvent) {
-            if (e.button == "Select") {
-                var selectedType = dialog.portletTypeSelector.selectedItem.type;
-                trace("selected: " + selectedType);
-
-                var portletContainer = pageLayoutPreview.findComponent(portletContainerId, Box);
-                var portletInstance = PortletFactory.instance.createInstance(selectedType);
-                portletContainer.removeAllComponents();
-                portletContainer.addComponent(portletInstance);
-            }
-        }
-        dialog.show();
-    }
-
 	private var _working:WorkingIndicator;
-
 	private function onUpdate() {
 		pageDetails.name = pageNameField.text;
+
+        var portletContainers = pageLayoutPreview.portletContainers;
+        var portletInstances:Array<PortletInstance> = [];
+        for (portletContainer in portletContainers) {
+            var portletInstance = portletContainer.portletInstance;
+            if (portletInstance != null) {
+                trace("-----> " + portletContainer.id + ", " + portletInstance.className);
+                portletInstances.push(portletInstance);
+            }
+        }
+
+        var portletsToAssign = [];
+        for (portletInstance in portletInstances) {
+            var portletDetails:PortletInstanceData = portletInstance.portletDetails;
+            portletsToAssign.push(portletDetails);
+            trace(portletDetails.portletData, portletDetails.layoutData);
+        }
 
 		_working = new WorkingIndicator();
 		_working.showWorking();
 		InternalDB.pages.updateObject(pageDetails).then(function(r) {
-			OrganizationsView.instance.populateOrgs();
-			_working.workComplete();
+            InternalDB.pages.utils.assignPortletInstances(pageDetails.pageId, portletsToAssign).then(function(r) {
+                OrganizationsView.instance.populateOrgs();
+                _working.workComplete();
+            });
 		});
 	}
 }

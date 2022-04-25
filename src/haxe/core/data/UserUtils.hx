@@ -66,6 +66,7 @@ class UserUtils {
                 }
             }
             promises.push(InternalDB.users.removeObject(user(userId)));
+            
             PromiseUtils.runSequentially(promises, function() {
                 resolve(true);
             });

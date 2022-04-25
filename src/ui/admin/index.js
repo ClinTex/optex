@@ -6693,7 +6693,29 @@ core_components_PageLayout.prototype = $extend(haxe_ui_containers_Box.prototype,
 	}
 	,assignPortletInstance: function(portletContainerId,portletInstance) {
 		var portletContainer = this.findComponent(portletContainerId,core_components_portlets_PortletContainer);
+		if(portletContainer == null) {
+			haxe_Log.trace("WARNING: could not find portlet container with an id of: " + portletContainerId,{ fileName : "../../haxe/core/components/PageLayout.hx", lineNumber : 50, className : "core.components.PageLayout", methodName : "assignPortletInstance"});
+			return;
+		}
 		portletContainer.set_portletInstance(portletInstance);
+	}
+	,assignPortletInstancesFromPage: function(pageId) {
+		var _g = 0;
+		var _g1 = core_data_InternalDB.pages.utils.portletInstances(pageId);
+		while(_g < _g1.length) {
+			var portletDetails = _g1[_g];
+			++_g;
+			var instanceData = core_data_PortletInstancePortletData.fomJsonString(portletDetails.get_portletData());
+			haxe_Log.trace(portletDetails.get_portletData(),{ fileName : "../../haxe/core/components/PageLayout.hx", lineNumber : 59, className : "core.components.PageLayout", methodName : "assignPortletInstancesFromPage"});
+			var layoutData = core_data_PortletInstanceLayoutData.fomJsonString(portletDetails.get_layoutData());
+			var portletInstance = core_components_portlets_PortletFactory.get_instance().createInstance(instanceData.get_portletClassName());
+			this.assignPortletInstance(layoutData.get_portletContainerId(),portletInstance);
+		}
+	}
+	,portletContainers: null
+	,get_portletContainers: function() {
+		var containers = this.findComponents(null,core_components_portlets_PortletContainer,-1);
+		return containers;
 	}
 	,applyEditable: function() {
 		var portletContainers = this.findComponents(null,core_components_portlets_PortletContainer,-1);
@@ -6728,7 +6750,7 @@ core_components_PageLayout.prototype = $extend(haxe_ui_containers_Box.prototype,
 		return new core_components_PageLayout();
 	}
 	,__class__: core_components_PageLayout
-	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{set_editable:"set_editable",get_editable:"get_editable",set_layoutData:"set_layoutData",get_layoutData:"get_layoutData"})
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{get_portletContainers:"get_portletContainers",set_editable:"set_editable",get_editable:"get_editable",set_layoutData:"set_layoutData",get_layoutData:"get_layoutData"})
 });
 var haxe_ui_backend_DialogBase = function() {
 	this._buttonsCreated = false;
@@ -7176,14 +7198,33 @@ core_components_portlets_Portlet.prototype = $extend(haxe_ui_containers_Box.prot
 	,__class__: core_components_portlets_Portlet
 });
 var core_components_portlets_PortletInstance = function() {
-	this.portletDetails = new core_data_PortletInstanceData();
 	core_components_portlets_Portlet.call(this);
 };
 $hxClasses["core.components.portlets.PortletInstance"] = core_components_portlets_PortletInstance;
 core_components_portlets_PortletInstance.__name__ = "core.components.portlets.PortletInstance";
 core_components_portlets_PortletInstance.__super__ = core_components_portlets_Portlet;
 core_components_portlets_PortletInstance.prototype = $extend(core_components_portlets_Portlet.prototype,{
-	portletDetails: null
+	instanceData: null
+	,layoutData: null
+	,onReady: function() {
+		core_components_portlets_Portlet.prototype.onReady.call(this);
+		this.set_percentWidth(100);
+	}
+	,_portletDetails: null
+	,get_portletDetails: function() {
+		if(this._portletDetails == null) {
+			this._portletDetails = new core_data_PortletInstanceData();
+		}
+		this._portletDetails.set_portletData(core_data_PortletInstancePortletData.toJsonString(this.instanceData));
+		this._portletDetails.set_layoutData(core_data_PortletInstanceLayoutData.toJsonString(this.layoutData));
+		return this._portletDetails;
+	}
+	,set_portletDetails: function(value) {
+		this._portletDetails = value;
+		this.instanceData = core_data_PortletInstancePortletData.fomJsonString(this._portletDetails.get_portletData());
+		this.layoutData = core_data_PortletInstanceLayoutData.fomJsonString(this._portletDetails.get_layoutData());
+		return value;
+	}
 	,registerBehaviours: function() {
 		core_components_portlets_Portlet.prototype.registerBehaviours.call(this);
 	}
@@ -7204,6 +7245,7 @@ core_components_portlets_PortletInstance.prototype = $extend(core_components_por
 		return new core_components_portlets_PortletInstance();
 	}
 	,__class__: core_components_portlets_PortletInstance
+	,__properties__: $extend(core_components_portlets_Portlet.prototype.__properties__,{set_portletDetails:"set_portletDetails",get_portletDetails:"get_portletDetails"})
 });
 var core_components_portlets_BarGraphPortletInstance = function() {
 	core_components_portlets_PortletInstance.call(this);
@@ -7214,7 +7256,8 @@ core_components_portlets_BarGraphPortletInstance.__super__ = core_components_por
 core_components_portlets_BarGraphPortletInstance.prototype = $extend(core_components_portlets_PortletInstance.prototype,{
 	onReady: function() {
 		core_components_portlets_PortletInstance.prototype.onReady.call(this);
-		var button = new haxe_ui_components_Button();
+		var button = new haxe_ui_components_Label();
+		button.set_percentWidth(100);
 		button.set_text(this.get_className());
 		this.addComponent(button);
 	}
@@ -7248,7 +7291,8 @@ core_components_portlets_LineGraphPortletInstance.__super__ = core_components_po
 core_components_portlets_LineGraphPortletInstance.prototype = $extend(core_components_portlets_PortletInstance.prototype,{
 	onReady: function() {
 		core_components_portlets_PortletInstance.prototype.onReady.call(this);
-		var button = new haxe_ui_components_Button();
+		var button = new haxe_ui_components_Label();
+		button.set_percentWidth(100);
 		button.set_text(this.get_className());
 		this.addComponent(button);
 	}
@@ -7282,7 +7326,8 @@ core_components_portlets_NestedPortletInstance.__super__ = core_components_portl
 core_components_portlets_NestedPortletInstance.prototype = $extend(core_components_portlets_PortletInstance.prototype,{
 	onReady: function() {
 		core_components_portlets_PortletInstance.prototype.onReady.call(this);
-		var button = new haxe_ui_components_Button();
+		var button = new haxe_ui_components_Label();
+		button.set_percentWidth(100);
 		button.set_text(this.get_className());
 		this.addComponent(button);
 	}
@@ -7310,6 +7355,7 @@ core_components_portlets_NestedPortletInstance.prototype = $extend(core_componen
 var core_components_portlets_PortletContainer = function() {
 	this._editable = false;
 	this._portletInstance = null;
+	var _gthis = this;
 	haxe_ui_containers_Box.call(this);
 	this._portletContent = new haxe_ui_containers_Box();
 	this._portletContent.set_percentWidth(this._portletContent.set_percentHeight(100));
@@ -7325,7 +7371,25 @@ var core_components_portlets_PortletContainer = function() {
 	button.set_onClick($bind(this,this.onConfigurePortletInstance));
 	this._controls.addComponent(button);
 	this._controls.set_horizontalAlign("right");
+	this._controls.set_opacity(.5);
+	this._controls.hide();
 	this.addComponent(this._controls);
+	this.set_onMouseOver(function(_) {
+		if(_gthis._editable) {
+			_gthis._controls.show();
+		}
+	});
+	this.set_onMouseOut(function(_) {
+		if(_gthis._editable) {
+			_gthis._controls.hide();
+		}
+	});
+	this._controls.set_onMouseOver(function(_) {
+		_gthis._controls.set_opacity(1);
+	});
+	this._controls.set_onMouseOut(function(_) {
+		_gthis._controls.set_opacity(.5);
+	});
 };
 $hxClasses["core.components.portlets.PortletContainer"] = core_components_portlets_PortletContainer;
 core_components_portlets_PortletContainer.__name__ = "core.components.portlets.PortletContainer";
@@ -7339,11 +7403,12 @@ core_components_portlets_PortletContainer.prototype = $extend(haxe_ui_containers
 	,onConfigurePortletInstance: function(_) {
 		var _gthis = this;
 		var dialog = new core_components_dialogs_GenericPortletConfigDialog();
+		dialog.portletConfigJsonField.set_text(this._portletInstance.get_portletDetails().get_portletData());
 		dialog.set_onDialogClosed(function(event) {
 			var larr = haxe_ui_containers_dialogs_DialogButton.toString(event.button).split("|");
 			if(larr.indexOf(haxe_ui_containers_dialogs_DialogButton.toString("{{dialog.apply}}")) != -1) {
 				if(_gthis._portletInstance != null) {
-					_gthis._portletInstance.portletDetails.set_portletData(dialog.portletConfigJsonField.get_text());
+					_gthis._portletInstance.get_portletDetails().set_portletData(dialog.portletConfigJsonField.get_text());
 				}
 			}
 		});
@@ -7357,13 +7422,18 @@ core_components_portlets_PortletContainer.prototype = $extend(haxe_ui_containers
 		this._portletInstance = value;
 		this._portletContent.removeAllComponents();
 		if(this._portletInstance != null) {
-			this._portletContent.addComponent(this._portletInstance);
-			if(this._editable) {
-				this._controls.show();
+			if(this._portletInstance.instanceData == null) {
+				this._portletInstance.instanceData = new core_data_PortletInstancePortletData();
 			}
+			this._portletInstance.instanceData.set_portletClassName(this._portletInstance.get_className());
+			if(this._portletInstance.layoutData == null) {
+				this._portletInstance.layoutData = new core_data_PortletInstanceLayoutData();
+			}
+			this._portletInstance.layoutData.set_portletContainerId(this.get_id());
+			this._portletContent.addComponent(this._portletInstance);
+			var tmp = this._editable;
 		} else if(this._editable) {
 			this.addPortletAssignUI();
-			this._controls.hide();
 		}
 		return value;
 	}
@@ -7538,24 +7608,27 @@ core_components_portlets_PortletFactory.prototype = {
 	createInstance: function(type) {
 		var instance = null;
 		switch(type) {
-		case "bar-graph":
+		case "core.components.portlets.BarGraphPortletInstance":
 			instance = new core_components_portlets_BarGraphPortletInstance();
 			break;
-		case "line-graph":
+		case "core.components.portlets.LineGraphPortletInstance":
 			instance = new core_components_portlets_LineGraphPortletInstance();
 			break;
-		case "nested-portlet":
+		case "core.components.portlets.NestedPortletInstance":
 			instance = new core_components_portlets_NestedPortletInstance();
 			break;
-		case "quick-filter":
+		case "core.components.portlets.QuickFilterPortletInstance":
 			instance = new core_components_portlets_QuickFilterPortletInstance();
 			break;
-		case "site-map":
+		case "core.components.portlets.SiteMapPortletInstance":
 			instance = new core_components_portlets_SiteMapPortletInstance();
 			break;
-		case "static-image":
+		case "core.components.portlets.StaticImagePortletInstance":
 			instance = new core_components_portlets_StaticImagePortletInstance();
 			break;
+		}
+		if(instance == null) {
+			haxe_Log.trace("WARNING: could not create portlet instance class: " + type,{ fileName : "../../haxe/core/components/portlets/PortletFactory.hx", lineNumber : 30, className : "core.components.portlets.PortletFactory", methodName : "createInstance"});
 		}
 		return instance;
 	}
@@ -7570,7 +7643,8 @@ core_components_portlets_QuickFilterPortletInstance.__super__ = core_components_
 core_components_portlets_QuickFilterPortletInstance.prototype = $extend(core_components_portlets_PortletInstance.prototype,{
 	onReady: function() {
 		core_components_portlets_PortletInstance.prototype.onReady.call(this);
-		var button = new haxe_ui_components_Button();
+		var button = new haxe_ui_components_Label();
+		button.set_percentWidth(100);
 		button.set_text(this.get_className());
 		this.addComponent(button);
 	}
@@ -7604,7 +7678,8 @@ core_components_portlets_SiteMapPortletInstance.__super__ = core_components_port
 core_components_portlets_SiteMapPortletInstance.prototype = $extend(core_components_portlets_PortletInstance.prototype,{
 	onReady: function() {
 		core_components_portlets_PortletInstance.prototype.onReady.call(this);
-		var button = new haxe_ui_components_Button();
+		var button = new haxe_ui_components_Label();
+		button.set_percentWidth(100);
 		button.set_text(this.get_className());
 		this.addComponent(button);
 	}
@@ -7638,7 +7713,8 @@ core_components_portlets_StaticImagePortletInstance.__super__ = core_components_
 core_components_portlets_StaticImagePortletInstance.prototype = $extend(core_components_portlets_PortletInstance.prototype,{
 	onReady: function() {
 		core_components_portlets_PortletInstance.prototype.onReady.call(this);
-		var button = new haxe_ui_components_Button();
+		var button = new haxe_ui_components_Label();
+		button.set_percentWidth(100);
 		button.set_text(this.get_className());
 		this.addComponent(button);
 	}
@@ -11657,7 +11733,7 @@ core_data_LayoutData.prototype = {
 		if(data.length > core_data_LayoutData.FieldDefinitions.length) {
 			this._hash = data.pop();
 		}
-		this.set_layoutId(core_data_utils_ConversionUtils.fromString(data[0],2));
+		this.set_layoutId(core_data_utils_ConversionUtils.fromString(data[0],3));
 		this.set_organizationId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.set_name(core_data_utils_ConversionUtils.fromString(data[2],1));
 		this.set_layoutData(core_data_utils_ConversionUtils.fromString(data[3],1));
@@ -12661,7 +12737,7 @@ core_data_PageData.prototype = {
 		if(data.length > core_data_PageData.FieldDefinitions.length) {
 			this._hash = data.pop();
 		}
-		this.set_pageId(core_data_utils_ConversionUtils.fromString(data[0],2));
+		this.set_pageId(core_data_utils_ConversionUtils.fromString(data[0],3));
 		this.set_parentPageId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.set_siteId(core_data_utils_ConversionUtils.fromString(data[2],2));
 		this.set_layoutId(core_data_utils_ConversionUtils.fromString(data[3],2));
@@ -13189,7 +13265,63 @@ var core_data_PageUtils = function() {
 $hxClasses["core.data.PageUtils"] = core_data_PageUtils;
 core_data_PageUtils.__name__ = "core.data.PageUtils";
 core_data_PageUtils.prototype = {
-	__class__: core_data_PageUtils
+	portletInstances: function(pageId) {
+		var instances = [];
+		var _g = 0;
+		var _g1 = core_data_InternalDB.portletInstances.data;
+		while(_g < _g1.length) {
+			var portletInstance = _g1[_g];
+			++_g;
+			if(portletInstance.get_pageId() == pageId) {
+				instances.push(portletInstance);
+			}
+		}
+		return instances;
+	}
+	,assignPortletInstances: function(pageId,portletInstances,removeExisting) {
+		if(removeExisting == null) {
+			removeExisting = true;
+		}
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var promises = [];
+			var _g = 0;
+			while(_g < portletInstances.length) {
+				var portletInstance = portletInstances[_g];
+				++_g;
+				portletInstance.set_pageId(pageId);
+				promises.push(core_data_InternalDB.portletInstances.addObject(portletInstance));
+			}
+			if(removeExisting) {
+				_gthis.removeAllPortletInstances(pageId).then(function(r) {
+					core_data_utils_PromiseUtils.runSequentially(promises,function() {
+						resolve(true);
+					});
+				});
+			} else {
+				core_data_utils_PromiseUtils.runSequentially(promises,function() {
+					resolve(true);
+				});
+			}
+		});
+	}
+	,removeAllPortletInstances: function(pageId) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var promises = [];
+			var _g = 0;
+			var _g1 = _gthis.portletInstances(pageId);
+			while(_g < _g1.length) {
+				var portletInstance = _g1[_g];
+				++_g;
+				promises.push(core_data_InternalDB.portletInstances.removeObject(portletInstance));
+			}
+			core_data_utils_PromiseUtils.runSequentially(promises,function() {
+				resolve(true);
+			});
+		});
+	}
+	,__class__: core_data_PageUtils
 };
 var core_data_PermissionData = function() {
 	this._hash = null;
@@ -13207,7 +13339,7 @@ core_data_PermissionData.prototype = {
 		if(data.length > core_data_PermissionData.FieldDefinitions.length) {
 			this._hash = data.pop();
 		}
-		this.set_permissionId(core_data_utils_ConversionUtils.fromString(data[0],2));
+		this.set_permissionId(core_data_utils_ConversionUtils.fromString(data[0],3));
 		this.set_roleId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.set_resourceId(core_data_utils_ConversionUtils.fromString(data[2],2));
 		this.set_resourceType(core_data_utils_ConversionUtils.fromString(data[3],2));
@@ -13729,7 +13861,7 @@ core_data_PortletInstanceData.prototype = {
 		if(data.length > core_data_PortletInstanceData.FieldDefinitions.length) {
 			this._hash = data.pop();
 		}
-		this.set_portletInstanceId(core_data_utils_ConversionUtils.fromString(data[0],2));
+		this.set_portletInstanceId(core_data_utils_ConversionUtils.fromString(data[0],3));
 		this.set_pageId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.set_portletData(core_data_utils_ConversionUtils.fromString(data[2],1));
 		this.set_layoutData(core_data_utils_ConversionUtils.fromString(data[3],1));
@@ -14218,6 +14350,76 @@ core_data_PortletInstanceDataTable.prototype = {
 	}
 	,__class__: core_data_PortletInstanceDataTable
 };
+var core_data_PortletInstanceLayoutData = function() {
+	this.data = { };
+};
+$hxClasses["core.data.PortletInstanceLayoutData"] = core_data_PortletInstanceLayoutData;
+core_data_PortletInstanceLayoutData.__name__ = "core.data.PortletInstanceLayoutData";
+core_data_PortletInstanceLayoutData.fomJsonString = function(s) {
+	var data = new core_data_PortletInstanceLayoutData();
+	var object = JSON.parse(s);
+	data.data = object;
+	return data;
+};
+core_data_PortletInstanceLayoutData.toJsonString = function(o) {
+	return JSON.stringify(o.data);
+};
+core_data_PortletInstanceLayoutData.prototype = {
+	data: null
+	,get_portletContainerId: function() {
+		if(this.data == null) {
+			return null;
+		}
+		if(this.data.portletContainerId == null) {
+			return null;
+		}
+		return this.data.portletContainerId;
+	}
+	,set_portletContainerId: function(value) {
+		if(this.data == null) {
+			this.data = { };
+		}
+		this.data.portletContainerId = value;
+		return value;
+	}
+	,__class__: core_data_PortletInstanceLayoutData
+	,__properties__: {set_portletContainerId:"set_portletContainerId",get_portletContainerId:"get_portletContainerId"}
+};
+var core_data_PortletInstancePortletData = function() {
+	this.data = { };
+};
+$hxClasses["core.data.PortletInstancePortletData"] = core_data_PortletInstancePortletData;
+core_data_PortletInstancePortletData.__name__ = "core.data.PortletInstancePortletData";
+core_data_PortletInstancePortletData.fomJsonString = function(s) {
+	var data = new core_data_PortletInstancePortletData();
+	var object = JSON.parse(s);
+	data.data = object;
+	return data;
+};
+core_data_PortletInstancePortletData.toJsonString = function(o) {
+	return JSON.stringify(o.data);
+};
+core_data_PortletInstancePortletData.prototype = {
+	data: null
+	,get_portletClassName: function() {
+		if(this.data == null) {
+			return null;
+		}
+		if(this.data.portletClassName == null) {
+			return null;
+		}
+		return this.data.portletClassName;
+	}
+	,set_portletClassName: function(value) {
+		if(this.data == null) {
+			this.data = { };
+		}
+		this.data.portletClassName = value;
+		return value;
+	}
+	,__class__: core_data_PortletInstancePortletData
+	,__properties__: {set_portletClassName:"set_portletClassName",get_portletClassName:"get_portletClassName"}
+};
 var core_data_PortletInstanceUtils = function() {
 };
 $hxClasses["core.data.PortletInstanceUtils"] = core_data_PortletInstanceUtils;
@@ -14266,7 +14468,7 @@ core_data_RoleData.prototype = {
 		if(data.length > core_data_RoleData.FieldDefinitions.length) {
 			this._hash = data.pop();
 		}
-		this.set_roleId(core_data_utils_ConversionUtils.fromString(data[0],2));
+		this.set_roleId(core_data_utils_ConversionUtils.fromString(data[0],3));
 		this.set_name(core_data_utils_ConversionUtils.fromString(data[1],1));
 		this.set_organizationId(core_data_utils_ConversionUtils.fromString(data[2],2));
 		this.dataChanged = false;
@@ -14788,7 +14990,7 @@ core_data_SiteData.prototype = {
 		if(data.length > core_data_SiteData.FieldDefinitions.length) {
 			this._hash = data.pop();
 		}
-		this.set_siteId(core_data_utils_ConversionUtils.fromString(data[0],2));
+		this.set_siteId(core_data_utils_ConversionUtils.fromString(data[0],3));
 		this.set_organizationId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.set_name(core_data_utils_ConversionUtils.fromString(data[2],1));
 		this.dataChanged = false;
@@ -16327,7 +16529,7 @@ core_data_UserGroupRoleLinkData.prototype = {
 		if(data.length > core_data_UserGroupRoleLinkData.FieldDefinitions.length) {
 			this._hash = data.pop();
 		}
-		this.set_userGroupId(core_data_utils_ConversionUtils.fromString(data[0],3));
+		this.set_userGroupId(core_data_utils_ConversionUtils.fromString(data[0],2));
 		this.set_roleId(core_data_utils_ConversionUtils.fromString(data[1],2));
 		this.dataChanged = false;
 	}
@@ -20174,12 +20376,12 @@ var dialogs_SelectPortletDialog = function() {
 	c0.set_percentHeight(100.);
 	c0.set_selectedIndex(0);
 	var ds0 = new haxe_ui_data_ArrayDataSource();
-	ds0.add({ text : "Nested Portlet", id : "item", type : "nested-portlet"});
-	ds0.add({ text : "Bar Graph", id : "item", type : "bar-graph"});
-	ds0.add({ text : "Line Graph", id : "item", type : "line-graph"});
-	ds0.add({ text : "Site Map", id : "item", type : "site-map"});
-	ds0.add({ text : "Image", id : "item", type : "static-image"});
-	ds0.add({ text : "Quick Filter", id : "item", type : "quick-filter"});
+	ds0.add({ text : "Nested Portlet", id : "item", className : "core.components.portlets.NestedPortletInstance"});
+	ds0.add({ text : "Bar Graph", id : "item", className : "core.components.portlets.BarGraphPortletInstance"});
+	ds0.add({ text : "Line Graph", id : "item", className : "core.components.portlets.LineGraphPortletInstance"});
+	ds0.add({ text : "Site Map", id : "item", className : "core.components.portlets.SiteMapPortletInstance"});
+	ds0.add({ text : "Image", id : "item", className : "core.components.portlets.StaticImagePortletInstance"});
+	ds0.add({ text : "Quick Filter", id : "item", className : "core.components.portlets.QuickFilterPortletInstance"});
 	c0.set_dataSource(ds0);
 	this.addComponent(c0);
 	this.set_width(300.);
@@ -53062,7 +53264,11 @@ var panels_OrganizationDetailsPanel = function() {
 	var c0 = new haxe_ui_components_Button();
 	c0.set_text("Org details");
 	this.addComponent(c0);
+	var c1 = new haxe_ui_components_TextField();
+	c1.set_id("orgNameField");
+	this.addComponent(c1);
 	this.bindingRoot = true;
+	this.orgNameField = c1;
 };
 $hxClasses["panels.OrganizationDetailsPanel"] = panels_OrganizationDetailsPanel;
 panels_OrganizationDetailsPanel.__name__ = "panels.OrganizationDetailsPanel";
@@ -53087,6 +53293,7 @@ panels_OrganizationDetailsPanel.prototype = $extend(haxe_ui_containers_VBox.prot
 	,self: function() {
 		return new panels_OrganizationDetailsPanel();
 	}
+	,orgNameField: null
 	,__class__: panels_OrganizationDetailsPanel
 });
 var panels_PageDetailsPanel = function() {
@@ -53134,15 +53341,15 @@ panels_PageDetailsPanel.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,onPortletAssignPortletClicked: function(event) {
 		var _gthis = this;
 		var portletContainer = event.portletContainer;
-		haxe_Log.trace("assign portlet! " + portletContainer.get_id(),{ fileName : "haxe/panels/PageDetailsPanel.hx", lineNumber : 31, className : "panels.PageDetailsPanel", methodName : "onPortletAssignPortletClicked"});
+		haxe_Log.trace("assign portlet! " + portletContainer.get_id(),{ fileName : "haxe/panels/PageDetailsPanel.hx", lineNumber : 33, className : "panels.PageDetailsPanel", methodName : "onPortletAssignPortletClicked"});
 		var portletContainerId = portletContainer.get_id();
 		var dialog = new dialogs_SelectPortletDialog();
 		dialog.set_onDialogClosed(function(e) {
 			var larr = haxe_ui_containers_dialogs_DialogButton.toString(e.button).split("|");
 			if(larr.indexOf(haxe_ui_containers_dialogs_DialogButton.toString("Select")) != -1) {
-				var selectedType = dialog.portletTypeSelector.get_selectedItem().type;
-				haxe_Log.trace("selected: " + selectedType,{ fileName : "haxe/panels/PageDetailsPanel.hx", lineNumber : 38, className : "panels.PageDetailsPanel", methodName : "onPortletAssignPortletClicked"});
-				var portletInstance = core_components_portlets_PortletFactory.get_instance().createInstance(selectedType);
+				var selectedClassName = dialog.portletTypeSelector.get_selectedItem().className;
+				haxe_Log.trace("selected: " + selectedClassName,{ fileName : "haxe/panels/PageDetailsPanel.hx", lineNumber : 40, className : "panels.PageDetailsPanel", methodName : "onPortletAssignPortletClicked"});
+				var portletInstance = core_components_portlets_PortletFactory.get_instance().createInstance(selectedClassName);
 				_gthis.pageLayoutPreview.assignPortletInstance(portletContainerId,portletInstance);
 			}
 		});
@@ -53153,34 +53360,40 @@ panels_PageDetailsPanel.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 		this.pageNameField.set_text(this.pageDetails.get_name());
 		var layout = core_data_InternalDB.layouts.utils.layout(this.pageDetails.get_layoutId());
 		this.pageLayoutPreview.set_layoutData(layout.get_layoutData());
-	}
-	,onAddImageClick: function(e) {
-		var _gthis = this;
-		var portletContainerId = e.target.userData;
-		haxe_Log.trace(portletContainerId,{ fileName : "haxe/panels/PageDetailsPanel.hx", lineNumber : 73, className : "panels.PageDetailsPanel", methodName : "onAddImageClick"});
-		var dialog = new dialogs_SelectPortletDialog();
-		dialog.set_onDialogClosed(function(e) {
-			var larr = haxe_ui_containers_dialogs_DialogButton.toString(e.button).split("|");
-			if(larr.indexOf(haxe_ui_containers_dialogs_DialogButton.toString("Select")) != -1) {
-				var selectedType = dialog.portletTypeSelector.get_selectedItem().type;
-				haxe_Log.trace("selected: " + selectedType,{ fileName : "haxe/panels/PageDetailsPanel.hx", lineNumber : 79, className : "panels.PageDetailsPanel", methodName : "onAddImageClick"});
-				var portletContainer = _gthis.pageLayoutPreview.findComponent(portletContainerId,haxe_ui_containers_Box);
-				var portletInstance = core_components_portlets_PortletFactory.get_instance().createInstance(selectedType);
-				portletContainer.removeAllComponents();
-				portletContainer.addComponent(portletInstance);
-			}
-		});
-		dialog.show();
+		this.pageLayoutPreview.assignPortletInstancesFromPage(this.pageDetails.get_pageId());
 	}
 	,_working: null
 	,onUpdate: function() {
 		var _gthis = this;
 		this.pageDetails.set_name(this.pageNameField.get_text());
+		var portletContainers = this.pageLayoutPreview.get_portletContainers();
+		var portletInstances = [];
+		var _g = 0;
+		while(_g < portletContainers.length) {
+			var portletContainer = portletContainers[_g];
+			++_g;
+			var portletInstance = portletContainer.get_portletInstance();
+			if(portletInstance != null) {
+				haxe_Log.trace("-----> " + portletContainer.get_id() + ", " + portletInstance.get_className(),{ fileName : "haxe/panels/PageDetailsPanel.hx", lineNumber : 69, className : "panels.PageDetailsPanel", methodName : "onUpdate"});
+				portletInstances.push(portletInstance);
+			}
+		}
+		var portletsToAssign = [];
+		var _g = 0;
+		while(_g < portletInstances.length) {
+			var portletInstance = portletInstances[_g];
+			++_g;
+			var portletDetails = portletInstance.get_portletDetails();
+			portletsToAssign.push(portletDetails);
+			haxe_Log.trace(portletDetails.get_portletData(),{ fileName : "haxe/panels/PageDetailsPanel.hx", lineNumber : 78, className : "panels.PageDetailsPanel", methodName : "onUpdate", customParams : [portletDetails.get_layoutData()]});
+		}
 		this._working = new components_WorkingIndicator();
 		this._working.showWorking();
 		core_data_InternalDB.pages.updateObject(this.pageDetails).then(function(r) {
-			views_OrganizationsView.instance.populateOrgs();
-			_gthis._working.workComplete();
+			core_data_InternalDB.pages.utils.assignPortletInstances(_gthis.pageDetails.get_pageId(),portletsToAssign).then(function(r) {
+				views_OrganizationsView.instance.populateOrgs();
+				_gthis._working.workComplete();
+			});
 		});
 	}
 	,registerBehaviours: function() {
@@ -54141,7 +54354,7 @@ sidebars_CreateSitePageSidebar.prototype = $extend(sidebars_DataObjectSidebar.pr
 		}
 		var iconData = this.pageIconSelector.get_selectedItem().iconData;
 		page.set_iconId(iconData.get_iconId());
-		page.set_layoutId(0);
+		page.set_layoutId(1);
 		core_data_InternalDB.pages.addObject(page).then(function(r) {
 			views_OrganizationsView.instance.populateOrgs();
 			_gthis.createComplete();
@@ -56663,8 +56876,8 @@ core_data_IconData.PrimaryFieldDefinitions = [{ fieldName : "iconId", fieldType 
 core_data_IconData.LinkedFields = [];
 core_data_IconDataTable.TableName = "icondata";
 core_data_LayoutData.TableName = "layoutdata";
-core_data_LayoutData.FieldDefinitions = [{ fieldName : "layoutId", fieldType : 2},{ fieldName : "organizationId", fieldType : 2},{ fieldName : "name", fieldType : 1},{ fieldName : "layoutData", fieldType : 1}];
-core_data_LayoutData.PrimaryFieldDefinitions = [{ fieldName : "layoutId", fieldType : 2}];
+core_data_LayoutData.FieldDefinitions = [{ fieldName : "layoutId", fieldType : 3},{ fieldName : "organizationId", fieldType : 2},{ fieldName : "name", fieldType : 1},{ fieldName : "layoutData", fieldType : 1}];
+core_data_LayoutData.PrimaryFieldDefinitions = [{ fieldName : "layoutId", fieldType : 3}];
 core_data_LayoutData.LinkedFields = [];
 core_data_LayoutDataTable.TableName = "layoutdata";
 core_data_OrganizationData.TableName = "organizationdata";
@@ -56673,18 +56886,18 @@ core_data_OrganizationData.PrimaryFieldDefinitions = [{ fieldName : "organizatio
 core_data_OrganizationData.LinkedFields = [];
 core_data_OrganizationDataTable.TableName = "organizationdata";
 core_data_PageData.TableName = "pagedata";
-core_data_PageData.FieldDefinitions = [{ fieldName : "pageId", fieldType : 2},{ fieldName : "parentPageId", fieldType : 2},{ fieldName : "siteId", fieldType : 2},{ fieldName : "layoutId", fieldType : 2},{ fieldName : "iconId", fieldType : 2},{ fieldName : "name", fieldType : 1}];
-core_data_PageData.PrimaryFieldDefinitions = [{ fieldName : "pageId", fieldType : 2}];
+core_data_PageData.FieldDefinitions = [{ fieldName : "pageId", fieldType : 3},{ fieldName : "parentPageId", fieldType : 2},{ fieldName : "siteId", fieldType : 2},{ fieldName : "layoutId", fieldType : 2},{ fieldName : "iconId", fieldType : 2},{ fieldName : "name", fieldType : 1}];
+core_data_PageData.PrimaryFieldDefinitions = [{ fieldName : "pageId", fieldType : 3}];
 core_data_PageData.LinkedFields = [];
 core_data_PageDataTable.TableName = "pagedata";
 core_data_PermissionData.TableName = "permissiondata";
-core_data_PermissionData.FieldDefinitions = [{ fieldName : "permissionId", fieldType : 2},{ fieldName : "roleId", fieldType : 2},{ fieldName : "resourceId", fieldType : 2},{ fieldName : "resourceType", fieldType : 2},{ fieldName : "permissionAction", fieldType : 2}];
-core_data_PermissionData.PrimaryFieldDefinitions = [{ fieldName : "permissionId", fieldType : 2}];
+core_data_PermissionData.FieldDefinitions = [{ fieldName : "permissionId", fieldType : 3},{ fieldName : "roleId", fieldType : 2},{ fieldName : "resourceId", fieldType : 2},{ fieldName : "resourceType", fieldType : 2},{ fieldName : "permissionAction", fieldType : 2}];
+core_data_PermissionData.PrimaryFieldDefinitions = [{ fieldName : "permissionId", fieldType : 3}];
 core_data_PermissionData.LinkedFields = [];
 core_data_PermissionDataTable.TableName = "permissiondata";
 core_data_PortletInstanceData.TableName = "portletinstancedata";
-core_data_PortletInstanceData.FieldDefinitions = [{ fieldName : "portletInstanceId", fieldType : 2},{ fieldName : "pageId", fieldType : 2},{ fieldName : "portletData", fieldType : 1},{ fieldName : "layoutData", fieldType : 1}];
-core_data_PortletInstanceData.PrimaryFieldDefinitions = [{ fieldName : "portletInstanceId", fieldType : 2}];
+core_data_PortletInstanceData.FieldDefinitions = [{ fieldName : "portletInstanceId", fieldType : 3},{ fieldName : "pageId", fieldType : 2},{ fieldName : "portletData", fieldType : 1},{ fieldName : "layoutData", fieldType : 1}];
+core_data_PortletInstanceData.PrimaryFieldDefinitions = [{ fieldName : "portletInstanceId", fieldType : 3}];
 core_data_PortletInstanceData.LinkedFields = [];
 core_data_PortletInstanceDataTable.TableName = "portletinstancedata";
 core_data_ResourceType.Organization = 1;
@@ -56696,13 +56909,13 @@ core_data_ResourceType.Dashboard = 6;
 core_data_ResourceType.DashboardGroup = 7;
 core_data_ResourceType.DataSource = 8;
 core_data_RoleData.TableName = "roledata";
-core_data_RoleData.FieldDefinitions = [{ fieldName : "roleId", fieldType : 2},{ fieldName : "name", fieldType : 1},{ fieldName : "organizationId", fieldType : 2}];
-core_data_RoleData.PrimaryFieldDefinitions = [{ fieldName : "roleId", fieldType : 2}];
+core_data_RoleData.FieldDefinitions = [{ fieldName : "roleId", fieldType : 3},{ fieldName : "name", fieldType : 1},{ fieldName : "organizationId", fieldType : 2}];
+core_data_RoleData.PrimaryFieldDefinitions = [{ fieldName : "roleId", fieldType : 3}];
 core_data_RoleData.LinkedFields = [];
 core_data_RoleDataTable.TableName = "roledata";
 core_data_SiteData.TableName = "sitedata";
-core_data_SiteData.FieldDefinitions = [{ fieldName : "siteId", fieldType : 2},{ fieldName : "organizationId", fieldType : 2},{ fieldName : "name", fieldType : 1}];
-core_data_SiteData.PrimaryFieldDefinitions = [{ fieldName : "siteId", fieldType : 2}];
+core_data_SiteData.FieldDefinitions = [{ fieldName : "siteId", fieldType : 3},{ fieldName : "organizationId", fieldType : 2},{ fieldName : "name", fieldType : 1}];
+core_data_SiteData.PrimaryFieldDefinitions = [{ fieldName : "siteId", fieldType : 3}];
 core_data_SiteData.LinkedFields = [];
 core_data_SiteDataTable.TableName = "sitedata";
 core_data_UserData.TableName = "userdata";
@@ -56716,8 +56929,8 @@ core_data_UserGroupData.PrimaryFieldDefinitions = [{ fieldName : "userGroupId", 
 core_data_UserGroupData.LinkedFields = [];
 core_data_UserGroupDataTable.TableName = "usergroupdata";
 core_data_UserGroupRoleLinkData.TableName = "usergrouprolelinkdata";
-core_data_UserGroupRoleLinkData.FieldDefinitions = [{ fieldName : "userGroupId", fieldType : 3},{ fieldName : "roleId", fieldType : 2}];
-core_data_UserGroupRoleLinkData.PrimaryFieldDefinitions = [{ fieldName : "userGroupId", fieldType : 3}];
+core_data_UserGroupRoleLinkData.FieldDefinitions = [{ fieldName : "userGroupId", fieldType : 2},{ fieldName : "roleId", fieldType : 2}];
+core_data_UserGroupRoleLinkData.PrimaryFieldDefinitions = [{ fieldName : "userGroupId", fieldType : 2}];
 core_data_UserGroupRoleLinkData.LinkedFields = [];
 core_data_UserGroupRoleLinkDataTable.TableName = "usergrouprolelinkdata";
 core_data_UserOrganizationLinkData.TableName = "userorganizationlinkdata";

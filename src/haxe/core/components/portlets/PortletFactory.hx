@@ -18,13 +18,18 @@ class PortletFactory {
     public function createInstance(type:String):PortletInstance {
         var instance:PortletInstance = null;
         switch (type) {
-            case "nested-portlet":      instance = new NestedPortletInstance();
-            case "bar-graph":           instance = new BarGraphPortletInstance();
-            case "line-graph":          instance = new LineGraphPortletInstance();
-            case "site-map":            instance = new SiteMapPortletInstance();
-            case "static-image":        instance = new StaticImagePortletInstance();
-            case "quick-filter":        instance = new QuickFilterPortletInstance();
+            case "core.components.portlets.NestedPortletInstance":          instance = new NestedPortletInstance();
+            case "core.components.portlets.BarGraphPortletInstance":        instance = new BarGraphPortletInstance();
+            case "core.components.portlets.LineGraphPortletInstance":       instance = new LineGraphPortletInstance();
+            case "core.components.portlets.SiteMapPortletInstance":         instance = new SiteMapPortletInstance();
+            case "core.components.portlets.StaticImagePortletInstance":     instance = new StaticImagePortletInstance();
+            case "core.components.portlets.QuickFilterPortletInstance":     instance = new QuickFilterPortletInstance();
         }
+
+        if (instance == null) {
+            trace("WARNING: could not create portlet instance class: " + type);
+        }
+
         return instance;
     }
 }

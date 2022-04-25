@@ -1,10 +1,14 @@
 package core.components;
 
+import core.data.PortletInstancePortletData;
+import core.data.PortletInstanceLayoutData;
 import core.components.portlets.PortletInstance;
 import core.components.portlets.PortletEvent;
 import core.components.portlets.PortletContainer;
 import haxe.ui.RuntimeComponentBuilder;
 import haxe.ui.containers.Box;
+import core.data.InternalDB;
+import core.components.portlets.PortletFactory;
 
 class PageLayout extends Box {
     public function new() {
@@ -42,7 +46,27 @@ class PageLayout extends Box {
 
     public function assignPortletInstance(portletContainerId:String, portletInstance:PortletInstance) {
         var portletContainer = findComponent(portletContainerId, PortletContainer);
+        if (portletContainer == null) {
+            trace("WARNING: could not find portlet container with an id of: " + portletContainerId);
+            return;
+        }
         portletContainer.portletInstance = portletInstance;
+    }
+
+    public function assignPortletInstancesFromPage(pageId:Int) {
+        for (portletDetails in InternalDB.pages.utils.portletInstances(pageId)) {
+            var instanceData = PortletInstancePortletData.fomJsonString(portletDetails.portletData);
+            trace(portletDetails.portletData);
+            var layoutData = PortletInstanceLayoutData.fomJsonString(portletDetails.layoutData);
+            var portletInstance = PortletFactory.instance.createInstance(instanceData.portletClassName);
+            assignPortletInstance(layoutData.portletContainerId, portletInstance);
+        }
+    }
+
+    public var portletContainers(get, null):Array<PortletContainer>;
+    private function get_portletContainers():Array<PortletContainer> {
+        var containers = findComponents(PortletContainer, -1);
+        return containers;
     }
 
     private function applyEditable() {

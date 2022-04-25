@@ -1,12 +1,12 @@
 <dialog width="300" height="300" title="Select Portlet">
     <listview id="portletTypeSelector" width="100%" height="100%" selectedIndex="0">
         <data>
-            <item text="Nested Portlet" type="nested-portlet" />
-            <item text="Bar Graph" type="bar-graph" />
-            <item text="Line Graph" type="line-graph" />
-            <item text="Site Map" type="site-map" />
-            <item text="Image" type="static-image" />
-            <item text="Quick Filter" type="quick-filter" />
+            <item text="Nested Portlet" className="core.components.portlets.NestedPortletInstance" />
+            <item text="Bar Graph" className="core.components.portlets.BarGraphPortletInstance" />
+            <item text="Line Graph" className="core.components.portlets.LineGraphPortletInstance" />
+            <item text="Site Map" className="core.components.portlets.SiteMapPortletInstance" />
+            <item text="Image" className="core.components.portlets.StaticImagePortletInstance" />
+            <item text="Quick Filter" className="core.components.portlets.QuickFilterPortletInstance" />
         </data>
     </listview>
 </dialog>

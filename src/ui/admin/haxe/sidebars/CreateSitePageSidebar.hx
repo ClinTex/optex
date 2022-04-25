@@ -33,7 +33,7 @@ class CreateSitePageSidebar extends DataObjectSidebar {
         }
         var iconData:IconData = pageIconSelector.selectedItem.iconData;
         page.iconId = iconData.iconId;
-        page.layoutId = 0;
+        page.layoutId = 1;
 
         InternalDB.pages.addObject(page).then(function(r) {
             OrganizationsView.instance.populateOrgs();
