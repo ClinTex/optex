@@ -20,6 +20,7 @@ class InternalDB extends Database {
     public static var pages:CachedDataTable<PageDataTable, PageData, PageUtils>;
     public static var layouts:CachedDataTable<LayoutDataTable, LayoutData, LayoutUtils>;
     public static var portletInstances:CachedDataTable<PortletInstanceDataTable, PortletInstanceData, PortletInstanceUtils>;
+    public static var dataSources:CachedDataTable<DataSourceDataTable, DataSourceData, DataSourceUtils>;
 
     private static var _instance:InternalDB = null;
     public static var instance(get, null):InternalDB;
@@ -45,6 +46,7 @@ class InternalDB extends Database {
     private var pageData:PageDataTable;
     private var layoutData:LayoutDataTable;
     private var portletInstanceData:PortletInstanceDataTable;
+    private var dataSourceData:DataSourceDataTable;
 
     public var caches = new CachedInternalDB();
 
@@ -68,6 +70,7 @@ class InternalDB extends Database {
         pageData = new PageDataTable();
         layoutData = new LayoutDataTable();
         portletInstanceData = new PortletInstanceDataTable();
+        dataSourceData = new DataSourceDataTable();
         
         registerTable(OrganizationDataTable.TableName, organizationData);
         registerTable(UserDataTable.TableName, userData);
@@ -84,6 +87,7 @@ class InternalDB extends Database {
         registerTable(PageDataTable.TableName, pageData);
         registerTable(LayoutDataTable.TableName, layoutData);
         registerTable(PortletInstanceDataTable.TableName, portletInstanceData);
+        registerTable(DataSourceDataTable.TableName, dataSourceData);
 
         caches.organizations = new CachedDataTable<OrganizationDataTable, OrganizationData, NullUtils>(organizationData);
         caches.users = new CachedDataTable<UserDataTable, UserData, UserUtils>(userData, new UserUtils());
@@ -100,6 +104,7 @@ class InternalDB extends Database {
         caches.pages = new CachedDataTable<PageDataTable, PageData, PageUtils>(pageData, new PageUtils());
         caches.layouts = new CachedDataTable<LayoutDataTable, LayoutData, LayoutUtils>(layoutData, new LayoutUtils());
         caches.portletInstances = new CachedDataTable<PortletInstanceDataTable, PortletInstanceData, PortletInstanceUtils>(portletInstanceData, new PortletInstanceUtils());
+        caches.dataSources = new CachedDataTable<DataSourceDataTable, DataSourceData, DataSourceUtils>(dataSourceData, new DataSourceUtils());
 
         InternalDB.organizations = caches.organizations;
         InternalDB.users = caches.users;
@@ -116,6 +121,7 @@ class InternalDB extends Database {
         InternalDB.pages = caches.pages;
         InternalDB.layouts = caches.layouts;
         InternalDB.portletInstances = caches.portletInstances;
+        InternalDB.dataSources = caches.dataSources;
     }
 
     public function init():Promise<Bool> {
@@ -135,7 +141,8 @@ class InternalDB extends Database {
                 siteData.init(),
                 pageData.init(),
                 layoutData.init(),
-                portletInstanceData.init()
+                portletInstanceData.init(),
+                dataSourceData.init()
             ];
 
             PromiseUtils.runSequentially(promises, function() {
@@ -161,7 +168,8 @@ class InternalDB extends Database {
                 caches.sites.fillCache(),
                 caches.pages.fillCache(),
                 caches.layouts.fillCache(),
-                caches.portletInstances.fillCache()
+                caches.portletInstances.fillCache(),
+                caches.dataSources.fillCache()
             ];
 
             PromiseUtils.runSequentially(promises, function() {

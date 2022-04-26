@@ -31,4 +31,35 @@ class PortletInstance extends Portlet {
         layoutData = PortletInstanceLayoutData.fomJsonString(_portletDetails.layoutData);
         return value;
     }
+
+    public function initPortlet() {
+
+    }
+
+    public function refreshView() {
+
+    }
+
+    private function getConfigValue(name:String, defaultValue:String = null):String {
+        return instanceData.getStringValue(name, defaultValue);
+    }
+
+    private function getConfigIntValue(name:String, defaultValue:Null<Int> = null):Null<Int> {
+        return instanceData.getIntValue(name, defaultValue);
+    }
+
+    private function getConfigBoolValue(name:String, defaultValue:Null<Bool> = false):Null<Bool> {
+        return instanceData.getBoolValue(name, defaultValue);
+    }
+
+    public var page(get, null):Page;
+    private function get_page():Page {
+        var p = findAncestor(Page);
+        return p;
+    }
+
+    public var configPage(get, null):PortletConfigPage;
+    private function get_configPage():PortletConfigPage {
+        return null;
+    }
 }

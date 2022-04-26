@@ -6659,15 +6659,123 @@ core_components_IconSelector.prototype = $extend(haxe_ui_components_DropDown.pro
 	}
 	,__class__: core_components_IconSelector
 });
+var core_components_Page = function() {
+	this._tableCache = new haxe_ds_StringMap();
+	this._databaseCache = new haxe_ds_StringMap();
+	haxe_ui_containers_Box.call(this);
+};
+$hxClasses["core.components.Page"] = core_components_Page;
+core_components_Page.__name__ = "core.components.Page";
+core_components_Page.__super__ = haxe_ui_containers_Box;
+core_components_Page.prototype = $extend(haxe_ui_containers_Box.prototype,{
+	_databaseCache: null
+	,getDatabase: function(databaseName) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			if(Object.prototype.hasOwnProperty.call(_gthis._databaseCache.h,databaseName)) {
+				resolve(_gthis._databaseCache.h[databaseName]);
+				return;
+			}
+			core_data_DatabaseManager.get_instance().getDatabase(databaseName).then(function(db) {
+				_gthis._databaseCache.h[databaseName] = db;
+				resolve(db);
+			});
+		});
+	}
+	,_tableCache: null
+	,fetchTableData: function(databaseName,tableName) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var key = databaseName + "." + tableName;
+			if(Object.prototype.hasOwnProperty.call(_gthis._tableCache.h,key)) {
+				var table = _gthis._tableCache.h[key];
+				var copy = table.clone(true);
+				resolve(copy);
+				return;
+			}
+			_gthis.getDatabase(databaseName).then(function(db) {
+				var table = db.getTable(tableName);
+				table.fetch().then(function(_) {
+					var copy = table.clone(true);
+					_gthis._tableCache.h[key] = copy;
+					resolve(copy);
+				});
+			});
+		});
+	}
+	,getTableData: function(portletInstance) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var dataSourceData = core_data_InternalDB.dataSources.utils.dataSource(portletInstance.instanceData.get_dataSourceId());
+			if(dataSourceData != null) {
+				_gthis.fetchTableData(dataSourceData.get_databaseName(),dataSourceData.get_tableName()).then(function(unfilteredTable) {
+					if(portletInstance.instanceData.get_transform() != null) {
+						unfilteredTable = unfilteredTable.transform(portletInstance.instanceData.get_transform(),null);
+					}
+					resolve(unfilteredTable);
+				});
+			} else {
+				resolve(null);
+			}
+		});
+	}
+	,preloadPortletInstance: function(portletInstance) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var promises = [];
+			if(portletInstance.instanceData != null && portletInstance.instanceData.get_dataSourceId() != null) {
+				promises.push(_gthis.preloadPortletDataSource(portletInstance));
+			}
+			core_data_utils_PromiseUtils.runSequentially(promises,function() {
+				resolve(true);
+			});
+		});
+	}
+	,preloadPortletDataSource: function(portletInstance) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var dataSourceData = core_data_InternalDB.dataSources.utils.dataSource(portletInstance.instanceData.get_dataSourceId());
+			if(dataSourceData != null) {
+				haxe_Log.trace("preload: " + dataSourceData.get_databaseName(),{ fileName : "../../haxe/core/components/Page.hx", lineNumber : 88, className : "core.components.Page", methodName : "preloadPortletDataSource", customParams : [dataSourceData.get_tableName()]});
+				_gthis.fetchTableData(dataSourceData.get_databaseName(),dataSourceData.get_tableName()).then(function(r) {
+					haxe_Log.trace("preloaded: " + r.records.length,{ fileName : "../../haxe/core/components/Page.hx", lineNumber : 90, className : "core.components.Page", methodName : "preloadPortletDataSource"});
+					resolve(true);
+				});
+			} else {
+				resolve(true);
+			}
+		});
+	}
+	,registerBehaviours: function() {
+		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_components_Page();
+	}
+	,__class__: core_components_Page
+});
 var core_components_PageLayout = function() {
 	this._editable = false;
 	this._layoutData = null;
-	haxe_ui_containers_Box.call(this);
+	core_components_Page.call(this);
 };
 $hxClasses["core.components.PageLayout"] = core_components_PageLayout;
 core_components_PageLayout.__name__ = "core.components.PageLayout";
-core_components_PageLayout.__super__ = haxe_ui_containers_Box;
-core_components_PageLayout.prototype = $extend(haxe_ui_containers_Box.prototype,{
+core_components_PageLayout.__super__ = core_components_Page;
+core_components_PageLayout.prototype = $extend(core_components_Page.prototype,{
 	_layoutData: null
 	,get_layoutData: function() {
 		return this._layoutData;
@@ -6697,7 +6805,9 @@ core_components_PageLayout.prototype = $extend(haxe_ui_containers_Box.prototype,
 			haxe_Log.trace("WARNING: could not find portlet container with an id of: " + portletContainerId,{ fileName : "../../haxe/core/components/PageLayout.hx", lineNumber : 50, className : "core.components.PageLayout", methodName : "assignPortletInstance"});
 			return;
 		}
-		portletContainer.set_portletInstance(portletInstance);
+		this.preloadPortletInstance(portletInstance).then(function(e) {
+			portletContainer.set_portletInstance(portletInstance);
+		});
 	}
 	,assignPortletInstancesFromPage: function(pageId) {
 		var _g = 0;
@@ -6706,9 +6816,10 @@ core_components_PageLayout.prototype = $extend(haxe_ui_containers_Box.prototype,
 			var portletDetails = _g1[_g];
 			++_g;
 			var instanceData = core_data_PortletInstancePortletData.fomJsonString(portletDetails.get_portletData());
-			haxe_Log.trace(portletDetails.get_portletData(),{ fileName : "../../haxe/core/components/PageLayout.hx", lineNumber : 59, className : "core.components.PageLayout", methodName : "assignPortletInstancesFromPage"});
 			var layoutData = core_data_PortletInstanceLayoutData.fomJsonString(portletDetails.get_layoutData());
 			var portletInstance = core_components_portlets_PortletFactory.get_instance().createInstance(instanceData.get_portletClassName());
+			portletInstance.instanceData = instanceData;
+			portletInstance.layoutData = layoutData;
 			this.assignPortletInstance(layoutData.get_portletContainerId(),portletInstance);
 		}
 	}
@@ -6731,10 +6842,10 @@ core_components_PageLayout.prototype = $extend(haxe_ui_containers_Box.prototype,
 		this.dispatch(event);
 	}
 	,registerBehaviours: function() {
-		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
+		core_components_Page.prototype.registerBehaviours.call(this);
 	}
 	,cloneComponent: function() {
-		var c = haxe_ui_containers_Box.prototype.cloneComponent.call(this);
+		var c = core_components_Page.prototype.cloneComponent.call(this);
 		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
 			var _g = 0;
 			var _g1 = this._children == null ? [] : this._children;
@@ -6750,7 +6861,7 @@ core_components_PageLayout.prototype = $extend(haxe_ui_containers_Box.prototype,
 		return new core_components_PageLayout();
 	}
 	,__class__: core_components_PageLayout
-	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{get_portletContainers:"get_portletContainers",set_editable:"set_editable",get_editable:"get_editable",set_layoutData:"set_layoutData",get_layoutData:"get_layoutData"})
+	,__properties__: $extend(core_components_Page.prototype.__properties__,{get_portletContainers:"get_portletContainers",set_editable:"set_editable",get_editable:"get_editable",set_layoutData:"set_layoutData",get_layoutData:"get_layoutData"})
 });
 var haxe_ui_backend_DialogBase = function() {
 	this._buttonsCreated = false;
@@ -7110,8 +7221,10 @@ haxe_ui_containers_dialogs_Dialog.prototype = $extend(haxe_ui_backend_DialogBase
 	,__properties__: $extend(haxe_ui_backend_DialogBase.prototype.__properties__,{set_onDialogClosed:"set_onDialogClosed"})
 });
 var core_components_dialogs_GenericPortletConfigDialog = function() {
+	this._configPages = [];
 	haxe_ui_containers_dialogs_Dialog.call(this);
 	var c0 = new haxe_ui_containers_TabView();
+	c0.set_id("mainTabs");
 	c0.set_percentWidth(100.);
 	c0.set_percentHeight(100.);
 	var c1 = new haxe_ui_containers_VBox();
@@ -7131,6 +7244,7 @@ var core_components_dialogs_GenericPortletConfigDialog = function() {
 	this.set_title("Configure Portlet");
 	this.bindingRoot = true;
 	this.portletConfigJsonField = c2;
+	this.mainTabs = c0;
 	var larr = haxe_ui_containers_dialogs_DialogButton.toString("{{dialog.cancel}}").split("|");
 	var rarr = haxe_ui_containers_dialogs_DialogButton.toString("{{dialog.apply}}").split("|");
 	var _g = 0;
@@ -7147,7 +7261,26 @@ $hxClasses["core.components.dialogs.GenericPortletConfigDialog"] = core_componen
 core_components_dialogs_GenericPortletConfigDialog.__name__ = "core.components.dialogs.GenericPortletConfigDialog";
 core_components_dialogs_GenericPortletConfigDialog.__super__ = haxe_ui_containers_dialogs_Dialog;
 core_components_dialogs_GenericPortletConfigDialog.prototype = $extend(haxe_ui_containers_dialogs_Dialog.prototype,{
-	registerBehaviours: function() {
+	_configPages: null
+	,onReady: function() {
+		haxe_ui_containers_dialogs_Dialog.prototype.onReady.call(this);
+		this._configPages.reverse();
+		var _g = 0;
+		var _g1 = this._configPages;
+		while(_g < _g1.length) {
+			var configPage = _g1[_g];
+			++_g;
+			this.mainTabs.addComponentAt(configPage,0);
+		}
+		this.mainTabs.set_pageIndex(0);
+	}
+	,addConfigPage: function(configPage) {
+		if(configPage == null) {
+			return;
+		}
+		this._configPages.push(configPage);
+	}
+	,registerBehaviours: function() {
 		haxe_ui_containers_dialogs_Dialog.prototype.registerBehaviours.call(this);
 	}
 	,cloneComponent: function() {
@@ -7167,6 +7300,7 @@ core_components_dialogs_GenericPortletConfigDialog.prototype = $extend(haxe_ui_c
 		return new core_components_dialogs_GenericPortletConfigDialog();
 	}
 	,portletConfigJsonField: null
+	,mainTabs: null
 	,__class__: core_components_dialogs_GenericPortletConfigDialog
 });
 var core_components_portlets_Portlet = function() {
@@ -7225,6 +7359,31 @@ core_components_portlets_PortletInstance.prototype = $extend(core_components_por
 		this.layoutData = core_data_PortletInstanceLayoutData.fomJsonString(this._portletDetails.get_layoutData());
 		return value;
 	}
+	,initPortlet: function() {
+	}
+	,refreshView: function() {
+	}
+	,getConfigValue: function(name,defaultValue) {
+		return this.instanceData.getStringValue(name,defaultValue);
+	}
+	,getConfigIntValue: function(name,defaultValue) {
+		return this.instanceData.getIntValue(name,defaultValue);
+	}
+	,getConfigBoolValue: function(name,defaultValue) {
+		if(defaultValue == null) {
+			defaultValue = false;
+		}
+		return this.instanceData.getBoolValue(name,defaultValue);
+	}
+	,page: null
+	,get_page: function() {
+		var p = this.findAncestor(null,core_components_Page);
+		return p;
+	}
+	,configPage: null
+	,get_configPage: function() {
+		return null;
+	}
 	,registerBehaviours: function() {
 		core_components_portlets_Portlet.prototype.registerBehaviours.call(this);
 	}
@@ -7245,21 +7404,130 @@ core_components_portlets_PortletInstance.prototype = $extend(core_components_por
 		return new core_components_portlets_PortletInstance();
 	}
 	,__class__: core_components_portlets_PortletInstance
-	,__properties__: $extend(core_components_portlets_Portlet.prototype.__properties__,{set_portletDetails:"set_portletDetails",get_portletDetails:"get_portletDetails"})
+	,__properties__: $extend(core_components_portlets_Portlet.prototype.__properties__,{get_configPage:"get_configPage",get_page:"get_page",set_portletDetails:"set_portletDetails",get_portletDetails:"get_portletDetails"})
 });
 var core_components_portlets_BarGraphPortletInstance = function() {
+	this.hasSize = false;
+	this._init = false;
+	this._dataSourceData = null;
 	core_components_portlets_PortletInstance.call(this);
 };
 $hxClasses["core.components.portlets.BarGraphPortletInstance"] = core_components_portlets_BarGraphPortletInstance;
 core_components_portlets_BarGraphPortletInstance.__name__ = "core.components.portlets.BarGraphPortletInstance";
 core_components_portlets_BarGraphPortletInstance.__super__ = core_components_portlets_PortletInstance;
 core_components_portlets_BarGraphPortletInstance.prototype = $extend(core_components_portlets_PortletInstance.prototype,{
-	onReady: function() {
-		core_components_portlets_PortletInstance.prototype.onReady.call(this);
-		var button = new haxe_ui_components_Label();
-		button.set_percentWidth(100);
-		button.set_text(this.get_className());
-		this.addComponent(button);
+	_bar: null
+	,_dataSourceData: null
+	,_transform: null
+	,_axisX: null
+	,_axisY: null
+	,_markerFunction: null
+	,_markerBehind: null
+	,_colorCalculator: null
+	,_init: null
+	,initPortlet: function() {
+		var tmp = this._init == true;
+		core_components_portlets_PortletInstance.prototype.initPortlet.call(this);
+		this._init = true;
+		this._dataSourceData = core_data_InternalDB.dataSources.utils.dataSource(this.instanceData.get_dataSourceId());
+		this._transform = this.getConfigValue("transform");
+		this._axisX = this.getConfigValue("axisX");
+		this._axisY = this.getConfigValue("axisY");
+		this._markerFunction = this.getConfigValue("markerFunction");
+		this._markerBehind = this.getConfigBoolValue("markerBehind");
+		this._colorCalculator = this.getConfigValue("colorCalculator");
+		this._bar = new core_graphs_BarGraph();
+		this._bar.set_percentWidth(100);
+		this._bar.set_percentHeight(100);
+		this._bar.labelRotation = -45;
+		this._bar.registerEvent("barSelected",$bind(this,this.onBarSelected));
+		this._bar.registerEvent("barUnselected",$bind(this,this.onBarUnselected));
+		this.addComponent(this._bar);
+	}
+	,refreshView: function() {
+		var _gthis = this;
+		core_components_portlets_PortletInstance.prototype.refreshView.call(this);
+		haxe_Log.trace("refreshing view",{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 53, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView"});
+		if(this._dataSourceData == null) {
+			haxe_Log.trace("data source data is null",{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 56, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView"});
+			return;
+		}
+		haxe_Log.trace("doing refresh",{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 60, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView"});
+		this.get_page().getTableData(this).then(function(table) {
+			haxe_Log.trace("bar graph refresh view: " + table.records.length,{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 63, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView"});
+			var records = table.records;
+			records.sort(function(o1,o2) {
+				if(Std.string(o1.getFieldValue(_gthis._axisX)) < Std.string(o2.getFieldValue(_gthis._axisX))) {
+					return -1;
+				}
+				if(Std.string(o1.getFieldValue(_gthis._axisX)) > Std.string(o2.getFieldValue(_gthis._axisX))) {
+					return 1;
+				}
+				return 0;
+			});
+			_gthis._bar.set_colourCalculator(_gthis.getColourCalculator());
+			_gthis._bar.getMarkerValueY = core_graphs_MarkerFunctions.get(_gthis._markerFunction);
+			_gthis._bar.markerBehind = _gthis._markerBehind;
+			var graphData = [];
+			var axisYParts = _gthis._axisY.split(",");
+			var _g = 0;
+			while(_g < axisYParts.length) {
+				var part = axisYParts[_g];
+				++_g;
+				part = StringTools.trim(part);
+				if(part.length == 0) {
+					continue;
+				}
+				var values = [];
+				var n = 0;
+				var _g1 = 0;
+				while(_g1 < records.length) {
+					var row = records[_g1];
+					++_g1;
+					var valueX = row.getFieldValue(_gthis._axisX);
+					var valueY = parseFloat(row.getFieldValue(part));
+					values.push({ x : valueX, y : valueY});
+					++n;
+				}
+				graphData.push({ key : part, values : values});
+			}
+			haxe_Log.trace(_gthis.get_width(),{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 108, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView", customParams : [_gthis.get_height()]});
+			if(_gthis.get_width() > 0 && _gthis.get_height() > 0) {
+				_gthis._bar.set_data(graphData);
+			}
+		});
+	}
+	,getColourCalculator: function() {
+		var s = this._colorCalculator;
+		if(s == null || StringTools.trim(s) == "") {
+			return null;
+		}
+		var cc = null;
+		var parts = s.split(":");
+		var id = parts.shift();
+		if(id == "threshold") {
+			cc = new core_graphs_ThresholdBasedColourCalculator(parseFloat(parts[0]));
+		}
+		return cc;
+	}
+	,onBarSelected: function(e) {
+	}
+	,onBarUnselected: function(e) {
+	}
+	,hasSize: null
+	,validateComponentLayout: function() {
+		var b = core_components_portlets_PortletInstance.prototype.validateComponentLayout.call(this);
+		if(this.get_width() > 0 && this.get_height() > 0) {
+			if(this.hasSize == false) {
+				this.hasSize = true;
+				this.refreshView();
+			}
+		}
+		return b;
+	}
+	,get_configPage: function() {
+		var configPage = new core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage();
+		return configPage;
 	}
 	,registerBehaviours: function() {
 		core_components_portlets_PortletInstance.prototype.registerBehaviours.call(this);
@@ -7281,6 +7549,67 @@ core_components_portlets_BarGraphPortletInstance.prototype = $extend(core_compon
 		return new core_components_portlets_BarGraphPortletInstance();
 	}
 	,__class__: core_components_portlets_BarGraphPortletInstance
+});
+var core_components_portlets_PortletConfigPage = function() {
+	haxe_ui_containers_VBox.call(this);
+};
+$hxClasses["core.components.portlets.PortletConfigPage"] = core_components_portlets_PortletConfigPage;
+core_components_portlets_PortletConfigPage.__name__ = "core.components.portlets.PortletConfigPage";
+core_components_portlets_PortletConfigPage.__super__ = haxe_ui_containers_VBox;
+core_components_portlets_PortletConfigPage.prototype = $extend(haxe_ui_containers_VBox.prototype,{
+	registerBehaviours: function() {
+		haxe_ui_containers_VBox.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_VBox.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_components_portlets_PortletConfigPage();
+	}
+	,__class__: core_components_portlets_PortletConfigPage
+});
+var core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage = function() {
+	core_components_portlets_PortletConfigPage.call(this);
+	var c0 = new haxe_ui_components_Button();
+	c0.set_text("bar graph config");
+	this.addComponent(c0);
+	this.set_text("Bar Graph");
+	this.bindingRoot = true;
+};
+$hxClasses["core.components.portlets._BarGraphPortletInstance.BarGraphConfigPage"] = core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage;
+core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage.__name__ = "core.components.portlets._BarGraphPortletInstance.BarGraphConfigPage";
+core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage.__super__ = core_components_portlets_PortletConfigPage;
+core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage.prototype = $extend(core_components_portlets_PortletConfigPage.prototype,{
+	registerBehaviours: function() {
+		core_components_portlets_PortletConfigPage.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = core_components_portlets_PortletConfigPage.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage();
+	}
+	,__class__: core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage
 });
 var core_components_portlets_LineGraphPortletInstance = function() {
 	core_components_portlets_PortletInstance.call(this);
@@ -7359,6 +7688,7 @@ var core_components_portlets_PortletContainer = function() {
 	haxe_ui_containers_Box.call(this);
 	this._portletContent = new haxe_ui_containers_Box();
 	this._portletContent.set_percentWidth(this._portletContent.set_percentHeight(100));
+	this._portletContent.set_id("portletContent");
 	this.addComponent(this._portletContent);
 	this._controls = new haxe_ui_containers_HBox();
 	this._controls.hide();
@@ -7403,12 +7733,26 @@ core_components_portlets_PortletContainer.prototype = $extend(haxe_ui_containers
 	,onConfigurePortletInstance: function(_) {
 		var _gthis = this;
 		var dialog = new core_components_dialogs_GenericPortletConfigDialog();
-		dialog.portletConfigJsonField.set_text(this._portletInstance.get_portletDetails().get_portletData());
+		dialog.addConfigPage(this._portletInstance.get_configPage());
+		var prettyJson = JSON.stringify(this.get_portletInstance().instanceData.data,null,"  ");
+		dialog.portletConfigJsonField.set_text(prettyJson);
 		dialog.set_onDialogClosed(function(event) {
 			var larr = haxe_ui_containers_dialogs_DialogButton.toString(event.button).split("|");
 			if(larr.indexOf(haxe_ui_containers_dialogs_DialogButton.toString("{{dialog.apply}}")) != -1) {
 				if(_gthis._portletInstance != null) {
-					_gthis._portletInstance.get_portletDetails().set_portletData(dialog.portletConfigJsonField.get_text());
+					var json = JSON.parse(dialog.portletConfigJsonField.get_text());
+					var _g = 0;
+					var _g1 = Reflect.fields(json);
+					while(_g < _g1.length) {
+						var f = _g1[_g];
+						++_g;
+						var v = Reflect.field(json,f);
+						_gthis.get_portletInstance().instanceData.data[f] = v;
+					}
+					_gthis.get_page().preloadPortletInstance(_gthis._portletInstance).then(function(r) {
+						_gthis._portletInstance.initPortlet();
+						_gthis._portletInstance.refreshView();
+					});
 				}
 			}
 		});
@@ -7430,7 +7774,11 @@ core_components_portlets_PortletContainer.prototype = $extend(haxe_ui_containers
 				this._portletInstance.layoutData = new core_data_PortletInstanceLayoutData();
 			}
 			this._portletInstance.layoutData.set_portletContainerId(this.get_id());
+			this._portletInstance.set_percentWidth(100);
+			this._portletInstance.set_percentHeight(100);
 			this._portletContent.addComponent(this._portletInstance);
+			this._portletInstance.initPortlet();
+			this._portletInstance.refreshView();
 			var tmp = this._editable;
 		} else if(this._editable) {
 			this.addPortletAssignUI();
@@ -7475,6 +7823,11 @@ core_components_portlets_PortletContainer.prototype = $extend(haxe_ui_containers
 		portletEvent.portletContainer = this;
 		this.dispatch(portletEvent);
 	}
+	,page: null
+	,get_page: function() {
+		var p = this.findAncestor(null,core_components_Page);
+		return p;
+	}
 	,registerBehaviours: function() {
 		haxe_ui_containers_Box.prototype.registerBehaviours.call(this);
 	}
@@ -7495,7 +7848,7 @@ core_components_portlets_PortletContainer.prototype = $extend(haxe_ui_containers
 		return new core_components_portlets_PortletContainer();
 	}
 	,__class__: core_components_portlets_PortletContainer
-	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{set_editable:"set_editable",get_editable:"get_editable",set_portletInstance:"set_portletInstance",get_portletInstance:"get_portletInstance"})
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{get_page:"get_page",set_editable:"set_editable",get_editable:"get_editable",set_portletInstance:"set_portletInstance",get_portletInstance:"get_portletInstance"})
 });
 var haxe_ui_backend_EventBase = function() { };
 $hxClasses["haxe.ui.backend.EventBase"] = haxe_ui_backend_EventBase;
@@ -9096,6 +9449,7 @@ core_data_CachedInternalDB.prototype = {
 	,pages: null
 	,layouts: null
 	,portletInstances: null
+	,dataSources: null
 	,__class__: core_data_CachedInternalDB
 };
 var core_data_dao_IDataObject = function() { };
@@ -9477,7 +9831,6 @@ core_data_DashboardDataTable.prototype = {
 						++_g;
 						var record = new core_data_DashboardData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.DashboardDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -10035,7 +10388,6 @@ core_data_DashboardGroupDataTable.prototype = {
 						++_g;
 						var record = new core_data_DashboardGroupData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.DashboardGroupDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -10359,6 +10711,529 @@ core_data_DashboardUtils.prototype = {
 	,__class__: core_data_DashboardUtils
 	,__properties__: {get_byGroup:"get_byGroup"}
 };
+var core_data_DataSourceData = function() {
+	this._hash = null;
+	this.dataChanged = false;
+	this.links = new haxe_ds_StringMap();
+};
+$hxClasses["core.data.DataSourceData"] = core_data_DataSourceData;
+core_data_DataSourceData.__name__ = "core.data.DataSourceData";
+core_data_DataSourceData.__interfaces__ = [core_data_dao_IBuiltDataObject];
+core_data_DataSourceData.prototype = {
+	table: null
+	,links: null
+	,dataChanged: null
+	,fromArray: function(data) {
+		if(data.length > core_data_DataSourceData.FieldDefinitions.length) {
+			this._hash = data.pop();
+		}
+		this.set_dataSourceId(core_data_utils_ConversionUtils.fromString(data[0],3));
+		this.set_databaseName(core_data_utils_ConversionUtils.fromString(data[1],1));
+		this.set_tableName(core_data_utils_ConversionUtils.fromString(data[2],1));
+		this.set_configData(core_data_utils_ConversionUtils.fromString(data[3],1));
+		this.dataChanged = false;
+	}
+	,toArray: function() {
+		var data = [];
+		data.push(Std.string(this.get_dataSourceId()));
+		data.push(Std.string(this.get_databaseName()));
+		data.push(Std.string(this.get_tableName()));
+		data.push(Std.string(this.get_configData()));
+		return data;
+	}
+	,setLinkObject: function(fieldId,object) {
+	}
+	,getFieldValue: function(fieldId) {
+		if(fieldId == "dataSourceId") {
+			return this.get_dataSourceId();
+		}
+		if(fieldId == "databaseName") {
+			return this.get_databaseName();
+		}
+		if(fieldId == "tableName") {
+			return this.get_tableName();
+		}
+		if(fieldId == "configData") {
+			return this.get_configData();
+		}
+		return null;
+	}
+	,_hash: null
+	,hash: null
+	,get_hash: function() {
+		return this._hash;
+	}
+	,_dataSourceId: null
+	,get_dataSourceId: function() {
+		return this._dataSourceId;
+	}
+	,set_dataSourceId: function(value) {
+		if(this._dataSourceId == value) {
+			return value;
+		}
+		this.dataChanged = true;
+		this._dataSourceId = value;
+		return value;
+	}
+	,_databaseName: null
+	,get_databaseName: function() {
+		return this._databaseName;
+	}
+	,set_databaseName: function(value) {
+		if(this._databaseName == value) {
+			return value;
+		}
+		this.dataChanged = true;
+		this._databaseName = value;
+		return value;
+	}
+	,_tableName: null
+	,get_tableName: function() {
+		return this._tableName;
+	}
+	,set_tableName: function(value) {
+		if(this._tableName == value) {
+			return value;
+		}
+		this.dataChanged = true;
+		this._tableName = value;
+		return value;
+	}
+	,_configData: null
+	,get_configData: function() {
+		return this._configData;
+	}
+	,set_configData: function(value) {
+		if(this._configData == value) {
+			return value;
+		}
+		this.dataChanged = true;
+		this._configData = value;
+		return value;
+	}
+	,get_primaryKey: function() {
+		return this.get_dataSourceId();
+	}
+	,set_primaryKey: function(value) {
+		return this.set_dataSourceId(value);
+	}
+	,primaryKeyName: null
+	,get_primaryKeyName: function() {
+		return "dataSourceId";
+	}
+	,add: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var list = [];
+			var h = _gthis.links.h;
+			var k_h = h;
+			var k_keys = Object.keys(h);
+			var k_length = k_keys.length;
+			var k_current = 0;
+			while(k_current < k_length) {
+				var k = k_keys[k_current++];
+				var link = _gthis.links.h[k];
+				if(link != null) {
+					list.push(link.add());
+				}
+			}
+			list.push(_gthis.table.addObject(_gthis));
+			core_data_utils_PromiseUtils.runSequentially(list,function() {
+				_gthis.dataChanged = false;
+				resolve(true);
+			},function(e) {
+				reject(e);
+			});
+		});
+	}
+	,'delete': function() {
+		return new Promise(function(resolve,reject) {
+			resolve(true);
+		});
+	}
+	,update: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var list = [];
+			if(_gthis.dataChanged == true) {
+				list.push(_gthis.table.updateObject(_gthis));
+			}
+			var h = _gthis.links.h;
+			var k_h = h;
+			var k_keys = Object.keys(h);
+			var k_length = k_keys.length;
+			var k_current = 0;
+			while(k_current < k_length) {
+				var k = k_keys[k_current++];
+				var link = _gthis.links.h[k];
+				if(link != null) {
+					list.push(link.update());
+				}
+			}
+			if(list.length != 0) {
+				core_data_utils_PromiseUtils.runSequentially(list,function() {
+					_gthis.dataChanged = false;
+					resolve(true);
+				},function(e) {
+					reject(e);
+				});
+			} else {
+				resolve(true);
+			}
+		});
+	}
+	,__class__: core_data_DataSourceData
+	,__properties__: {get_primaryKeyName:"get_primaryKeyName",set_primaryKey:"set_primaryKey",get_primaryKey:"get_primaryKey",set_configData:"set_configData",get_configData:"get_configData",set_tableName:"set_tableName",get_tableName:"get_tableName",set_databaseName:"set_databaseName",get_databaseName:"get_databaseName",set_dataSourceId:"set_dataSourceId",get_dataSourceId:"get_dataSourceId",get_hash:"get_hash"}
+};
+var core_data_DataSourceDataTable = function() {
+	this.batchSize = 5000;
+};
+$hxClasses["core.data.DataSourceDataTable"] = core_data_DataSourceDataTable;
+core_data_DataSourceDataTable.__name__ = "core.data.DataSourceDataTable";
+core_data_DataSourceDataTable.__interfaces__ = [core_data_dao_IDataTable];
+core_data_DataSourceDataTable.prototype = {
+	info: null
+	,db: null
+	,name: null
+	,fetch: function(params) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			if(params == null) {
+				params = { };
+			}
+			if(params.start == null) {
+				params.start = 0;
+			}
+			if(params.end == null) {
+				params.end = 16777215;
+			}
+			_gthis.init().then(function(r) {
+				var tmp = "" + _gthis.db.name + "." + "datasourcedata";
+				core_data_dao_Logger.get_instance().log(tmp + " retrieving table data");
+				core_data.getAllTableData(_gthis.db.name,"datasourcedata").then(function(frag) {
+					var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " data retrieved (" + frag.count + " of " + frag.total;
+					core_data_dao_Logger.get_instance().log(tmp + ")");
+					var records = [];
+					var linkInfoMap_h = Object.create(null);
+					var hasLinks = false;
+					var _g = 0;
+					var _g1 = frag.data;
+					while(_g < _g1.length) {
+						var rawRecord = _g1[_g];
+						++_g;
+						var record = new core_data_DataSourceData();
+						record.table = _gthis;
+						record.fromArray(rawRecord);
+						records.push(record);
+						var _g2 = 0;
+						var _g3 = core_data_DataSourceData.LinkedFields;
+						while(_g2 < _g3.length) {
+							var linkField = _g3[_g2];
+							++_g2;
+							hasLinks = true;
+							var list = linkInfoMap_h[linkField.tableName + "$" + linkField.fieldName];
+							if(list == null) {
+								list = [];
+								linkInfoMap_h[linkField.tableName + "$" + linkField.fieldName] = list;
+							}
+							var value = Std.string(record.getFieldValue(linkField.fieldName));
+							if(list.indexOf(value) == -1) {
+								list.push(value);
+							}
+						}
+					}
+					if(hasLinks == true) {
+						var linkPromises = [];
+						var h = linkInfoMap_h;
+						var linkKey_h = h;
+						var linkKey_keys = Object.keys(h);
+						var linkKey_length = linkKey_keys.length;
+						var linkKey_current = 0;
+						while(linkKey_current < linkKey_length) {
+							var linkKey = linkKey_keys[linkKey_current++];
+							var parts = linkKey.split("$");
+							var tableName = parts[0];
+							var fieldName = parts[1];
+							var fieldValues = linkInfoMap_h[linkKey];
+							var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " looking up links based on " + fieldName + ": ";
+							var tmp1 = Std.string(fieldValues);
+							core_data_dao_Logger.get_instance().log(tmp + tmp1);
+							linkPromises.push(_gthis.buildLinks(tableName,fieldName,records));
+						}
+						Promise.all(linkPromises).then(function(_) {
+							resolve(records);
+						}).catch(function(e) {
+							var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to retrieve data (" + e;
+							core_data_dao_Logger.get_instance().error(tmp + ")");
+							reject(e);
+						});
+					} else {
+						resolve(records);
+					}
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to retrieve data (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to retrieve data (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,updateObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "datasourcedata" + " updating object - " + Std.string(object.toArray()));
+				var primaryKeyName = core_data_DataSourceData.PrimaryFieldDefinitions[0].fieldName;
+				core_data.updateTableData(_gthis.db.name,"datasourcedata",object.get_hash(),object.toArray()).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to update object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to update object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,addObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "datasourcedata" + " adding object - " + Std.string(object.toArray()));
+				var data = object.toArray();
+				core_data.addTableData(_gthis.db.name,"datasourcedata",[data]).then(function(r) {
+					var newPrimaryKey = null;
+					if(r.resultIds.length > 0 && r.resultIds[0].length > 0) {
+						newPrimaryKey = r.resultIds[0][0];
+					}
+					if(newPrimaryKey != null) {
+						object.set_primaryKey(Std.parseInt(newPrimaryKey));
+					}
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to add object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to add object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,removeObject: function(object) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.init().then(function(r) {
+				core_data_dao_Logger.get_instance().log(_gthis.db.name + "." + "datasourcedata" + " removing object - hash: " + object.get_hash());
+				core_data.removeTableData(_gthis.db.name,"datasourcedata",[object.get_hash()]).then(function(r) {
+					resolve(true);
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to remove object (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to remove object (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,createObject: function(data) {
+		var record = new core_data_DataSourceData();
+		record.table = this;
+		if(data != null) {
+			var stringArray = [];
+			var _g = 0;
+			while(_g < data.length) {
+				var d = data[_g];
+				++_g;
+				stringArray.push(Std.string(d));
+			}
+			record.fromArray(stringArray);
+		}
+		return record;
+	}
+	,buildLinks: function(tableName,fieldName,records) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var tmp = _gthis.db.name + "." + "datasourcedata" + " building links for " + "datasourcedata" + "." + fieldName + " == " + tableName + ".";
+			core_data_dao_Logger.get_instance().log(tmp + fieldName);
+			var table = _gthis.db.getTable(tableName);
+			table.fetch().then(function(linkObjects) {
+				var _g = 0;
+				while(_g < records.length) {
+					var record = records[_g];
+					++_g;
+					var _g1 = 0;
+					while(_g1 < linkObjects.length) {
+						var linkObject = linkObjects[_g1];
+						++_g1;
+						if(linkObject.getFieldValue(fieldName) == record.getFieldValue(fieldName)) {
+							record.setLinkObject(fieldName,linkObject);
+						}
+					}
+				}
+				resolve(records);
+			}).catch(function(e) {
+				var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to retrieve data during linking to " + _gthis.db.name + "." + tableName + " (" + e;
+				core_data_dao_Logger.get_instance().error(tmp + ")");
+				reject(e);
+			});
+		});
+	}
+	,init: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			if(_gthis.info != null) {
+				var tmp = "" + _gthis.db.name + "." + "datasourcedata";
+				core_data_dao_Logger.get_instance().log(tmp + " already initialized, returning");
+				resolve(true);
+				return;
+			}
+			var tmp = _gthis.db.name + "." + "datasourcedata";
+			core_data_dao_Logger.get_instance().log(tmp + " initializing");
+			_gthis.db.create().then(function(r) {
+				core_data.hasTable(_gthis.db.name,"datasourcedata").then(function(hasTable) {
+					if(hasTable == false) {
+						var tmp = _gthis.db.name + "." + "datasourcedata";
+						core_data_dao_Logger.get_instance().log(tmp + " does not exist, creating");
+						_gthis.create().then(function(createResult) {
+							resolve(true);
+						}).catch(function(e) {
+							var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to create table during initialization (" + e;
+							core_data_dao_Logger.get_instance().error(tmp + ")");
+							reject(e);
+						});
+					} else {
+						var tmp = "" + _gthis.db.name + "." + "datasourcedata";
+						core_data_dao_Logger.get_instance().log(tmp + " exists, continuing");
+						core_data.getTableInfo(_gthis.db.name,"datasourcedata").then(function(tableInfo) {
+							resolve(true);
+							_gthis.info = tableInfo;
+						}).catch(function(e) {
+							var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to retrieve table info (" + e;
+							core_data_dao_Logger.get_instance().error(tmp + ")");
+							reject(e);
+						});
+					}
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to initialize (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			});
+		});
+	}
+	,create: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			_gthis.db.create().then(function(r) {
+				var tmp = "" + _gthis.db.name + "." + "datasourcedata";
+				core_data_dao_Logger.get_instance().log(tmp + " creating table");
+				var fieldDefs = core_data_DataSourceData.FieldDefinitions;
+				core_data.createTable(_gthis.db.name,"datasourcedata",fieldDefs).then(function(createTableResult) {
+					_gthis.addDefaultData().then(function(r) {
+						var tmp = "" + _gthis.db.name + "." + "datasourcedata";
+						core_data_dao_Logger.get_instance().log(tmp + " table created");
+						core_data.getTableInfo(_gthis.db.name,"datasourcedata").then(function(tableInfo) {
+							_gthis.info = tableInfo;
+							resolve(true);
+						}).catch(function(e) {
+							var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to retrieve table info (" + e;
+							core_data_dao_Logger.get_instance().error(tmp + ")");
+							reject(e);
+						});
+					});
+				}).catch(function(e) {
+					var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " failed to create table (" + e;
+					core_data_dao_Logger.get_instance().error(tmp + ")");
+					reject(e);
+				});
+			});
+		});
+	}
+	,batchSize: null
+	,addObjects: function(objects,onProgress) {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			var batches = [];
+			var n = 0;
+			var batch = [];
+			var _g = 0;
+			while(_g < objects.length) {
+				var o = objects[_g];
+				++_g;
+				var objectData = o.toArray().slice();
+				batch.push(objectData);
+				++n;
+				if(n >= _gthis.batchSize) {
+					n = 0;
+					batches.push(batch);
+					batch = [];
+				}
+			}
+			if(batch.length > 0) {
+				batches.push(batch);
+			}
+			var tmp = "" + _gthis.db.name + "." + "datasourcedata" + " adding " + objects.length + " objects in " + batches.length + " batches of ";
+			core_data_dao_Logger.get_instance().log(tmp + _gthis.batchSize);
+			_gthis.processBatches(batches,function() {
+				resolve(true);
+			},onProgress,0,batches.length);
+		});
+	}
+	,processBatches: function(batches,onComplete,onProgress,current,max) {
+		var _gthis = this;
+		if(batches.length == 0) {
+			onComplete();
+			return;
+		}
+		if(onProgress != null) {
+			onProgress(current + 1,max);
+		}
+		var batch = batches.shift();
+		var tmp = "" + this.db.name + "." + "datasourcedata" + " processing batch " + (current + 1) + " of " + max + " (" + batch.length;
+		core_data_dao_Logger.get_instance().log(tmp + " items)");
+		core_data.addTableData(this.db.name,"datasourcedata",batch).then(function(batchResult) {
+			_gthis.processBatches(batches,onComplete,onProgress,current + 1,max);
+		});
+	}
+	,addDefaultData: function() {
+		return new Promise(function(resolve,reject) {
+			resolve(true);
+		});
+	}
+	,__class__: core_data_DataSourceDataTable
+};
+var core_data_DataSourceUtils = function() {
+};
+$hxClasses["core.data.DataSourceUtils"] = core_data_DataSourceUtils;
+core_data_DataSourceUtils.__name__ = "core.data.DataSourceUtils";
+core_data_DataSourceUtils.prototype = {
+	dataSource: function(dataSourceId) {
+		var _g = 0;
+		var _g1 = core_data_InternalDB.dataSources.data;
+		while(_g < _g1.length) {
+			var d = _g1[_g];
+			++_g;
+			if(d.get_dataSourceId() == dataSourceId) {
+				return d;
+			}
+		}
+		return null;
+	}
+	,__class__: core_data_DataSourceUtils
+};
 var core_data_DatabaseBatchOperationType = $hxEnums["core.data.DatabaseBatchOperationType"] = { __ename__:true,__constructs__:null
 	,CreateDatabase: {_hx_name:"CreateDatabase",_hx_index:0,__enum__:"core.data.DatabaseBatchOperationType",toString:$estr}
 	,CreateTable: {_hx_name:"CreateTable",_hx_index:1,__enum__:"core.data.DatabaseBatchOperationType",toString:$estr}
@@ -10532,7 +11407,9 @@ core_data_GenericData.prototype = {
 	}
 	,fromArray: function(data) {
 		this.data = [];
-		this._hash = data.pop();
+		if(this.table != null && this.table.info != null && data.length > this.table.info.fieldDefinitions.length) {
+			this._hash = data.pop();
+		}
 		var _g = 0;
 		while(_g < data.length) {
 			var d = data[_g];
@@ -11207,7 +12084,6 @@ core_data_IconDataTable.prototype = {
 						++_g;
 						var record = new core_data_IconData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.IconDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -11624,6 +12500,7 @@ var core_data_InternalDB = function() {
 	this.pageData = new core_data_PageDataTable();
 	this.layoutData = new core_data_LayoutDataTable();
 	this.portletInstanceData = new core_data_PortletInstanceDataTable();
+	this.dataSourceData = new core_data_DataSourceDataTable();
 	this.registerTable(core_data_OrganizationDataTable.TableName,this.organizationData);
 	this.registerTable(core_data_UserDataTable.TableName,this.userData);
 	this.registerTable(core_data_UserGroupDataTable.TableName,this.userGroupData);
@@ -11639,6 +12516,7 @@ var core_data_InternalDB = function() {
 	this.registerTable(core_data_PageDataTable.TableName,this.pageData);
 	this.registerTable(core_data_LayoutDataTable.TableName,this.layoutData);
 	this.registerTable(core_data_PortletInstanceDataTable.TableName,this.portletInstanceData);
+	this.registerTable(core_data_DataSourceDataTable.TableName,this.dataSourceData);
 	this.caches.organizations = new core_data_CachedDataTable(this.organizationData);
 	this.caches.users = new core_data_CachedDataTable(this.userData,new core_data_UserUtils());
 	this.caches.userGroups = new core_data_CachedDataTable(this.userGroupData,new core_data_UserGroupUtils());
@@ -11654,6 +12532,7 @@ var core_data_InternalDB = function() {
 	this.caches.pages = new core_data_CachedDataTable(this.pageData,new core_data_PageUtils());
 	this.caches.layouts = new core_data_CachedDataTable(this.layoutData,new core_data_LayoutUtils());
 	this.caches.portletInstances = new core_data_CachedDataTable(this.portletInstanceData,new core_data_PortletInstanceUtils());
+	this.caches.dataSources = new core_data_CachedDataTable(this.dataSourceData,new core_data_DataSourceUtils());
 	core_data_InternalDB.organizations = this.caches.organizations;
 	core_data_InternalDB.users = this.caches.users;
 	core_data_InternalDB.userGroups = this.caches.userGroups;
@@ -11669,6 +12548,7 @@ var core_data_InternalDB = function() {
 	core_data_InternalDB.pages = this.caches.pages;
 	core_data_InternalDB.layouts = this.caches.layouts;
 	core_data_InternalDB.portletInstances = this.caches.portletInstances;
+	core_data_InternalDB.dataSources = this.caches.dataSources;
 };
 $hxClasses["core.data.InternalDB"] = core_data_InternalDB;
 core_data_InternalDB.__name__ = "core.data.InternalDB";
@@ -11696,11 +12576,12 @@ core_data_InternalDB.prototype = $extend(core_data_dao_Database.prototype,{
 	,pageData: null
 	,layoutData: null
 	,portletInstanceData: null
+	,dataSourceData: null
 	,caches: null
 	,init: function() {
 		var _gthis = this;
 		return new Promise(function(resolve,reject) {
-			var promises = [_gthis.organizationData.init(),_gthis.userData.init(),_gthis.userGroupData.init(),_gthis.userOrganizationLinkData.init(),_gthis.dashboardData.init(),_gthis.dashboardGroupData.init(),_gthis.iconData.init(),_gthis.roleData.init(),_gthis.permissionData.init(),_gthis.userGroupLinkData.init(),_gthis.userGroupRoleLinkData.init(),_gthis.siteData.init(),_gthis.pageData.init(),_gthis.layoutData.init(),_gthis.portletInstanceData.init()];
+			var promises = [_gthis.organizationData.init(),_gthis.userData.init(),_gthis.userGroupData.init(),_gthis.userOrganizationLinkData.init(),_gthis.dashboardData.init(),_gthis.dashboardGroupData.init(),_gthis.iconData.init(),_gthis.roleData.init(),_gthis.permissionData.init(),_gthis.userGroupLinkData.init(),_gthis.userGroupRoleLinkData.init(),_gthis.siteData.init(),_gthis.pageData.init(),_gthis.layoutData.init(),_gthis.portletInstanceData.init(),_gthis.dataSourceData.init()];
 			core_data_utils_PromiseUtils.runSequentially(promises,function() {
 				resolve(true);
 			});
@@ -11709,7 +12590,7 @@ core_data_InternalDB.prototype = $extend(core_data_dao_Database.prototype,{
 	,start: function() {
 		var _gthis = this;
 		return new Promise(function(resolve,reject) {
-			var promises = [_gthis.caches.organizations.fillCache(),_gthis.caches.users.fillCache(),_gthis.caches.userGroups.fillCache(),_gthis.caches.userOrganizationLinks.fillCache(),_gthis.caches.dashboards.fillCache(),_gthis.caches.dashboardGroups.fillCache(),_gthis.caches.icons.fillCache(),_gthis.caches.roles.fillCache(),_gthis.caches.permissions.fillCache(),_gthis.caches.userGroupLinks.fillCache(),_gthis.caches.userGroupRoleLinks.fillCache(),_gthis.caches.sites.fillCache(),_gthis.caches.pages.fillCache(),_gthis.caches.layouts.fillCache(),_gthis.caches.portletInstances.fillCache()];
+			var promises = [_gthis.caches.organizations.fillCache(),_gthis.caches.users.fillCache(),_gthis.caches.userGroups.fillCache(),_gthis.caches.userOrganizationLinks.fillCache(),_gthis.caches.dashboards.fillCache(),_gthis.caches.dashboardGroups.fillCache(),_gthis.caches.icons.fillCache(),_gthis.caches.roles.fillCache(),_gthis.caches.permissions.fillCache(),_gthis.caches.userGroupLinks.fillCache(),_gthis.caches.userGroupRoleLinks.fillCache(),_gthis.caches.sites.fillCache(),_gthis.caches.pages.fillCache(),_gthis.caches.layouts.fillCache(),_gthis.caches.portletInstances.fillCache(),_gthis.caches.dataSources.fillCache()];
 			core_data_utils_PromiseUtils.runSequentially(promises,function() {
 				resolve(true);
 			});
@@ -11929,7 +12810,6 @@ core_data_LayoutDataTable.prototype = {
 						++_g;
 						var record = new core_data_LayoutData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.LayoutDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -12428,7 +13308,6 @@ core_data_OrganizationDataTable.prototype = {
 						++_g;
 						var record = new core_data_OrganizationData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.OrganizationDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -12967,7 +13846,6 @@ core_data_PageDataTable.prototype = {
 						++_g;
 						var record = new core_data_PageData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.PageDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -13552,7 +14430,6 @@ core_data_PermissionDataTable.prototype = {
 						++_g;
 						var record = new core_data_PermissionData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.PermissionDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -14057,7 +14934,6 @@ core_data_PortletInstanceDataTable.prototype = {
 						++_g;
 						var record = new core_data_PortletInstanceData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.PortletInstanceDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -14402,23 +15278,58 @@ core_data_PortletInstancePortletData.toJsonString = function(o) {
 core_data_PortletInstancePortletData.prototype = {
 	data: null
 	,get_portletClassName: function() {
-		if(this.data == null) {
-			return null;
-		}
-		if(this.data.portletClassName == null) {
-			return null;
-		}
-		return this.data.portletClassName;
+		return this.getStringValue("portletClassName");
 	}
 	,set_portletClassName: function(value) {
+		return this.setValue("portletClassName",value);
+	}
+	,get_dataSourceId: function() {
+		return this.getIntValue("dataSourceId");
+	}
+	,set_dataSourceId: function(value) {
+		return this.setValue("dataSourceId",value);
+	}
+	,get_transform: function() {
+		return this.getStringValue("transform");
+	}
+	,set_transform: function(value) {
+		return this.setValue("transform",value);
+	}
+	,getStringValue: function(name,defaultValue) {
 		if(this.data == null) {
 			this.data = { };
 		}
-		this.data.portletClassName = value;
+		if(!Object.prototype.hasOwnProperty.call(this.data,name)) {
+			return defaultValue;
+		}
+		return Std.string(Reflect.field(this.data,name));
+	}
+	,getIntValue: function(name,defaultValue) {
+		var s = this.getStringValue(name,null);
+		if(s == null) {
+			return defaultValue;
+		}
+		return Std.parseInt(s);
+	}
+	,getBoolValue: function(name,defaultValue) {
+		if(defaultValue == null) {
+			defaultValue = false;
+		}
+		var s = this.getStringValue(name,null);
+		if(s == null) {
+			return defaultValue;
+		}
+		return s == "true";
+	}
+	,setValue: function(name,value) {
+		if(this.data == null) {
+			this.data = { };
+		}
+		this.data[name] = value;
 		return value;
 	}
 	,__class__: core_data_PortletInstancePortletData
-	,__properties__: {set_portletClassName:"set_portletClassName",get_portletClassName:"get_portletClassName"}
+	,__properties__: {set_transform:"set_transform",get_transform:"get_transform",set_dataSourceId:"set_dataSourceId",get_dataSourceId:"get_dataSourceId",set_portletClassName:"set_portletClassName",get_portletClassName:"get_portletClassName"}
 };
 var core_data_PortletInstanceUtils = function() {
 };
@@ -14647,7 +15558,6 @@ core_data_RoleDataTable.prototype = {
 						++_g;
 						var record = new core_data_RoleData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.RoleDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -15169,7 +16079,6 @@ core_data_SiteDataTable.prototype = {
 						++_g;
 						var record = new core_data_SiteData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.SiteDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -15732,7 +16641,6 @@ core_data_UserDataTable.prototype = {
 						++_g;
 						var record = new core_data_UserData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.UserDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -16220,7 +17128,6 @@ core_data_UserGroupDataTable.prototype = {
 						++_g;
 						var record = new core_data_UserGroupData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.UserGroupDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -16691,7 +17598,6 @@ core_data_UserGroupRoleLinkDataTable.prototype = {
 						++_g;
 						var record = new core_data_UserGroupRoleLinkData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.UserGroupRoleLinkDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -17215,7 +18121,6 @@ core_data_UserOrganizationLinkDataTable.prototype = {
 						++_g;
 						var record = new core_data_UserOrganizationLinkData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.UserOrganizationLinkDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -17686,7 +18591,6 @@ core_data_UserUserGroupLinkDataTable.prototype = {
 						++_g;
 						var record = new core_data_UserUserGroupLinkData();
 						record.table = _gthis;
-						haxe_Log.trace("----------------> " + Std.string(rawRecord),{ fileName : "../../haxe/core/data/dao/Macros.hx", lineNumber : 230, className : "core.data.UserUserGroupLinkDataTable", methodName : "fetch"});
 						record.fromArray(rawRecord);
 						records.push(record);
 						var _g2 = 0;
@@ -53341,14 +54245,12 @@ panels_PageDetailsPanel.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,onPortletAssignPortletClicked: function(event) {
 		var _gthis = this;
 		var portletContainer = event.portletContainer;
-		haxe_Log.trace("assign portlet! " + portletContainer.get_id(),{ fileName : "haxe/panels/PageDetailsPanel.hx", lineNumber : 33, className : "panels.PageDetailsPanel", methodName : "onPortletAssignPortletClicked"});
 		var portletContainerId = portletContainer.get_id();
 		var dialog = new dialogs_SelectPortletDialog();
 		dialog.set_onDialogClosed(function(e) {
 			var larr = haxe_ui_containers_dialogs_DialogButton.toString(e.button).split("|");
 			if(larr.indexOf(haxe_ui_containers_dialogs_DialogButton.toString("Select")) != -1) {
 				var selectedClassName = dialog.portletTypeSelector.get_selectedItem().className;
-				haxe_Log.trace("selected: " + selectedClassName,{ fileName : "haxe/panels/PageDetailsPanel.hx", lineNumber : 40, className : "panels.PageDetailsPanel", methodName : "onPortletAssignPortletClicked"});
 				var portletInstance = core_components_portlets_PortletFactory.get_instance().createInstance(selectedClassName);
 				_gthis.pageLayoutPreview.assignPortletInstance(portletContainerId,portletInstance);
 			}
@@ -53374,7 +54276,6 @@ panels_PageDetailsPanel.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 			++_g;
 			var portletInstance = portletContainer.get_portletInstance();
 			if(portletInstance != null) {
-				haxe_Log.trace("-----> " + portletContainer.get_id() + ", " + portletInstance.get_className(),{ fileName : "haxe/panels/PageDetailsPanel.hx", lineNumber : 69, className : "panels.PageDetailsPanel", methodName : "onUpdate"});
 				portletInstances.push(portletInstance);
 			}
 		}
@@ -53385,7 +54286,6 @@ panels_PageDetailsPanel.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 			++_g;
 			var portletDetails = portletInstance.get_portletDetails();
 			portletsToAssign.push(portletDetails);
-			haxe_Log.trace(portletDetails.get_portletData(),{ fileName : "haxe/panels/PageDetailsPanel.hx", lineNumber : 78, className : "panels.PageDetailsPanel", methodName : "onUpdate", customParams : [portletDetails.get_layoutData()]});
 		}
 		this._working = new components_WorkingIndicator();
 		this._working.showWorking();
@@ -55201,7 +56101,6 @@ sidebars_ImportDataSourceSidebar.prototype = $extend(haxe_ui_containers_SideBar.
 		this._working = new components_WorkingIndicator();
 		this._working.showWorking();
 		core_data_DatabaseManager.get_instance().performBatchOperations(function(operation,current,max) {
-			haxe_Log.trace(operation.type,{ fileName : "haxe/sidebars/ImportDataSourceSidebar.hx", lineNumber : 220, className : "sidebars.ImportDataSourceSidebar", methodName : "createData", customParams : [current,max]});
 			switch(operation.type._hx_index) {
 			case 0:
 				_gthis._working.set_message("Creating Core");
@@ -55214,8 +56113,19 @@ sidebars_ImportDataSourceSidebar.prototype = $extend(haxe_ui_containers_SideBar.
 				break;
 			}
 		}).then(function(result) {
-			_gthis._working.workComplete();
-			views_DataView.instance.refresh(dbName,tableName);
+			if(_gthis.createNewTableOption.get_selected() == true) {
+				var dataSource = core_data_InternalDB.dataSources.createObject();
+				dataSource.set_databaseName(dbName);
+				dataSource.set_tableName(tableName);
+				dataSource.set_configData("{}");
+				core_data_InternalDB.dataSources.addObject(dataSource).then(function(r) {
+					_gthis._working.workComplete();
+					views_DataView.instance.refresh(dbName,tableName);
+				});
+			} else {
+				_gthis._working.workComplete();
+				views_DataView.instance.refresh(dbName,tableName);
+			}
 		});
 	}
 	,onHideAnimationEnd: function() {
@@ -55946,9 +56856,6 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 		link.setAttribute("download",fileName);
 		window.document.body.append(link);
 		link.click();
-		haxe_Log.trace(this._table.records.length,{ fileName : "haxe/views/DataView.hx", lineNumber : 150, className : "views.DataView", methodName : "exportCurrentTable"});
-		haxe_Log.trace(this._table.info,{ fileName : "haxe/views/DataView.hx", lineNumber : 152, className : "views.DataView", methodName : "exportCurrentTable"});
-		haxe_Log.trace(sb_b,{ fileName : "haxe/views/DataView.hx", lineNumber : 153, className : "views.DataView", methodName : "exportCurrentTable"});
 	}
 	,onDatabaseSelectorChanged: function(e) {
 		var _gthis = this;
@@ -55993,9 +56900,7 @@ views_DataView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 			return;
 		}
 		var hash = selectedItem.hash;
-		haxe_Log.trace("delete row with hash: " + hash,{ fileName : "haxe/views/DataView.hx", lineNumber : 209, className : "views.DataView", methodName : "onDeleteSelectedRowButton"});
 		core_data.removeTableData(this._database.name,this._table.name,[hash]).then(function(r) {
-			haxe_Log.trace("delete result: " + Std.string(r),{ fileName : "haxe/views/DataView.hx", lineNumber : 211, className : "views.DataView", methodName : "onDeleteSelectedRowButton"});
 		});
 	}
 	,refreshTableData: function(table) {
@@ -56869,6 +57774,11 @@ core_data_DashboardGroupData.FieldDefinitions = [{ fieldName : "dashboardGroupId
 core_data_DashboardGroupData.PrimaryFieldDefinitions = [{ fieldName : "dashboardGroupId", fieldType : 2}];
 core_data_DashboardGroupData.LinkedFields = [{ tableName : "icondata", fieldName : "iconId"}];
 core_data_DashboardGroupDataTable.TableName = "dashboardgroupdata";
+core_data_DataSourceData.TableName = "datasourcedata";
+core_data_DataSourceData.FieldDefinitions = [{ fieldName : "dataSourceId", fieldType : 3},{ fieldName : "databaseName", fieldType : 1},{ fieldName : "tableName", fieldType : 1},{ fieldName : "configData", fieldType : 1}];
+core_data_DataSourceData.PrimaryFieldDefinitions = [{ fieldName : "dataSourceId", fieldType : 3}];
+core_data_DataSourceData.LinkedFields = [];
+core_data_DataSourceDataTable.TableName = "datasourcedata";
 core_data_DatabaseEvent.Initialized = "dbInitialized";
 core_data_IconData.TableName = "icondata";
 core_data_IconData.FieldDefinitions = [{ fieldName : "iconId", fieldType : 3},{ fieldName : "name", fieldType : 1},{ fieldName : "path", fieldType : 1}];

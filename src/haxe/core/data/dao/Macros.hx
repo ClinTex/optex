@@ -227,7 +227,6 @@ class Macros {
                         for (rawRecord in frag.data) {
                             var record = new $typePath();
                             record.table = this;
-                            trace("----------------> " + rawRecord);
                             record.fromArray(rawRecord);
                             records.push(record);
                             

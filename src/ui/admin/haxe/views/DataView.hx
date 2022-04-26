@@ -146,11 +146,6 @@ class DataView extends VBox {
         link.setAttribute("download", fileName);
         Browser.document.body.append(link);
         link.click();
-
-        trace(_table.records.length);
-
-        trace(_table.info);
-        trace(sb.toString());
     }
 
     @:bind(databaseSelector, UIEvent.CHANGE)
@@ -206,9 +201,7 @@ class DataView extends VBox {
         }
 
         var hash:String = selectedItem.hash;
-        trace("delete row with hash: " + hash);
         CoreData.removeTableData(_database.name, _table.name, [hash]).then(function(r) {
-            trace("delete result: " + r);
         });
     }
 

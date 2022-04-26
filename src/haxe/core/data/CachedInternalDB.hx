@@ -16,6 +16,7 @@ class CachedInternalDB {
     public var pages:CachedDataTable<PageDataTable, PageData, PageUtils>;
     public var layouts:CachedDataTable<LayoutDataTable, LayoutData, LayoutUtils>;
     public var portletInstances:CachedDataTable<PortletInstanceDataTable, PortletInstanceData, PortletInstanceUtils>;
+    public var dataSources:CachedDataTable<DataSourceDataTable, DataSourceData, DataSourceUtils>;
 
     public function new() {
     }

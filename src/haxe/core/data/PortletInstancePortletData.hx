@@ -10,21 +10,61 @@ class PortletInstancePortletData {
 
     public var portletClassName(get, set):String;
     private function get_portletClassName():String {
-        if (data == null) {
-            return null;
-        }
-        if (data.portletClassName == null) {
-            return null;
-        }
-        return data.portletClassName;
+        return getStringValue("portletClassName");
     }
     private function set_portletClassName(value:String):String {
+        return setValue("portletClassName", value);
+    }
+
+    public var dataSourceId(get, set):Null<Int>;
+    private function get_dataSourceId():Null<Int> {
+        return getIntValue("dataSourceId");
+    }
+    private function set_dataSourceId(value:Null<Int>):Null<Int> {
+        return setValue("dataSourceId", value);
+    }
+
+    public var transform(get, set):String;
+    private function get_transform():String {
+        return getStringValue("transform");
+    }
+    private function set_transform(value:String):String {
+        return setValue("transform", value);
+    }
+
+    public function getStringValue(name:String, defaultValue:String = null):String {
         if (data == null) {
             data = {};
         }
 
-        data.portletClassName = value;
+        if (!Reflect.hasField(data, name)) {
+            return defaultValue;
+        }
 
+        return Std.string(Reflect.field(data, name));
+    }
+
+    public function getIntValue(name:String, defaultValue:Null<Int> = null):Null<Int> {
+        var s = getStringValue(name, null);
+        if (s == null) {
+            return defaultValue;
+        }
+        return Std.parseInt(s);
+    }
+
+    public function getBoolValue(name:String, defaultValue:Null<Bool> = false):Null<Bool> {
+        var s = getStringValue(name, null);
+        if (s == null) {
+            return defaultValue;
+        }
+        return (s == "true");
+    }
+
+    public function setValue(name:String, value:Any):Any {
+        if (data == null) {
+            data = {};
+        }
+        Reflect.setField(data, name, value);
         return value;
     }
 

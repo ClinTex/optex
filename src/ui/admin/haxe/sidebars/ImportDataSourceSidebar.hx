@@ -1,5 +1,6 @@
 package sidebars;
 
+import core.data.InternalDB;
 import core.data.GenericTable;
 import views.DataView;
 import core.data.internal.CoreData.FieldType;
@@ -217,7 +218,6 @@ class ImportDataSourceSidebar extends SideBar {
         _working = new WorkingIndicator();
         _working.showWorking();
         DatabaseManager.instance.performBatchOperations(function(operation, current, max) {
-            trace(operation.type, current, max);
             switch (operation.type) {
                 case CreateDatabase:
                     _working.message = "Creating Core";
@@ -227,8 +227,19 @@ class ImportDataSourceSidebar extends SideBar {
                     _working.message = "Adding Data";
             }
         }).then(function(result) {
-            _working.workComplete();
-            DataView.instance.refresh(dbName, tableName);
+            if (createNewTableOption.selected == true) {
+                var dataSource = InternalDB.dataSources.createObject();
+                dataSource.databaseName = dbName;
+                dataSource.tableName = tableName;
+                dataSource.configData = "{}";
+                InternalDB.dataSources.addObject(dataSource).then(function(r) {
+                    _working.workComplete();
+                    DataView.instance.refresh(dbName, tableName);
+                });
+            } else {
+                _working.workComplete();
+                DataView.instance.refresh(dbName, tableName);
+            }
         });
     }
 

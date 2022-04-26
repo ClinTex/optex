@@ -30,14 +30,12 @@ class PageDetailsPanel extends VBox {
 
     private function onPortletAssignPortletClicked(event:PortletEvent) {
         var portletContainer = event.portletContainer;
-        trace("assign portlet! " + portletContainer.id);
         var portletContainerId:String = portletContainer.id;
 
         var dialog = new SelectPortletDialog();
         dialog.onDialogClosed = function(e:DialogEvent) {
             if (e.button == "Select") {
                 var selectedClassName = dialog.portletTypeSelector.selectedItem.className;
-                trace("selected: " + selectedClassName);
 
                 var portletInstance = PortletFactory.instance.createInstance(selectedClassName);
                 pageLayoutPreview.assignPortletInstance(portletContainerId, portletInstance);
@@ -66,7 +64,6 @@ class PageDetailsPanel extends VBox {
         for (portletContainer in portletContainers) {
             var portletInstance = portletContainer.portletInstance;
             if (portletInstance != null) {
-                trace("-----> " + portletContainer.id + ", " + portletInstance.className);
                 portletInstances.push(portletInstance);
             }
         }
@@ -75,7 +72,6 @@ class PageDetailsPanel extends VBox {
         for (portletInstance in portletInstances) {
             var portletDetails:PortletInstanceData = portletInstance.portletDetails;
             portletsToAssign.push(portletDetails);
-            trace(portletDetails.portletData, portletDetails.layoutData);
         }
 
 		_working = new WorkingIndicator();

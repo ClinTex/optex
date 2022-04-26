@@ -21,7 +21,9 @@ class GenericData implements IDataObject {
 
     public function fromArray(data:Array<Any>):Void {
         this.data = [];
-        _hash = data.pop();
+        if (table != null && table.info != null && data.length > table.info.fieldDefinitions.length) {
+            _hash = data.pop();
+        }
         for (d in data) {
             this.data.push(ConversionUtils.toString(d));
         }

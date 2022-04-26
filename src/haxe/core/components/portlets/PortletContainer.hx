@@ -21,6 +21,7 @@ class PortletContainer extends Box {
         super();
         _portletContent = new Box();
         _portletContent.percentWidth = _portletContent.percentHeight = 100;
+        _portletContent.id = "portletContent";
         addComponent(_portletContent);
 
         _controls = new HBox();
@@ -64,11 +65,22 @@ class PortletContainer extends Box {
 
     private function onConfigurePortletInstance(_) {
         var dialog = new GenericPortletConfigDialog();
-        dialog.portletConfigJsonField.text = _portletInstance.portletDetails.portletData;
+        dialog.addConfigPage(_portletInstance.configPage);
+        var prettyJson = Json.stringify(portletInstance.instanceData.data, null, "  ");
+        dialog.portletConfigJsonField.text = prettyJson;
         dialog.onDialogClosed = function(event:DialogEvent) {
             if (event.button == DialogButton.APPLY) {
                 if (_portletInstance != null) {
-                    _portletInstance.portletDetails.portletData = dialog.portletConfigJsonField.text;
+                    var json = Json.parse(dialog.portletConfigJsonField.text);
+                    for (f in Reflect.fields(json)) {
+                        var v = Reflect.field(json, f);
+                        Reflect.setField(portletInstance.instanceData.data, f, v);
+                    }
+
+                    page.preloadPortletInstance(_portletInstance).then(function(r) {
+                        _portletInstance.initPortlet();
+                        _portletInstance.refreshView();
+                    });
                 }
             }
         }
@@ -95,7 +107,11 @@ class PortletContainer extends Box {
             }
             _portletInstance.layoutData.portletContainerId = this.id;
     
+            _portletInstance.percentWidth = 100;
+            _portletInstance.percentHeight = 100;
             _portletContent.addComponent(_portletInstance);
+            _portletInstance.initPortlet();
+            _portletInstance.refreshView();
             if (_editable) {
                 //_controls.show();
             }
@@ -149,5 +165,11 @@ class PortletContainer extends Box {
         var portletEvent = new PortletEvent(PortletEvent.ASSIGN_PORTLET_CLICKED);
         portletEvent.portletContainer = this;
         dispatch(portletEvent);
+    }
+
+    public var page(get, null):Page;
+    private function get_page():Page {
+        var p = findAncestor(Page);
+        return p;
     }
 }

@@ -1,0 +1,3 @@
+<vbox text="Bar Graph">
+    <button text="bar graph config" />
+</vbox>

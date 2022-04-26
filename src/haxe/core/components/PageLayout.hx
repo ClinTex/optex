@@ -10,7 +10,7 @@ import haxe.ui.containers.Box;
 import core.data.InternalDB;
 import core.components.portlets.PortletFactory;
 
-class PageLayout extends Box {
+class PageLayout extends Page {
     public function new() {
         super();
     }
@@ -50,15 +50,19 @@ class PageLayout extends Box {
             trace("WARNING: could not find portlet container with an id of: " + portletContainerId);
             return;
         }
-        portletContainer.portletInstance = portletInstance;
+
+        preloadPortletInstance(portletInstance).then(function(e) {
+                portletContainer.portletInstance = portletInstance;
+        });
     }
 
     public function assignPortletInstancesFromPage(pageId:Int) {
         for (portletDetails in InternalDB.pages.utils.portletInstances(pageId)) {
             var instanceData = PortletInstancePortletData.fomJsonString(portletDetails.portletData);
-            trace(portletDetails.portletData);
             var layoutData = PortletInstanceLayoutData.fomJsonString(portletDetails.layoutData);
             var portletInstance = PortletFactory.instance.createInstance(instanceData.portletClassName);
+            portletInstance.instanceData = instanceData;
+            portletInstance.layoutData = layoutData;
             assignPortletInstance(layoutData.portletContainerId, portletInstance);
         }
     }
