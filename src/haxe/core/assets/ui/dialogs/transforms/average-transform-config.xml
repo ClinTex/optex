@@ -1,0 +1,9 @@
+<dialog title="'Average' Config">
+    <grid>
+        <label text="Field" verticalAlign="center" />
+        <dropdown id="fieldSelector" width="200" />
+
+        <spacer />
+        <checkbox id="fieldFromFilter" text="Obtain value from filter" />
+    </grid>
+</dialog>

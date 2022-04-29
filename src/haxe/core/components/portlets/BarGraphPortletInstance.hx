@@ -6,11 +6,12 @@ import core.graphs.BarGraph;
 import core.data.InternalDB;
 import core.graphs.ColorCalculator_OLD;
 import core.graphs.MarkerFunctions;
+import haxe.ui.events.UIEvent;
 
 using StringTools;
 
 class BarGraphPortletInstance extends PortletInstance {
-    private var _bar:BarGraph;
+    private var _bar:BarGraph = null;
 
     private var _dataSourceData:DataSourceData = null;
     private var _transform:String;
@@ -37,15 +38,17 @@ class BarGraphPortletInstance extends PortletInstance {
         _markerBehind = getConfigBoolValue("markerBehind");
         _colorCalculator = getConfigValue("colorCalculator");
 
-        _bar = new BarGraph();
-        _bar.percentWidth = 100;
-        _bar.percentHeight = 100;
-        _bar.labelRotation = -45;
+        if (_bar == null) {
+            _bar = new BarGraph();
+            _bar.percentWidth = 100;
+            _bar.percentHeight = 100;
+            _bar.labelRotation = -45;
 
-        _bar.registerEvent(BarGraphEvent.BAR_SELECTED, onBarSelected);
-        _bar.registerEvent(BarGraphEvent.BAR_UNSELECTED, onBarUnselected);
+            _bar.registerEvent(BarGraphEvent.BAR_SELECTED, onBarSelected);
+            _bar.registerEvent(BarGraphEvent.BAR_UNSELECTED, onBarUnselected);
 
-        addComponent(_bar);
+            addComponent(_bar);
+        }
     }
 
     public override function refreshView() {
@@ -56,8 +59,6 @@ class BarGraphPortletInstance extends PortletInstance {
             trace("data source data is null");
             return;
         }
-
-trace("doing refresh");
 
         page.getTableData(this).then(function(table) {
             trace("bar graph refresh view: " + table.records.length);
@@ -162,5 +163,28 @@ trace("doing refresh");
 private class BarGraphConfigPage extends PortletConfigPage {
     public function new() {
         super();
+    }
+
+    private override function onReady() {
+        super.onReady();
+        if (portletData.dataSourceId != null) {
+            datasourceSelector.selectedDataSource = InternalDB.dataSources.utils.dataSource(portletData.dataSourceId);
+        }
+        if (portletData.transform != null) {
+            transformBuilder.selectedDataSource = InternalDB.dataSources.utils.dataSource(portletData.dataSourceId);
+            transformBuilder.transformString = portletData.transform;
+        }
+    }
+
+    @:bind(datasourceSelector, UIEvent.CHANGE)
+    private function onDataSourceSelected(_) {
+        transformBuilder.selectedDataSource = datasourceSelector.selectedDataSource;
+        portletData.dataSourceId = datasourceSelector.selectedDataSource.dataSourceId;
+    }
+
+    @:bind(transformBuilder, UIEvent.CHANGE)
+    private function onTransformBuilderChange(_) {
+        trace("CHANGED: " + transformBuilder.transformString);
+        portletData.transform = transformBuilder.transformString;
     }
 }

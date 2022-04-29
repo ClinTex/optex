@@ -9,12 +9,14 @@ import js.lib.Promise;
 import core.data.DatabaseManager;
 import core.data.GenericTable;
 import core.data.dao.Database;
+import core.components.portlets.PortletDataUtils;
 
 class Page extends Box {
     public function new() {
         super();
     }
 
+    /*
     private var _databaseCache:Map<String, Database> = [];
     public function getDatabase(databaseName:String):Promise<Database> {
         return new Promise((resolve, reject) -> {
@@ -50,12 +52,13 @@ class Page extends Box {
             });
         });
     }
+    */
 
     public function getTableData(portletInstance:PortletInstance):Promise<GenericTable> {
         return new Promise((resolve, reject) -> {
             var dataSourceData:DataSourceData = InternalDB.dataSources.utils.dataSource(portletInstance.instanceData.dataSourceId);
             if (dataSourceData != null) {
-                fetchTableData(dataSourceData.databaseName, dataSourceData.tableName).then(function(unfilteredTable) {
+                PortletDataUtils.fetchTableData(dataSourceData.databaseName, dataSourceData.tableName).then(function(unfilteredTable) {
                     // TODO: filter table here if required
                     if (portletInstance.instanceData.transform != null) {
                         unfilteredTable = unfilteredTable.transform(portletInstance.instanceData.transform , null);
@@ -86,7 +89,7 @@ class Page extends Box {
             var dataSourceData = InternalDB.dataSources.utils.dataSource(portletInstance.instanceData.dataSourceId);
             if (dataSourceData != null) {
                 trace("preload: " + dataSourceData.databaseName, dataSourceData.tableName);
-                fetchTableData(dataSourceData.databaseName, dataSourceData.tableName).then(function(r) {
+                PortletDataUtils.fetchTableData(dataSourceData.databaseName, dataSourceData.tableName).then(function(r) {
                     trace("preloaded: " + r.records.length);
                     resolve(true);
                 });

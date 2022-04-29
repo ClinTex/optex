@@ -1,3 +1,9 @@
-<vbox text="Bar Graph">
-    <button text="bar graph config" />
+<vbox text="Bar Graph" width="100%">
+    <grid width="100%">
+        <label text="Data Source" verticalAlign="center" />
+        <datasource-selector id="datasourceSelector" width="100%" />
+
+        <label text="Transform" verticalAlign="top" style="padding-top: 6px;" />
+        <complex-transform-builder id="transformBuilder" width="100%" />
+    </grid>
 </vbox>

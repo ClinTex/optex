@@ -65,18 +65,25 @@ class PortletContainer extends Box {
 
     private function onConfigurePortletInstance(_) {
         var dialog = new GenericPortletConfigDialog();
+        dialog.page = page;
+        dialog.portletData = portletInstance.instanceData;
+        trace("BEFORE -------------------------------");
+        trace(portletInstance.instanceData.data);
+        trace("-------------------------------");
         dialog.addConfigPage(_portletInstance.configPage);
-        var prettyJson = Json.stringify(portletInstance.instanceData.data, null, "  ");
-        dialog.portletConfigJsonField.text = prettyJson;
         dialog.onDialogClosed = function(event:DialogEvent) {
             if (event.button == DialogButton.APPLY) {
                 if (_portletInstance != null) {
-                    var json = Json.parse(dialog.portletConfigJsonField.text);
-                    for (f in Reflect.fields(json)) {
-                        var v = Reflect.field(json, f);
+                    /*
+                    for (f in Reflect.fields(dialog.portletData.data)) {
+                        var v = Reflect.field(dialog.portletData.data, f);
                         Reflect.setField(portletInstance.instanceData.data, f, v);
                     }
-
+                    */
+                    portletInstance.instanceData.data = dialog.portletData.data;
+                    trace("AFTER -------------------------------");
+                    trace(portletInstance.instanceData.data);
+                    trace("-------------------------------");
                     page.preloadPortletInstance(_portletInstance).then(function(r) {
                         _portletInstance.initPortlet();
                         _portletInstance.refreshView();

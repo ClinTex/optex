@@ -2,10 +2,15 @@ package core.components.dialogs;
 
 import core.components.portlets.PortletConfigPage;
 import haxe.ui.containers.dialogs.Dialog;
+import core.data.PortletInstancePortletData;
+import haxe.ui.events.UIEvent;
+import haxe.Json;
 
 @:build(haxe.ui.ComponentBuilder.build("core/assets/ui/dialogs/generic-portlet-config.xml"))
 class GenericPortletConfigDialog extends Dialog {
     private var _configPages:Array<PortletConfigPage> = [];
+
+    public var portletData:PortletInstancePortletData;
 
     public function new() {
         super();
@@ -22,10 +27,30 @@ class GenericPortletConfigDialog extends Dialog {
         mainTabs.pageIndex = 0;
     }
 
+    @:bind(mainTabs, UIEvent.CHANGE)
+    private function onMainTabsChange(_) {
+        if (mainTabs.selectedPage.text == "JSON") {
+            var prettyJson = Json.stringify(portletData.data, null, "  ");
+            portletConfigJsonField.text = prettyJson;
+        }
+    }
+
     public function addConfigPage(configPage:PortletConfigPage) {
         if (configPage == null) {
             return;
         }
+        configPage.page = page;
+        configPage.portletData = portletData;
         _configPages.push(configPage);
+    }
+
+    private var _page:Page = null;
+    public var page(get, set):Page;
+    private function get_page():Page {
+        return _page;
+    }
+    private function set_page(value:Page):Page {
+        _page = value;
+        return value;
     }
 }
