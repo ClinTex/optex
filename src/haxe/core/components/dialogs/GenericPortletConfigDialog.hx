@@ -14,7 +14,7 @@ class GenericPortletConfigDialog extends Dialog {
 
     public function new() {
         super();
-        buttons = DialogButton.CANCEL | DialogButton.APPLY;
+        buttons = DialogButton.CLOSE;
     }
 
     private override function onReady() {

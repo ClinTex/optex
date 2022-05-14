@@ -46,6 +46,10 @@ class DatasourceSelector extends HBox {
     private function set_selectedDataSource(value:DataSourceData):DataSourceData {
         _selectedDataSource = value;
         refreshUI();
+        /*
+        var event = new UIEvent(UIEvent.CHANGE);
+        this.dispatch(event);
+        */
         return value;
     }
 

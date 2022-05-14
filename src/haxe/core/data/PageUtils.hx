@@ -7,6 +7,18 @@ class PageUtils {
     public function new() {
     }
 
+    public function page(pageId:Int):PageData {
+        var page = null;
+        for (p in InternalDB.pages.data) {
+            if (p.pageId == pageId) {
+                page = p;
+                break;
+            }
+        }
+        return page;
+    }
+
+
     public function portletInstances(pageId:Int):Array<PortletInstanceData> {
         var instances = [];
 

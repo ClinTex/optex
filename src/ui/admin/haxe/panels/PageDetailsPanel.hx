@@ -1,12 +1,11 @@
 package panels;
 
+import haxe.ui.data.ArrayDataSource;
 import core.data.PortletInstanceData;
 import core.components.portlets.PortletInstance;
 import core.components.portlets.PortletEvent;
 import haxe.ui.containers.dialogs.Dialog.DialogEvent;
 import dialogs.SelectPortletDialog;
-import haxe.ui.events.MouseEvent;
-import haxe.ui.containers.Box;
 import core.data.LayoutData;
 import views.OrganizationsView;
 import components.WorkingIndicator;
@@ -49,6 +48,21 @@ class PageDetailsPanel extends VBox {
 		super.onReady();
 
 		pageNameField.text = pageDetails.name;
+        var ds = new ArrayDataSource<Dynamic>();
+        var indexToSelect = 0;
+        var n = 0;
+        for (layout in InternalDB.layouts.utils.availableLayoutsForPage(pageDetails.pageId)) {
+            if (layout.layoutId == pageDetails.layoutId) {
+                indexToSelect = n;
+            }
+            ds.add({
+                text: layout.name,
+                layout: layout
+            });
+            n++;
+        }
+        layoutSelector.dataSource = ds;
+        layoutSelector.selectedIndex = indexToSelect;
 
 		var layout:LayoutData = InternalDB.layouts.utils.layout(pageDetails.layoutId);
 		pageLayoutPreview.layoutData = layout.layoutData;
@@ -58,6 +72,8 @@ class PageDetailsPanel extends VBox {
 	private var _working:WorkingIndicator;
 	private function onUpdate() {
 		pageDetails.name = pageNameField.text;
+        var layout:LayoutData = layoutSelector.selectedItem.layout;
+        pageDetails.layoutId = layout.layoutId;
 
         var portletContainers = pageLayoutPreview.portletContainers;
         var portletInstances:Array<PortletInstance> = [];

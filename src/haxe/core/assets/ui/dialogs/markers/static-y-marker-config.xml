@@ -1,0 +1,6 @@
+<dialog title="'Static Line (Y-Axis)' Config">
+    <grid>
+        <label text="Value" verticalAlign="center" />
+        <textfield id="fieldValue" width="200" />
+    </grid>
+</dialog>

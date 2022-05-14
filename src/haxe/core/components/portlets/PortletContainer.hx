@@ -65,12 +65,16 @@ class PortletContainer extends Box {
 
     private function onConfigurePortletInstance(_) {
         var dialog = new GenericPortletConfigDialog();
+        dialog.modal = false;
         dialog.page = page;
         dialog.portletData = portletInstance.instanceData;
         trace("BEFORE -------------------------------");
         trace(portletInstance.instanceData.data);
         trace("-------------------------------");
         dialog.addConfigPage(_portletInstance.configPage);
+        dialog.onChange = function(_) {
+            applyPortletConfig(dialog.portletData.data);
+        }
         dialog.onDialogClosed = function(event:DialogEvent) {
             if (event.button == DialogButton.APPLY) {
                 if (_portletInstance != null) {
@@ -80,18 +84,24 @@ class PortletContainer extends Box {
                         Reflect.setField(portletInstance.instanceData.data, f, v);
                     }
                     */
-                    portletInstance.instanceData.data = dialog.portletData.data;
-                    trace("AFTER -------------------------------");
-                    trace(portletInstance.instanceData.data);
-                    trace("-------------------------------");
-                    page.preloadPortletInstance(_portletInstance).then(function(r) {
-                        _portletInstance.initPortlet();
-                        _portletInstance.refreshView();
-                    });
+                    applyPortletConfig(dialog.portletData.data);
                 }
             }
         }
         dialog.show();
+    }
+
+    private function applyPortletConfig(data:Dynamic) {
+        if (_portletInstance != null) {
+            portletInstance.instanceData.data = data;
+            trace("AFTER -------------------------------");
+            trace(portletInstance.instanceData.data);
+            trace("-------------------------------");
+            page.preloadPortletInstance(_portletInstance).then(function(r) {
+                _portletInstance.initPortlet();
+                _portletInstance.refreshView();
+            });
+        }
     }
 
     private var _portletInstance:PortletInstance = null;

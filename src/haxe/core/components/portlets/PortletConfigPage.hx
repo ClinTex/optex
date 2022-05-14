@@ -1,5 +1,7 @@
 package core.components.portlets;
 
+import haxe.ui.events.UIEvent;
+import haxe.ui.containers.dialogs.Dialog;
 import core.data.PortletInstancePortletData;
 import haxe.ui.containers.VBox;
 
@@ -18,5 +20,13 @@ class PortletConfigPage extends VBox {
     private function set_page(value:Page):Page {
         _page = value;
         return value;
+    }
+
+    private function dispatchPortletConfigChanged() {
+        var dialog = findAncestor(Dialog);
+        if (dialog != null) {
+            var event = new UIEvent(UIEvent.CHANGE);
+            dialog.dispatch(event);
+        }
     }
 }

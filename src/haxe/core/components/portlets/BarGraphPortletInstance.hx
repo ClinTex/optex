@@ -169,22 +169,59 @@ private class BarGraphConfigPage extends PortletConfigPage {
         super.onReady();
         if (portletData.dataSourceId != null) {
             datasourceSelector.selectedDataSource = InternalDB.dataSources.utils.dataSource(portletData.dataSourceId);
+            axisXSelector.selectedDataSource = datasourceSelector.selectedDataSource;
+            axisYSelector.selectedDataSource = datasourceSelector.selectedDataSource;
         }
         if (portletData.transform != null) {
             transformBuilder.selectedDataSource = InternalDB.dataSources.utils.dataSource(portletData.dataSourceId);
             transformBuilder.transformString = portletData.transform;
         }
+
+        axisXSelector.selectedFieldName = portletData.getStringValue("axisX");
+        axisXSelector.transformString = portletData.transform;
+
+        axisYSelector.selectedFieldName = portletData.getStringValue("axisY");
+        axisYSelector.transformString = portletData.transform;
     }
 
     @:bind(datasourceSelector, UIEvent.CHANGE)
     private function onDataSourceSelected(_) {
         transformBuilder.selectedDataSource = datasourceSelector.selectedDataSource;
         portletData.dataSourceId = datasourceSelector.selectedDataSource.dataSourceId;
+        axisXSelector.selectedDataSource = datasourceSelector.selectedDataSource;
+        axisYSelector.selectedDataSource = datasourceSelector.selectedDataSource;
+        dispatchPortletConfigChanged();
     }
 
     @:bind(transformBuilder, UIEvent.CHANGE)
     private function onTransformBuilderChange(_) {
-        trace("CHANGED: " + transformBuilder.transformString);
         portletData.transform = transformBuilder.transformString;
+        axisXSelector.transformString = portletData.transform;
+        axisYSelector.transformString = portletData.transform;
+        dispatchPortletConfigChanged();
+    }
+
+    @:bind(axisXSelector, UIEvent.CHANGE)
+    private function onAxisXChange(_) {
+        if (axisXSelector.selectedFieldName != null) {
+            portletData.setValue("axisX", axisXSelector.selectedFieldName);
+            dispatchPortletConfigChanged();
+        }
+    }
+
+    @:bind(axisYSelector, UIEvent.CHANGE)
+    private function onAxisYChange(_) {
+        if (axisYSelector.selectedFieldName != null) {
+            portletData.setValue("axisY", axisYSelector.selectedFieldName);
+            dispatchPortletConfigChanged();
+        }
+    }
+
+    @:bind(markerFunctionSelector, UIEvent.CHANGE)
+    private function onMarkerFunctionChange(_) {
+        portletData.setValue("markerFunction", markerFunctionSelector.markerString);
+        portletData.setValue("markerBehind", markerFunctionSelector.markerBehind);
+        dispatchPortletConfigChanged();
+        trace("---------------------------> " + markerFunctionSelector.markerString, markerFunctionSelector.markerBehind);
     }
 }

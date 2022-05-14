@@ -80,6 +80,10 @@ class ComplexTransformBuilder extends VBox {
         var removeButton = new Button();
         removeButton.text = "-";
         hbox.addComponent(removeButton);
+        removeButton.onClick = function(e) {
+            var index = _transformContainer.getComponentIndex(e.target.parentComponent);
+            removeTransform(index);
+        }
 
         var addButton = new Button();
         addButton.text = "+";
@@ -89,6 +93,11 @@ class ComplexTransformBuilder extends VBox {
         hbox.addComponent(addButton);
 
         _transformContainer.addComponent(hbox);
+    }
+
+    public function removeTransform(index:Int) {
+        _transformContainer.removeComponentAt(index);
+        dispatch(new UIEvent(UIEvent.CHANGE));
     }
 
     private function onTransformBuilderChange(_) {
