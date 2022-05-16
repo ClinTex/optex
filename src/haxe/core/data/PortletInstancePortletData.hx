@@ -1,5 +1,6 @@
 package core.data;
 
+import js.lib.Reflect;
 import haxe.Json;
 
 class PortletInstancePortletData {
@@ -30,6 +31,18 @@ class PortletInstancePortletData {
     }
     private function set_transform(value:String):String {
         return setValue("transform", value);
+    }
+
+    public function getObjectValue(name:String, defaultValue:Dynamic = null):Dynamic {
+        if (data == null) {
+            data = {};
+        }
+
+        if (!Reflect.hasField(data, name)) {
+            return defaultValue;
+        }
+
+        return Reflect.field(data, name);
     }
 
     public function getStringValue(name:String, defaultValue:String = null):String {
@@ -68,10 +81,16 @@ class PortletInstancePortletData {
         return value;
     }
 
-    public static function fomJsonString(s:String):PortletInstancePortletData {
+    public static function fromJsonString(s:String):PortletInstancePortletData {
         var data = new PortletInstancePortletData();
         var object:Dynamic = Json.parse(s);
         data.data = object;
+        return data;
+    }
+
+    public static function fromJsonObject(o:Dynamic):PortletInstancePortletData {
+        var data = new PortletInstancePortletData();
+        data.data = o;
         return data;
     }
 

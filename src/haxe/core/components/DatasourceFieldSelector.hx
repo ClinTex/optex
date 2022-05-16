@@ -69,7 +69,12 @@ class DatasourceFieldSelector extends DropDown {
                 });
             }
             this.dataSource = ds;
-            this.selectedItem = _selectedFieldName;
+            if (_selectedFieldName != null) {
+                this.selectedItem = _selectedFieldName;
+            } else {
+                this.selectedIndex = -1;
+                this.selectedIndex = 0;
+            }
         });
     }
     /*

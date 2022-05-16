@@ -1,6 +1,6 @@
 <dialog width="500" title="Configure Portlet">
     <tabview id="mainTabs" width="100%">
-        <vbox text="JSON" width="100%" height="100">
+        <vbox text="JSON" width="100%" height="250">
             <textarea id="portletConfigJsonField" text="{\n}" width="100%" height="100%" />
         </vbox>
     </tabview>

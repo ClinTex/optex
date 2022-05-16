@@ -3,9 +3,6 @@ package panels;
 import haxe.ui.data.ArrayDataSource;
 import core.data.PortletInstanceData;
 import core.components.portlets.PortletInstance;
-import core.components.portlets.PortletEvent;
-import haxe.ui.containers.dialogs.Dialog.DialogEvent;
-import dialogs.SelectPortletDialog;
 import core.data.LayoutData;
 import views.OrganizationsView;
 import components.WorkingIndicator;
@@ -13,7 +10,6 @@ import haxe.ui.components.Button;
 import core.data.PageData;
 import haxe.ui.containers.VBox;
 import core.data.InternalDB;
-import core.components.portlets.PortletFactory;
 
 @:build(haxe.ui.ComponentBuilder.build("assets/panels/page-details.xml"))
 class PageDetailsPanel extends VBox {
@@ -24,25 +20,7 @@ class PageDetailsPanel extends VBox {
 		findComponent("updateButton", Button).onClick = function(_) {
 			onUpdate();
 		}
-        pageLayoutPreview.registerEvent(PortletEvent.ASSIGN_PORTLET_CLICKED, onPortletAssignPortletClicked);
 	}
-
-    private function onPortletAssignPortletClicked(event:PortletEvent) {
-        var portletContainer = event.portletContainer;
-        var portletContainerId:String = portletContainer.id;
-
-        var dialog = new SelectPortletDialog();
-        dialog.onDialogClosed = function(e:DialogEvent) {
-            if (e.button == "Select") {
-                var selectedClassName = dialog.portletTypeSelector.selectedItem.className;
-
-                var portletInstance = PortletFactory.instance.createInstance(selectedClassName);
-                pageLayoutPreview.assignPortletInstance(portletContainerId, portletInstance);
-            }
-        }
-        dialog.show();
-
-    }
 
 	public override function onReady() {
 		super.onReady();
@@ -66,7 +44,7 @@ class PageDetailsPanel extends VBox {
 
 		var layout:LayoutData = InternalDB.layouts.utils.layout(pageDetails.layoutId);
 		pageLayoutPreview.layoutData = layout.layoutData;
-        pageLayoutPreview.assignPortletInstancesFromPage(pageDetails.pageId);
+        pageLayoutPreview.loadPage(pageDetails.pageId);
 	}
 
 	private var _working:WorkingIndicator;

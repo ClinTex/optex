@@ -28,10 +28,16 @@ class PortletInstanceLayoutData {
         return value;
     }
 
-    public static function fomJsonString(s:String):PortletInstanceLayoutData {
+    public static function fromJsonString(s:String):PortletInstanceLayoutData {
         var data = new PortletInstanceLayoutData();
         var object:Dynamic = Json.parse(s);
         data.data = object;
+        return data;
+    }
+
+    public static function fromJsonObject(o:Dynamic):PortletInstanceLayoutData {
+        var data = new PortletInstanceLayoutData();
+        data.data = o;
         return data;
     }
 

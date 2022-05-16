@@ -11,6 +11,8 @@ import haxe.ui.components.DropDown;
 import haxe.ui.containers.HBox;
 import haxe.ui.containers.VBox;
 
+using StringTools;
+
 class MarkerFunctionSelector extends VBox {
     private var _functionSelector:DropDown;
     private var _behindCheckBox:CheckBox;
@@ -59,6 +61,7 @@ class MarkerFunctionSelector extends VBox {
     }
     private function set_markerBehind(value:Bool):Bool {
         _markerBehind = value;
+        _behindCheckBox.selected = _markerBehind;
         return value;
     }
 
@@ -86,6 +89,33 @@ class MarkerFunctionSelector extends VBox {
     }
     private function set_markerString(value:String):String {
         _markerString = value;
+        if (_markerString != null) {
+            var n = _markerString.indexOf("(");
+            var markerId = null;
+            if (n == -1) {
+                _markerParams = null;
+                markerId = _markerString;
+            } else {
+                markerId = _markerString.substr(0, n);
+                var paramString = _markerString.substring(n + 1, _markerString.length - 1);
+                var parts = paramString.split(",");
+                _markerParams = [];
+                for (p in parts) {
+                    p = p.trim();
+                    _markerParams.push(p);
+                }
+            }
+
+            var n = 0;
+            var ds = _functionSelector.dataSource;
+            for (i in 0...ds.size) {
+                if (ds.get(i).functionId == markerId) {
+                    n = i;
+                    break;
+                }
+            }
+            _functionSelector.selectedIndex = n;
+        }
         return value;
     }
 

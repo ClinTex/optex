@@ -37,15 +37,16 @@ class PortletContainer extends Box {
         _controls.horizontalAlign = "right";
         _controls.opacity = .5;
         _controls.hide();
+        _controls.styleString = "margin: 10px;";
         addComponent(_controls);
 
         onMouseOver = function(_) {
-            if (_editable) {
+            if (_editable && portletInstance != null) {
                 _controls.show();
             }
         }
         onMouseOut = function(_) {
-            if (_editable) {
+            if (_editable && portletInstance != null) {
                 _controls.hide();
             }
         }
@@ -100,6 +101,11 @@ class PortletContainer extends Box {
             page.preloadPortletInstance(_portletInstance).then(function(r) {
                 _portletInstance.initPortlet();
                 _portletInstance.refreshView();
+
+                var event = new PortletEvent(PortletEvent.PORTLET_CONFIG_CHANGED);
+                event.portletContainer = this;
+                event.data = data;
+                dispatch(event);
             });
         }
     }
@@ -123,7 +129,9 @@ class PortletContainer extends Box {
                 _portletInstance.layoutData = new PortletInstanceLayoutData();
             }
             _portletInstance.layoutData.portletContainerId = this.id;
-    
+            _controls.horizontalAlign = _portletInstance.configureControlsHorizontalAlign;
+            _controls.verticalAlign = _portletInstance.configureControlsVerticalAlign;
+
             _portletInstance.percentWidth = 100;
             _portletInstance.percentHeight = 100;
             _portletContent.addComponent(_portletInstance);
@@ -133,6 +141,8 @@ class PortletContainer extends Box {
                 //_controls.show();
             }
         } else {
+            _controls.horizontalAlign = "right";
+            _controls.verticalAlign = "top";
             if (_editable) {
                 addPortletAssignUI();
                 //_controls.hide();

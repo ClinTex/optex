@@ -47,6 +47,7 @@ class SimpleTransformBuilder extends Box {
         _simpleHBox.addComponent(_functionSelector);
 
         _configButton = new Button();
+        _configButton.width = 200;
         _configButton.text = "Configure";
         _configButton.onClick = onConfigButton;
         _configButton.hide();
@@ -83,6 +84,7 @@ class SimpleTransformBuilder extends Box {
             if (e.button == DialogButton.APPLY) {
                 _transformParams = dialog.transformParams;
                 buildTransformString();
+                _configButton.text = dialog.humanReadableTransformParams;
             }
         }
         dialog.show();
@@ -141,9 +143,9 @@ class SimpleTransformBuilder extends Box {
 
     private function refreshFunctionList() {
         var transformList = [
-            {text: "None", transformId: "none"},
-            {text: "Group By", transformId: "group-by"},
-            {text: "Average", transformId: "average"}
+            {text: "None", transformId: "none", originalText: "None"},
+            {text: "Group By", transformId: "group-by", originalText: "Group By"},
+            {text: "Average", transformId: "average", originalText: "Average"},
         ];
 
         var ds = new ArrayDataSource<Dynamic>();

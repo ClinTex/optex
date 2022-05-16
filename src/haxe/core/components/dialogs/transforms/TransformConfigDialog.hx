@@ -6,6 +6,8 @@ import core.components.portlets.PortletDataUtils;
 import core.data.DataSourceData;
 import haxe.ui.data.ArrayDataSource;
 
+using StringTools;
+
 class TransformConfigDialog extends Dialog {
     private var _selectedDataSource:DataSourceData = null;
     public var selectedDataSource(get, set):DataSourceData;
@@ -38,6 +40,15 @@ class TransformConfigDialog extends Dialog {
     private function set_transformParams(value:Array<String>):Array<String> {
         _transformParams = value;
         return value;
+    }
+
+    public var humanReadableTransformParams(get, null):String;
+    private function get_humanReadableTransformParams():String {
+        if (_transformParams == null) {
+            return "";
+        }
+
+        return _transformParams.join(" and ").replace("'", "").replace("$", "");
     }
 
 }

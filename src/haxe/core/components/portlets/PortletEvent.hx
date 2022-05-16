@@ -5,6 +5,8 @@ import haxe.ui.events.UIEvent;
 class PortletEvent extends UIEvent {
     public static inline var ASSIGN_PORTLET_CLICKED:String = "assignPortletClicked";
     public static inline var CONFIGURE_PORTLET_CLICKED:String = "configurePortletClicked";
+    public static inline var PORTLET_ASSIGNED:String = "portletAssigned";
+    public static inline var PORTLET_CONFIG_CHANGED:String = "portletConfigChanged";
 
     public var portletContainer:PortletContainer = null;
 

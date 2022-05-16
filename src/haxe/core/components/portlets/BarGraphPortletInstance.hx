@@ -7,6 +7,8 @@ import core.data.InternalDB;
 import core.graphs.ColorCalculator_OLD;
 import core.graphs.MarkerFunctions;
 import haxe.ui.events.UIEvent;
+import core.data.PortletInstancePortletData;
+import js.lib.Promise;
 
 using StringTools;
 
@@ -49,6 +51,31 @@ class BarGraphPortletInstance extends PortletInstance {
 
             addComponent(_bar);
         }
+    }
+
+    public override function autoConfigure():Promise<Bool> {
+        return new Promise((resolve, reject) -> {
+            if (instanceData == null) {
+                instanceData = new PortletInstancePortletData();
+            }
+            if (instanceData.dataSourceId == null) {
+                if (InternalDB.dataSources.data.length > 0) {
+                    var firstDataSource = InternalDB.dataSources.data[0];
+                    PortletDataUtils.fetchTableData(firstDataSource.databaseName, firstDataSource.tableName).then(function(r) {
+                        var firstField = r.info.fieldDefinitions[0];
+                        var secondField = r.info.fieldDefinitions[1];
+                        instanceData.dataSourceId = firstDataSource.dataSourceId;
+                        instanceData.setValue("axisX", firstField.fieldName);
+                        instanceData.setValue("axisY", secondField.fieldName);
+                        resolve(true);
+                    });
+                } else {
+                    resolve(true);
+                }
+            } else {
+                resolve(true);
+            }
+        });
     }
 
     public override function refreshView() {
@@ -167,21 +194,37 @@ private class BarGraphConfigPage extends PortletConfigPage {
 
     private override function onReady() {
         super.onReady();
+        portletData.setValue("colorCalculator", "threshold:5.5");
+
         if (portletData.dataSourceId != null) {
             datasourceSelector.selectedDataSource = InternalDB.dataSources.utils.dataSource(portletData.dataSourceId);
             axisXSelector.selectedDataSource = datasourceSelector.selectedDataSource;
             axisYSelector.selectedDataSource = datasourceSelector.selectedDataSource;
         }
-        if (portletData.transform != null) {
-            transformBuilder.selectedDataSource = InternalDB.dataSources.utils.dataSource(portletData.dataSourceId);
-            transformBuilder.transformString = portletData.transform;
+
+        if (portletData.dataSourceId != null) {
+            if (portletData.transform != null) {
+                transformBuilder.selectedDataSource = InternalDB.dataSources.utils.dataSource(portletData.dataSourceId);
+                transformBuilder.transformString = portletData.transform;
+            }
+
+            if (portletData.getStringValue("axisX") != null) {
+                axisXSelector.selectedFieldName = portletData.getStringValue("axisX");
+                axisXSelector.transformString = portletData.transform;
+            }
+
+            if (portletData.getStringValue("axisY") != null) {
+                axisYSelector.selectedFieldName = portletData.getStringValue("axisY");
+                axisYSelector.transformString = portletData.transform;
+            }
+
+            if (portletData.getStringValue("markerFunction") != null) {
+                markerFunctionSelector.markerString = portletData.getStringValue("markerFunction");
+                markerFunctionSelector.markerBehind = portletData.getBoolValue("markerBehind");
+            }
+        } else {
+            onDataSourceSelected(null);
         }
-
-        axisXSelector.selectedFieldName = portletData.getStringValue("axisX");
-        axisXSelector.transformString = portletData.transform;
-
-        axisYSelector.selectedFieldName = portletData.getStringValue("axisY");
-        axisYSelector.transformString = portletData.transform;
     }
 
     @:bind(datasourceSelector, UIEvent.CHANGE)
@@ -219,9 +262,10 @@ private class BarGraphConfigPage extends PortletConfigPage {
 
     @:bind(markerFunctionSelector, UIEvent.CHANGE)
     private function onMarkerFunctionChange(_) {
-        portletData.setValue("markerFunction", markerFunctionSelector.markerString);
-        portletData.setValue("markerBehind", markerFunctionSelector.markerBehind);
-        dispatchPortletConfigChanged();
-        trace("---------------------------> " + markerFunctionSelector.markerString, markerFunctionSelector.markerBehind);
+        if (markerFunctionSelector.markerString != null) {
+            portletData.setValue("markerFunction", markerFunctionSelector.markerString);
+            portletData.setValue("markerBehind", markerFunctionSelector.markerBehind);
+            dispatchPortletConfigChanged();
+        }
     }
 }

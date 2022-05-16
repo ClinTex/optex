@@ -10,8 +10,11 @@ import core.data.DatabaseManager;
 import core.data.GenericTable;
 import core.data.dao.Database;
 import core.components.portlets.PortletDataUtils;
+import core.data.PageData;
 
 class Page extends Box {
+    public var pageDetails:PageData;
+
     public function new() {
         super();
     }

@@ -6004,6 +6004,12 @@ core_components_ComplexTransformBuilder.prototype = $extend(haxe_ui_containers_V
 		}
 		return value;
 	}
+	,onReady: function() {
+		haxe_ui_containers_VBox.prototype.onReady.call(this);
+		if(this.findComponents(null,core_components_SimpleTransformBuilder).length == 0) {
+			this.addTransform();
+		}
+	}
 	,onPreviewResults: function(_) {
 		var dialog = new core_components_dialogs_transforms_TransformResultsPreviewDialog();
 		dialog.set_transformString(this.get_transformString());
@@ -6831,7 +6837,12 @@ core_components_DatasourceFieldSelector.prototype = $extend(haxe_ui_components_D
 				ds.add({ text : fd.fieldName, fieldDefinition : fd});
 			}
 			_gthis.set_dataSource(ds);
-			return _gthis.set_selectedItem(_gthis._selectedFieldName);
+			if(_gthis._selectedFieldName != null) {
+				return _gthis.set_selectedItem(_gthis._selectedFieldName);
+			} else {
+				_gthis.set_selectedIndex(-1);
+				return _gthis.set_selectedIndex(0);
+			}
 		});
 	}
 	,registerBehaviours: function() {
@@ -6940,6 +6951,9 @@ core_components_DatasourceSelector.prototype = $extend(haxe_ui_containers_HBox.p
 			++n;
 		}
 		this._databaseSelector.set_dataSource(ds);
+		if(this.get_selectedDataSource() == null) {
+			this._databaseSelector.set_selectedIndex(-1);
+		}
 		this._databaseSelector.set_selectedIndex(indexToSelect);
 		this.refreshTables();
 	}
@@ -6966,6 +6980,9 @@ core_components_DatasourceSelector.prototype = $extend(haxe_ui_containers_HBox.p
 			++n;
 		}
 		this._tableSelector.set_dataSource(ds);
+		if(this.get_selectedDataSource() == null) {
+			this._tableSelector.set_selectedIndex(-1);
+		}
 		this._tableSelector.set_selectedIndex(indexToSelect);
 	}
 	,registerBehaviours: function() {
@@ -7073,6 +7090,7 @@ core_components_MarkerFunctionSelector.prototype = $extend(haxe_ui_containers_VB
 	}
 	,set_markerBehind: function(value) {
 		this._markerBehind = value;
+		this._behindCheckBox.set_selected(this._markerBehind);
 		return value;
 	}
 	,_markerString: null
@@ -7096,6 +7114,38 @@ core_components_MarkerFunctionSelector.prototype = $extend(haxe_ui_containers_VB
 	}
 	,set_markerString: function(value) {
 		this._markerString = value;
+		if(this._markerString != null) {
+			var n = this._markerString.indexOf("(");
+			var markerId = null;
+			if(n == -1) {
+				this._markerParams = null;
+				markerId = this._markerString;
+			} else {
+				markerId = HxOverrides.substr(this._markerString,0,n);
+				var paramString = this._markerString.substring(n + 1,this._markerString.length - 1);
+				var parts = paramString.split(",");
+				this._markerParams = [];
+				var _g = 0;
+				while(_g < parts.length) {
+					var p = parts[_g];
+					++_g;
+					p = StringTools.trim(p);
+					this._markerParams.push(p);
+				}
+			}
+			var n = 0;
+			var ds = this._functionSelector.get_dataSource();
+			var _g = 0;
+			var _g1 = ds.get_size();
+			while(_g < _g1) {
+				var i = _g++;
+				if(ds.get(i).functionId == markerId) {
+					n = i;
+					break;
+				}
+			}
+			this._functionSelector.set_selectedIndex(n);
+		}
 		return value;
 	}
 	,onConfig: function(_) {
@@ -7149,6 +7199,7 @@ core_components_MultiDatasourceFieldSelector.__name__ = "core.components.MultiDa
 core_components_MultiDatasourceFieldSelector.__super__ = haxe_ui_containers_VBox;
 core_components_MultiDatasourceFieldSelector.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	onReady: function() {
+		haxe_ui_containers_VBox.prototype.onReady.call(this);
 		if(this.findComponents(null,core_components_DatasourceFieldSelector).length == 0) {
 			this.addFieldSelector();
 		}
@@ -7170,9 +7221,19 @@ core_components_MultiDatasourceFieldSelector.prototype = $extend(haxe_ui_contain
 	}
 	,_selectedFieldName: null
 	,get_selectedFieldName: function() {
+		var fields = [];
+		var _g = 0;
+		var _g1 = this.findComponents(null,core_components_DatasourceFieldSelector);
+		while(_g < _g1.length) {
+			var c = _g1[_g];
+			++_g;
+			fields.push(c.get_selectedFieldName());
+		}
+		this._selectedFieldName = fields.join(",");
 		return this._selectedFieldName;
 	}
 	,set_selectedFieldName: function(value) {
+		this.removeAllComponents();
 		var fields = value.split(",");
 		var _g = 0;
 		while(_g < fields.length) {
@@ -7190,6 +7251,13 @@ core_components_MultiDatasourceFieldSelector.prototype = $extend(haxe_ui_contain
 	}
 	,set_transformString: function(value) {
 		this._transformString = value;
+		var _g = 0;
+		var _g1 = this.findComponents(null,core_components_DatasourceFieldSelector);
+		while(_g < _g1.length) {
+			var c = _g1[_g];
+			++_g;
+			c.set_transformString(this._transformString);
+		}
 		return value;
 	}
 	,addFieldSelector: function(fieldName) {
@@ -7200,16 +7268,27 @@ core_components_MultiDatasourceFieldSelector.prototype = $extend(haxe_ui_contain
 		selector.set_percentWidth(100);
 		selector.set_selectedDataSource(this._selectedDataSource);
 		selector.set_selectedFieldName(fieldName);
+		selector.set_transformString(this._transformString);
+		selector.set_onChange(function(_) {
+			var event = new haxe_ui_events_UIEvent("change");
+			_gthis.dispatch(event);
+		});
 		hbox.addComponent(selector);
 		var removeButton = new haxe_ui_components_Button();
 		removeButton.set_text("-");
 		hbox.addComponent(removeButton);
 		removeButton.set_onClick(function(e) {
+			var index = _gthis.getComponentIndex(e.target.parentComponent);
+			_gthis.removeComponentAt(index);
+			var event = new haxe_ui_events_UIEvent("change");
+			_gthis.dispatch(event);
 		});
 		var addButton = new haxe_ui_components_Button();
 		addButton.set_text("+");
 		addButton.set_onClick(function(_) {
 			_gthis.addFieldSelector();
+			var event = new haxe_ui_events_UIEvent("change");
+			_gthis.dispatch(event);
 		});
 		hbox.addComponent(addButton);
 		this.addComponent(hbox);
@@ -7243,7 +7322,8 @@ $hxClasses["core.components.Page"] = core_components_Page;
 core_components_Page.__name__ = "core.components.Page";
 core_components_Page.__super__ = haxe_ui_containers_Box;
 core_components_Page.prototype = $extend(haxe_ui_containers_Box.prototype,{
-	getTableData: function(portletInstance) {
+	pageDetails: null
+	,getTableData: function(portletInstance) {
 		return new Promise(function(resolve,reject) {
 			var dataSourceData = core_data_InternalDB.dataSources.utils.dataSource(portletInstance.instanceData.get_dataSourceId());
 			if(dataSourceData != null) {
@@ -7274,9 +7354,9 @@ core_components_Page.prototype = $extend(haxe_ui_containers_Box.prototype,{
 		return new Promise(function(resolve,reject) {
 			var dataSourceData = core_data_InternalDB.dataSources.utils.dataSource(portletInstance.instanceData.get_dataSourceId());
 			if(dataSourceData != null) {
-				haxe_Log.trace("preload: " + dataSourceData.get_databaseName(),{ fileName : "../../haxe/core/components/Page.hx", lineNumber : 91, className : "core.components.Page", methodName : "preloadPortletDataSource", customParams : [dataSourceData.get_tableName()]});
+				haxe_Log.trace("preload: " + dataSourceData.get_databaseName(),{ fileName : "../../haxe/core/components/Page.hx", lineNumber : 94, className : "core.components.Page", methodName : "preloadPortletDataSource", customParams : [dataSourceData.get_tableName()]});
 				core_components_portlets_PortletDataUtils.fetchTableData(dataSourceData.get_databaseName(),dataSourceData.get_tableName()).then(function(r) {
-					haxe_Log.trace("preloaded: " + r.records.length,{ fileName : "../../haxe/core/components/Page.hx", lineNumber : 93, className : "core.components.Page", methodName : "preloadPortletDataSource"});
+					haxe_Log.trace("preloaded: " + r.records.length,{ fileName : "../../haxe/core/components/Page.hx", lineNumber : 96, className : "core.components.Page", methodName : "preloadPortletDataSource"});
 					resolve(true);
 				});
 			} else {
@@ -7306,6 +7386,7 @@ core_components_Page.prototype = $extend(haxe_ui_containers_Box.prototype,{
 	,__class__: core_components_Page
 });
 var core_components_PageLayout = function() {
+	this._portletContainers = [];
 	this._editable = false;
 	this._layoutData = null;
 	core_components_Page.call(this);
@@ -7314,7 +7395,22 @@ $hxClasses["core.components.PageLayout"] = core_components_PageLayout;
 core_components_PageLayout.__name__ = "core.components.PageLayout";
 core_components_PageLayout.__super__ = core_components_Page;
 core_components_PageLayout.prototype = $extend(core_components_Page.prototype,{
-	_layoutData: null
+	onPortletAssignPortletClicked: function(event) {
+		var _gthis = this;
+		var portletContainer = event.portletContainer;
+		var portletContainerId = portletContainer.get_id();
+		var dialog = new core_components_dialogs_SelectPortletDialog();
+		dialog.set_onDialogClosed(function(e) {
+			var larr = haxe_ui_containers_dialogs_DialogButton.toString(e.button).split("|");
+			if(larr.indexOf(haxe_ui_containers_dialogs_DialogButton.toString("Select")) != -1) {
+				var selectedClassName = dialog.portletTypeSelector.get_selectedItem().className;
+				var portletInstance = core_components_portlets_PortletFactory.get_instance().createInstance(selectedClassName);
+				_gthis.assignPortletInstance(portletContainerId,portletInstance);
+			}
+		});
+		dialog.show();
+	}
+	,_layoutData: null
 	,get_layoutData: function() {
 		return this._layoutData;
 	}
@@ -7338,14 +7434,32 @@ core_components_PageLayout.prototype = $extend(core_components_Page.prototype,{
 		return value;
 	}
 	,assignPortletInstance: function(portletContainerId,portletInstance) {
+		var _gthis = this;
 		var portletContainer = this.findComponent(portletContainerId,core_components_portlets_PortletContainer);
 		if(portletContainer == null) {
-			haxe_Log.trace("WARNING: could not find portlet container with an id of: " + portletContainerId,{ fileName : "../../haxe/core/components/PageLayout.hx", lineNumber : 50, className : "core.components.PageLayout", methodName : "assignPortletInstance"});
+			haxe_Log.trace("WARNING: could not find portlet container with an id of: " + portletContainerId,{ fileName : "../../haxe/core/components/PageLayout.hx", lineNumber : 72, className : "core.components.PageLayout", methodName : "assignPortletInstance"});
 			return;
 		}
-		this.preloadPortletInstance(portletInstance).then(function(e) {
-			portletContainer.set_portletInstance(portletInstance);
+		this._portletContainers.push(portletContainer);
+		portletInstance.autoConfigure().then(function(r) {
+			_gthis.preloadPortletInstance(portletInstance).then(function(e) {
+				portletContainer.set_portletInstance(portletInstance);
+				portletContainer.registerEvent("portletConfigChanged",$bind(_gthis,_gthis.onPortletConfigChanged));
+				var newEvent = new core_components_portlets_PortletEvent("portletAssigned");
+				newEvent.portletContainer = portletContainer;
+				_gthis.dispatch(newEvent);
+			});
 		});
+	}
+	,onPortletConfigChanged: function(event) {
+		haxe_Log.trace("Portlet Config Changed: ",{ fileName : "../../haxe/core/components/PageLayout.hx", lineNumber : 89, className : "core.components.PageLayout", methodName : "onPortletConfigChanged", customParams : [event.data]});
+		this.dispatch(event);
+	}
+	,loadPage: function(pageId) {
+		this.pageDetails = core_data_InternalDB.pages.utils.page(pageId);
+		if(this.pageDetails != null) {
+			this.assignPortletInstancesFromPage(pageId);
+		}
 	}
 	,assignPortletInstancesFromPage: function(pageId) {
 		var _g = 0;
@@ -7353,18 +7467,29 @@ core_components_PageLayout.prototype = $extend(core_components_Page.prototype,{
 		while(_g < _g1.length) {
 			var portletDetails = _g1[_g];
 			++_g;
-			var instanceData = core_data_PortletInstancePortletData.fomJsonString(portletDetails.get_portletData());
-			var layoutData = core_data_PortletInstanceLayoutData.fomJsonString(portletDetails.get_layoutData());
-			var portletInstance = core_components_portlets_PortletFactory.get_instance().createInstance(instanceData.get_portletClassName());
-			portletInstance.instanceData = instanceData;
-			portletInstance.layoutData = layoutData;
-			this.assignPortletInstance(layoutData.get_portletContainerId(),portletInstance);
+			this.assignPortletFromStringData(portletDetails.get_portletData(),portletDetails.get_layoutData());
 		}
 	}
+	,assignPortletFromStringData: function(portletDataSting,layoutDataString) {
+		var instanceData = core_data_PortletInstancePortletData.fromJsonString(portletDataSting);
+		var layoutData = core_data_PortletInstanceLayoutData.fromJsonString(layoutDataString);
+		this.assignPortletFromData(instanceData,layoutData);
+	}
+	,assignPortletFromObjectData: function(portletDataObject,layoutDataObject) {
+		var instanceData = core_data_PortletInstancePortletData.fromJsonObject(portletDataObject);
+		var layoutData = core_data_PortletInstanceLayoutData.fromJsonObject(layoutDataObject);
+		this.assignPortletFromData(instanceData,layoutData);
+	}
+	,assignPortletFromData: function(instanceData,layoutData) {
+		var portletInstance = core_components_portlets_PortletFactory.get_instance().createInstance(instanceData.get_portletClassName());
+		portletInstance.instanceData = instanceData;
+		portletInstance.layoutData = layoutData;
+		this.assignPortletInstance(layoutData.get_portletContainerId(),portletInstance);
+	}
+	,_portletContainers: null
 	,portletContainers: null
 	,get_portletContainers: function() {
-		var containers = this.findComponents(null,core_components_portlets_PortletContainer,-1);
-		return containers;
+		return this._portletContainers;
 	}
 	,applyEditable: function() {
 		var portletContainers = this.findComponents(null,core_components_portlets_PortletContainer,-1);
@@ -7375,9 +7500,6 @@ core_components_PageLayout.prototype = $extend(core_components_Page.prototype,{
 			portletContainer.set_editable(this._editable);
 			portletContainer.registerEvent("assignPortletClicked",$bind(this,this.onPortletAssignPortletClicked));
 		}
-	}
-	,onPortletAssignPortletClicked: function(event) {
-		this.dispatch(event);
 	}
 	,registerBehaviours: function() {
 		core_components_Page.prototype.registerBehaviours.call(this);
@@ -7425,6 +7547,7 @@ var core_components_SimpleTransformBuilder = function() {
 	});
 	this._simpleHBox.addComponent(this._functionSelector);
 	this._configButton = new haxe_ui_components_Button();
+	this._configButton.set_width(200);
 	this._configButton.set_text("Configure");
 	this._configButton.set_onClick($bind(this,this.onConfigButton));
 	this._configButton.hide();
@@ -7467,6 +7590,7 @@ core_components_SimpleTransformBuilder.prototype = $extend(haxe_ui_containers_Bo
 			if(larr.indexOf(haxe_ui_containers_dialogs_DialogButton.toString("{{apply}}")) != -1) {
 				_gthis._transformParams = dialog.get_transformParams();
 				_gthis.buildTransformString();
+				_gthis._configButton.set_text(dialog.get_humanReadableTransformParams());
 			}
 		});
 		dialog.show();
@@ -7509,7 +7633,7 @@ core_components_SimpleTransformBuilder.prototype = $extend(haxe_ui_containers_Bo
 			return;
 		}
 		this._transformString = transformId + "(" + this._transformParams.join(", ") + ")";
-		haxe_Log.trace("current transform string: " + this._transformString,{ fileName : "../../haxe/core/components/SimpleTransformBuilder.hx", lineNumber : 128, className : "core.components.SimpleTransformBuilder", methodName : "buildTransformString"});
+		haxe_Log.trace("current transform string: " + this._transformString,{ fileName : "../../haxe/core/components/SimpleTransformBuilder.hx", lineNumber : 130, className : "core.components.SimpleTransformBuilder", methodName : "buildTransformString"});
 		this.dispatch(new haxe_ui_events_UIEvent("change"));
 	}
 	,_selectedDataSource: null
@@ -7521,7 +7645,7 @@ core_components_SimpleTransformBuilder.prototype = $extend(haxe_ui_containers_Bo
 		return value;
 	}
 	,refreshFunctionList: function() {
-		var transformList = [{ text : "None", transformId : "none"},{ text : "Group By", transformId : "group-by"},{ text : "Average", transformId : "average"}];
+		var transformList = [{ text : "None", transformId : "none", originalText : "None"},{ text : "Group By", transformId : "group-by", originalText : "Group By"},{ text : "Average", transformId : "average", originalText : "Average"}];
 		var ds = new haxe_ui_data_ArrayDataSource();
 		var indexToSelect = 0;
 		var n = 0;
@@ -7933,12 +8057,13 @@ haxe_ui_containers_dialogs_Dialog.prototype = $extend(haxe_ui_backend_DialogBase
 var core_components_dialogs_GenericPortletConfigDialog = function() {
 	this._page = null;
 	this._configPages = [];
+	var _gthis = this;
 	haxe_ui_containers_dialogs_Dialog.call(this);
 	var c0 = new haxe_ui_containers_TabView();
 	c0.set_id("mainTabs");
 	c0.set_percentWidth(100.);
 	var c1 = new haxe_ui_containers_VBox();
-	c1.set_height(100.);
+	c1.set_height(250.);
 	c1.set_percentWidth(100.);
 	c1.set_text("JSON");
 	var c2 = new haxe_ui_components_TextArea();
@@ -7955,6 +8080,14 @@ var core_components_dialogs_GenericPortletConfigDialog = function() {
 	this.portletConfigJsonField = c2;
 	this.mainTabs = c0;
 	this.buttons = "{{close}}";
+	this.portletConfigJsonField.set_onChange(function(_) {
+		try {
+			var json = JSON.parse(_gthis.portletConfigJsonField.get_text());
+			_gthis.portletData.data = json;
+			_gthis.dispatchPortletConfigChanged();
+		} catch( _g ) {
+		}
+	});
 	var c = this.mainTabs;
 	if(c != null) {
 		c.registerEvent("change",$bind(this,this.onMainTabsChange));
@@ -7968,6 +8101,13 @@ core_components_dialogs_GenericPortletConfigDialog.__super__ = haxe_ui_container
 core_components_dialogs_GenericPortletConfigDialog.prototype = $extend(haxe_ui_containers_dialogs_Dialog.prototype,{
 	_configPages: null
 	,portletData: null
+	,dispatchPortletConfigChanged: function() {
+		var event = new haxe_ui_events_UIEvent("change");
+		this.dispatch(event);
+		var event = new core_components_portlets_PortletEvent("portletConfigChanged");
+		event.data = this.portletData.data;
+		this.dispatch(event);
+	}
 	,onReady: function() {
 		haxe_ui_containers_dialogs_Dialog.prototype.onReady.call(this);
 		this._configPages.reverse();
@@ -8025,6 +8165,65 @@ core_components_dialogs_GenericPortletConfigDialog.prototype = $extend(haxe_ui_c
 	,mainTabs: null
 	,__class__: core_components_dialogs_GenericPortletConfigDialog
 	,__properties__: $extend(haxe_ui_containers_dialogs_Dialog.prototype.__properties__,{set_page:"set_page",get_page:"get_page"})
+});
+var core_components_dialogs_SelectPortletDialog = function() {
+	haxe_ui_containers_dialogs_Dialog.call(this);
+	var c0 = new haxe_ui_containers_ListView();
+	c0.set_id("portletTypeSelector");
+	c0.set_percentWidth(100.);
+	c0.set_percentHeight(100.);
+	c0.set_selectedIndex(0);
+	var ds0 = new haxe_ui_data_ArrayDataSource();
+	ds0.add({ text : "Nested Portlet", id : "item", className : "core.components.portlets.NestedPortletInstance"});
+	ds0.add({ text : "Bar Graph", id : "item", className : "core.components.portlets.BarGraphPortletInstance"});
+	ds0.add({ text : "Line Graph", id : "item", className : "core.components.portlets.LineGraphPortletInstance"});
+	ds0.add({ text : "Site Map", id : "item", className : "core.components.portlets.SiteMapPortletInstance"});
+	ds0.add({ text : "Image", id : "item", className : "core.components.portlets.StaticImagePortletInstance"});
+	ds0.add({ text : "Quick Filter", id : "item", className : "core.components.portlets.QuickFilterPortletInstance"});
+	c0.set_dataSource(ds0);
+	this.addComponent(c0);
+	this.set_width(300.);
+	this.set_height(300.);
+	this.set_title("Select Portlet");
+	this.bindingRoot = true;
+	this.portletTypeSelector = c0;
+	var larr = haxe_ui_containers_dialogs_DialogButton.toString("{{cancel}}").split("|");
+	var rarr = haxe_ui_containers_dialogs_DialogButton.toString("Select").split("|");
+	var _g = 0;
+	while(_g < rarr.length) {
+		var r = rarr[_g];
+		++_g;
+		if(larr.indexOf(r) == -1) {
+			larr.push(r);
+		}
+	}
+	this.buttons = larr.join("|");
+};
+$hxClasses["core.components.dialogs.SelectPortletDialog"] = core_components_dialogs_SelectPortletDialog;
+core_components_dialogs_SelectPortletDialog.__name__ = "core.components.dialogs.SelectPortletDialog";
+core_components_dialogs_SelectPortletDialog.__super__ = haxe_ui_containers_dialogs_Dialog;
+core_components_dialogs_SelectPortletDialog.prototype = $extend(haxe_ui_containers_dialogs_Dialog.prototype,{
+	registerBehaviours: function() {
+		haxe_ui_containers_dialogs_Dialog.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_containers_dialogs_Dialog.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_components_dialogs_SelectPortletDialog();
+	}
+	,portletTypeSelector: null
+	,__class__: core_components_dialogs_SelectPortletDialog
 });
 var core_components_dialogs_markers_MarkerConfigDialog = function() {
 	this._markerParams = [];
@@ -8162,6 +8361,13 @@ core_components_dialogs_transforms_TransformConfigDialog.prototype = $extend(hax
 		this._transformParams = value;
 		return value;
 	}
+	,humanReadableTransformParams: null
+	,get_humanReadableTransformParams: function() {
+		if(this._transformParams == null) {
+			return "";
+		}
+		return StringTools.replace(StringTools.replace(this._transformParams.join(" and "),"'",""),"$","");
+	}
 	,registerBehaviours: function() {
 		haxe_ui_containers_dialogs_Dialog.prototype.registerBehaviours.call(this);
 	}
@@ -8182,7 +8388,7 @@ core_components_dialogs_transforms_TransformConfigDialog.prototype = $extend(hax
 		return new core_components_dialogs_transforms_TransformConfigDialog();
 	}
 	,__class__: core_components_dialogs_transforms_TransformConfigDialog
-	,__properties__: $extend(haxe_ui_containers_dialogs_Dialog.prototype.__properties__,{set_transformParams:"set_transformParams",get_transformParams:"get_transformParams",set_selectedDataSource:"set_selectedDataSource",get_selectedDataSource:"get_selectedDataSource"})
+	,__properties__: $extend(haxe_ui_containers_dialogs_Dialog.prototype.__properties__,{get_humanReadableTransformParams:"get_humanReadableTransformParams",set_transformParams:"set_transformParams",get_transformParams:"get_transformParams",set_selectedDataSource:"set_selectedDataSource",get_selectedDataSource:"get_selectedDataSource"})
 });
 var core_components_dialogs_transforms_AverageTransformConfigDialog = function() {
 	core_components_dialogs_transforms_TransformConfigDialog.call(this);
@@ -8545,6 +8751,8 @@ core_components_portlets_Portlet.prototype = $extend(haxe_ui_containers_Box.prot
 	,__class__: core_components_portlets_Portlet
 });
 var core_components_portlets_PortletInstance = function() {
+	this.configureControlsVerticalAlign = "top";
+	this.configureControlsHorizontalAlign = "right";
 	core_components_portlets_Portlet.call(this);
 };
 $hxClasses["core.components.portlets.PortletInstance"] = core_components_portlets_PortletInstance;
@@ -8553,6 +8761,8 @@ core_components_portlets_PortletInstance.__super__ = core_components_portlets_Po
 core_components_portlets_PortletInstance.prototype = $extend(core_components_portlets_Portlet.prototype,{
 	instanceData: null
 	,layoutData: null
+	,configureControlsHorizontalAlign: null
+	,configureControlsVerticalAlign: null
 	,onReady: function() {
 		core_components_portlets_Portlet.prototype.onReady.call(this);
 		this.set_percentWidth(100);
@@ -8568,9 +8778,14 @@ core_components_portlets_PortletInstance.prototype = $extend(core_components_por
 	}
 	,set_portletDetails: function(value) {
 		this._portletDetails = value;
-		this.instanceData = core_data_PortletInstancePortletData.fomJsonString(this._portletDetails.get_portletData());
-		this.layoutData = core_data_PortletInstanceLayoutData.fomJsonString(this._portletDetails.get_layoutData());
+		this.instanceData = core_data_PortletInstancePortletData.fromJsonString(this._portletDetails.get_portletData());
+		this.layoutData = core_data_PortletInstanceLayoutData.fromJsonString(this._portletDetails.get_layoutData());
 		return value;
+	}
+	,autoConfigure: function() {
+		return new Promise(function(resolve,reject) {
+			resolve(true);
+		});
 	}
 	,initPortlet: function() {
 	}
@@ -8660,16 +8875,41 @@ core_components_portlets_BarGraphPortletInstance.prototype = $extend(core_compon
 			this.addComponent(this._bar);
 		}
 	}
+	,autoConfigure: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			if(_gthis.instanceData == null) {
+				_gthis.instanceData = new core_data_PortletInstancePortletData();
+			}
+			if(_gthis.instanceData.get_dataSourceId() == null) {
+				if(core_data_InternalDB.dataSources.data.length > 0) {
+					var firstDataSource = core_data_InternalDB.dataSources.data[0];
+					core_components_portlets_PortletDataUtils.fetchTableData(firstDataSource.get_databaseName(),firstDataSource.get_tableName()).then(function(r) {
+						var firstField = r.info.fieldDefinitions[0];
+						var secondField = r.info.fieldDefinitions[1];
+						_gthis.instanceData.set_dataSourceId(firstDataSource.get_dataSourceId());
+						_gthis.instanceData.setValue("axisX",firstField.fieldName);
+						_gthis.instanceData.setValue("axisY",secondField.fieldName);
+						resolve(true);
+					});
+				} else {
+					resolve(true);
+				}
+			} else {
+				resolve(true);
+			}
+		});
+	}
 	,refreshView: function() {
 		var _gthis = this;
 		core_components_portlets_PortletInstance.prototype.refreshView.call(this);
-		haxe_Log.trace("refreshing view",{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 56, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView"});
+		haxe_Log.trace("refreshing view",{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 83, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView"});
 		if(this._dataSourceData == null) {
-			haxe_Log.trace("data source data is null",{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 59, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView"});
+			haxe_Log.trace("data source data is null",{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 86, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView"});
 			return;
 		}
 		this.get_page().getTableData(this).then(function(table) {
-			haxe_Log.trace("bar graph refresh view: " + table.records.length,{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 64, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView"});
+			haxe_Log.trace("bar graph refresh view: " + table.records.length,{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 91, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView"});
 			var records = table.records;
 			records.sort(function(o1,o2) {
 				if(Std.string(o1.getFieldValue(_gthis._axisX)) < Std.string(o2.getFieldValue(_gthis._axisX))) {
@@ -8706,7 +8946,7 @@ core_components_portlets_BarGraphPortletInstance.prototype = $extend(core_compon
 				}
 				graphData.push({ key : part, values : values});
 			}
-			haxe_Log.trace(_gthis.get_width(),{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 109, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView", customParams : [_gthis.get_height()]});
+			haxe_Log.trace(_gthis.get_width(),{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 136, className : "core.components.portlets.BarGraphPortletInstance", methodName : "refreshView", customParams : [_gthis.get_height()]});
 			if(_gthis.get_width() > 0 && _gthis.get_height() > 0) {
 				_gthis._bar.set_data(graphData);
 			}
@@ -8786,6 +9026,8 @@ core_components_portlets_PortletConfigPage.prototype = $extend(haxe_ui_container
 		var dialog = this.findAncestor(null,haxe_ui_containers_dialogs_Dialog);
 		if(dialog != null) {
 			var event = new haxe_ui_events_UIEvent("change");
+			dialog.dispatch(event);
+			var event = new core_components_portlets_PortletEvent("portletConfigChanged");
 			dialog.dispatch(event);
 		}
 	}
@@ -8904,19 +9146,32 @@ core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage.__super__ 
 core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage.prototype = $extend(core_components_portlets_PortletConfigPage.prototype,{
 	onReady: function() {
 		core_components_portlets_PortletConfigPage.prototype.onReady.call(this);
+		this.portletData.setValue("colorCalculator","threshold:5.5");
 		if(this.portletData.get_dataSourceId() != null) {
 			this.datasourceSelector.set_selectedDataSource(core_data_InternalDB.dataSources.utils.dataSource(this.portletData.get_dataSourceId()));
 			this.axisXSelector.set_selectedDataSource(this.datasourceSelector.get_selectedDataSource());
 			this.axisYSelector.set_selectedDataSource(this.datasourceSelector.get_selectedDataSource());
 		}
-		if(this.portletData.get_transform() != null) {
-			this.transformBuilder.set_selectedDataSource(core_data_InternalDB.dataSources.utils.dataSource(this.portletData.get_dataSourceId()));
-			this.transformBuilder.set_transformString(this.portletData.get_transform());
+		if(this.portletData.get_dataSourceId() != null) {
+			if(this.portletData.get_transform() != null) {
+				this.transformBuilder.set_selectedDataSource(core_data_InternalDB.dataSources.utils.dataSource(this.portletData.get_dataSourceId()));
+				this.transformBuilder.set_transformString(this.portletData.get_transform());
+			}
+			if(this.portletData.getStringValue("axisX") != null) {
+				this.axisXSelector.set_selectedFieldName(this.portletData.getStringValue("axisX"));
+				this.axisXSelector.set_transformString(this.portletData.get_transform());
+			}
+			if(this.portletData.getStringValue("axisY") != null) {
+				this.axisYSelector.set_selectedFieldName(this.portletData.getStringValue("axisY"));
+				this.axisYSelector.set_transformString(this.portletData.get_transform());
+			}
+			if(this.portletData.getStringValue("markerFunction") != null) {
+				this.markerFunctionSelector.set_markerString(this.portletData.getStringValue("markerFunction"));
+				this.markerFunctionSelector.set_markerBehind(this.portletData.getBoolValue("markerBehind"));
+			}
+		} else {
+			this.onDataSourceSelected(null);
 		}
-		this.axisXSelector.set_selectedFieldName(this.portletData.getStringValue("axisX"));
-		this.axisXSelector.set_transformString(this.portletData.get_transform());
-		this.axisYSelector.set_selectedFieldName(this.portletData.getStringValue("axisY"));
-		this.axisYSelector.set_transformString(this.portletData.get_transform());
 	}
 	,onDataSourceSelected: function(_) {
 		this.transformBuilder.set_selectedDataSource(this.datasourceSelector.get_selectedDataSource());
@@ -8944,10 +9199,11 @@ core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage.prototype 
 		}
 	}
 	,onMarkerFunctionChange: function(_) {
-		this.portletData.setValue("markerFunction",this.markerFunctionSelector.get_markerString());
-		this.portletData.setValue("markerBehind",this.markerFunctionSelector.get_markerBehind());
-		this.dispatchPortletConfigChanged();
-		haxe_Log.trace("---------------------------> " + this.markerFunctionSelector.get_markerString(),{ fileName : "../../haxe/core/components/portlets/BarGraphPortletInstance.hx", lineNumber : 225, className : "core.components.portlets._BarGraphPortletInstance.BarGraphConfigPage", methodName : "onMarkerFunctionChange", customParams : [this.markerFunctionSelector.get_markerBehind()]});
+		if(this.markerFunctionSelector.get_markerString() != null) {
+			this.portletData.setValue("markerFunction",this.markerFunctionSelector.get_markerString());
+			this.portletData.setValue("markerBehind",this.markerFunctionSelector.get_markerBehind());
+			this.dispatchPortletConfigChanged();
+		}
 	}
 	,registerBehaviours: function() {
 		core_components_portlets_PortletConfigPage.prototype.registerBehaviours.call(this);
@@ -9011,18 +9267,97 @@ core_components_portlets_LineGraphPortletInstance.prototype = $extend(core_compo
 	,__class__: core_components_portlets_LineGraphPortletInstance
 });
 var core_components_portlets_NestedPortletInstance = function() {
+	this._pageLayout = null;
+	this._layoutId = null;
 	core_components_portlets_PortletInstance.call(this);
+	this.configureControlsHorizontalAlign = "left";
+	this.configureControlsVerticalAlign = "bottom";
 };
 $hxClasses["core.components.portlets.NestedPortletInstance"] = core_components_portlets_NestedPortletInstance;
 core_components_portlets_NestedPortletInstance.__name__ = "core.components.portlets.NestedPortletInstance";
 core_components_portlets_NestedPortletInstance.__super__ = core_components_portlets_PortletInstance;
 core_components_portlets_NestedPortletInstance.prototype = $extend(core_components_portlets_PortletInstance.prototype,{
-	onReady: function() {
+	_layoutId: null
+	,_pageLayout: null
+	,onReady: function() {
 		core_components_portlets_PortletInstance.prototype.onReady.call(this);
-		var button = new haxe_ui_components_Label();
-		button.set_percentWidth(100);
-		button.set_text(this.get_className());
-		this.addComponent(button);
+	}
+	,autoConfigure: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			if(_gthis.instanceData == null) {
+				_gthis.instanceData = new core_data_PortletInstancePortletData();
+			}
+			if(_gthis.instanceData.getIntValue("layoutId") == null) {
+				_gthis.instanceData.setValue("layoutId",1);
+			}
+			resolve(true);
+		});
+	}
+	,initPortlet: function() {
+		core_components_portlets_PortletInstance.prototype.initPortlet.call(this);
+		this._layoutId = this.getConfigIntValue("layoutId");
+		if(this._pageLayout != null) {
+			this.removeComponent(this._pageLayout);
+		}
+		this._pageLayout = new core_components_PageLayout();
+		this._pageLayout.pageDetails = this.get_page().pageDetails;
+		this._pageLayout.set_percentWidth(100);
+		this._pageLayout.set_percentHeight(100);
+		this._pageLayout.registerEvent("portletAssigned",$bind(this,this.onPortletAssigned));
+		this._pageLayout.registerEvent("portletConfigChanged",$bind(this,this.onPortletConfigChanged));
+		this.addComponent(this._pageLayout);
+	}
+	,onPortletAssigned: function(event) {
+		var portletContainer = event.portletContainer;
+		haxe_Log.trace("===================== PORTLET ASSIGNED =======================",{ fileName : "../../haxe/core/components/portlets/NestedPortletInstance.hx", lineNumber : 56, className : "core.components.portlets.NestedPortletInstance", methodName : "onPortletAssigned"});
+		haxe_Log.trace(portletContainer.get_portletInstance().instanceData,{ fileName : "../../haxe/core/components/portlets/NestedPortletInstance.hx", lineNumber : 57, className : "core.components.portlets.NestedPortletInstance", methodName : "onPortletAssigned"});
+		haxe_Log.trace(portletContainer.get_portletInstance().layoutData,{ fileName : "../../haxe/core/components/portlets/NestedPortletInstance.hx", lineNumber : 58, className : "core.components.portlets.NestedPortletInstance", methodName : "onPortletAssigned"});
+		this.writePortletConfig();
+	}
+	,onPortletConfigChanged: function(event) {
+		var portletContainer = event.portletContainer;
+		haxe_Log.trace("===================== PORTLET CONFIG CHANGED =======================",{ fileName : "../../haxe/core/components/portlets/NestedPortletInstance.hx", lineNumber : 64, className : "core.components.portlets.NestedPortletInstance", methodName : "onPortletConfigChanged"});
+		haxe_Log.trace(portletContainer.get_portletInstance().instanceData,{ fileName : "../../haxe/core/components/portlets/NestedPortletInstance.hx", lineNumber : 65, className : "core.components.portlets.NestedPortletInstance", methodName : "onPortletConfigChanged"});
+		haxe_Log.trace(portletContainer.get_portletInstance().layoutData,{ fileName : "../../haxe/core/components/portlets/NestedPortletInstance.hx", lineNumber : 66, className : "core.components.portlets.NestedPortletInstance", methodName : "onPortletConfigChanged"});
+		this.writePortletConfig();
+	}
+	,writePortletConfig: function() {
+		haxe_Log.trace("==============================>>>>>>>>>>>>>>>>>>>>>>>>> " + this._pageLayout.get_portletContainers().length,{ fileName : "../../haxe/core/components/portlets/NestedPortletInstance.hx", lineNumber : 71, className : "core.components.portlets.NestedPortletInstance", methodName : "writePortletConfig"});
+		var portlets = [];
+		var _g = 0;
+		var _g1 = this._pageLayout.get_portletContainers();
+		while(_g < _g1.length) {
+			var portletContainer = _g1[_g];
+			++_g;
+			haxe_Log.trace(portletContainer.get_portletInstance().instanceData,{ fileName : "../../haxe/core/components/portlets/NestedPortletInstance.hx", lineNumber : 74, className : "core.components.portlets.NestedPortletInstance", methodName : "writePortletConfig", customParams : [portletContainer.get_portletInstance().layoutData]});
+			portlets.push({ layoutData : portletContainer.get_portletInstance().layoutData.data, portletData : portletContainer.get_portletInstance().instanceData.data});
+		}
+		this.instanceData.setValue("portlets",portlets);
+	}
+	,refreshView: function() {
+		if(this._layoutId == null) {
+			return;
+		}
+		var layoutDetails = core_data_InternalDB.layouts.utils.layout(this._layoutId);
+		haxe_Log.trace(layoutDetails.get_layoutData(),{ fileName : "../../haxe/core/components/portlets/NestedPortletInstance.hx", lineNumber : 89, className : "core.components.portlets.NestedPortletInstance", methodName : "refreshView"});
+		this._pageLayout.set_layoutData(layoutDetails.get_layoutData());
+		this._pageLayout.set_editable(true);
+		var portlets = this.instanceData.getObjectValue("portlets");
+		if(portlets != null) {
+			var _g = 0;
+			while(_g < portlets.length) {
+				var porlet = portlets[_g];
+				++_g;
+				var portletData = porlet.portletData;
+				var layoutData = porlet.layoutData;
+				this._pageLayout.assignPortletFromObjectData(portletData,layoutData);
+			}
+		}
+	}
+	,get_configPage: function() {
+		var configPage = new core_components_portlets__$NestedPortletInstance_NestedPortletConfigPage();
+		return configPage;
 	}
 	,registerBehaviours: function() {
 		core_components_portlets_PortletInstance.prototype.registerBehaviours.call(this);
@@ -9044,6 +9379,84 @@ core_components_portlets_NestedPortletInstance.prototype = $extend(core_componen
 		return new core_components_portlets_NestedPortletInstance();
 	}
 	,__class__: core_components_portlets_NestedPortletInstance
+});
+var core_components_portlets__$NestedPortletInstance_NestedPortletConfigPage = function() {
+	core_components_portlets_PortletConfigPage.call(this);
+	var c0 = new haxe_ui_containers_Grid();
+	c0.set_percentWidth(100.);
+	var c1 = new haxe_ui_components_Label();
+	c1.set_text("Layout");
+	c1.set_verticalAlign("center");
+	c0.addComponent(c1);
+	var c2 = new haxe_ui_components_DropDown();
+	c2.set_id("layoutSelector");
+	c2.set_percentWidth(100.);
+	c0.addComponent(c2);
+	this.addComponent(c0);
+	this.set_percentWidth(100.);
+	this.set_text("Nested Portlets");
+	this.bindingRoot = true;
+	this.layoutSelector = c2;
+	var c = this.layoutSelector;
+	if(c != null) {
+		c.registerEvent("change",$bind(this,this.onLayoutSelectorChange));
+	} else {
+		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "layoutSelector" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "core.components.portlets._NestedPortletInstance.NestedPortletConfigPage", methodName : "new"});
+	}
+};
+$hxClasses["core.components.portlets._NestedPortletInstance.NestedPortletConfigPage"] = core_components_portlets__$NestedPortletInstance_NestedPortletConfigPage;
+core_components_portlets__$NestedPortletInstance_NestedPortletConfigPage.__name__ = "core.components.portlets._NestedPortletInstance.NestedPortletConfigPage";
+core_components_portlets__$NestedPortletInstance_NestedPortletConfigPage.__super__ = core_components_portlets_PortletConfigPage;
+core_components_portlets__$NestedPortletInstance_NestedPortletConfigPage.prototype = $extend(core_components_portlets_PortletConfigPage.prototype,{
+	onReady: function() {
+		core_components_portlets_PortletConfigPage.prototype.onReady.call(this);
+		var ds = new haxe_ui_data_ArrayDataSource();
+		var indexToSelect = 0;
+		var n = 0;
+		var layoutId = this.portletData.getIntValue("layoutId");
+		var _g = 0;
+		var _g1 = core_data_InternalDB.layouts.utils.availableLayoutsForPage(this.get_page().pageDetails.get_pageId());
+		while(_g < _g1.length) {
+			var layout = _g1[_g];
+			++_g;
+			if(layoutId != null && layout.get_layoutId() == layoutId) {
+				indexToSelect = n;
+			}
+			ds.add({ text : layout.get_name(), layout : layout});
+			++n;
+		}
+		this.layoutSelector.set_dataSource(ds);
+		this.layoutSelector.set_selectedIndex(indexToSelect);
+	}
+	,onLayoutSelectorChange: function(_) {
+		if(this.layoutSelector.get_selectedItem() == null) {
+			return;
+		}
+		var selectedLayout = this.layoutSelector.get_selectedItem().layout;
+		this.portletData.setValue("layoutId",selectedLayout.get_layoutId());
+		this.dispatchPortletConfigChanged();
+	}
+	,registerBehaviours: function() {
+		core_components_portlets_PortletConfigPage.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = core_components_portlets_PortletConfigPage.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_components_portlets__$NestedPortletInstance_NestedPortletConfigPage();
+	}
+	,layoutSelector: null
+	,__class__: core_components_portlets__$NestedPortletInstance_NestedPortletConfigPage
 });
 var core_components_portlets_PortletContainer = function() {
 	this._editable = false;
@@ -9067,14 +9480,15 @@ var core_components_portlets_PortletContainer = function() {
 	this._controls.set_horizontalAlign("right");
 	this._controls.set_opacity(.5);
 	this._controls.hide();
+	this._controls.set_styleString("margin: 10px;");
 	this.addComponent(this._controls);
 	this.set_onMouseOver(function(_) {
-		if(_gthis._editable) {
+		if(_gthis._editable && _gthis.get_portletInstance() != null) {
 			_gthis._controls.show();
 		}
 	});
 	this.set_onMouseOut(function(_) {
-		if(_gthis._editable) {
+		if(_gthis._editable && _gthis.get_portletInstance() != null) {
 			_gthis._controls.hide();
 		}
 	});
@@ -9100,9 +9514,9 @@ core_components_portlets_PortletContainer.prototype = $extend(haxe_ui_containers
 		dialog.modal = false;
 		dialog.set_page(this.get_page());
 		dialog.portletData = this.get_portletInstance().instanceData;
-		haxe_Log.trace("BEFORE -------------------------------",{ fileName : "../../haxe/core/components/portlets/PortletContainer.hx", lineNumber : 71, className : "core.components.portlets.PortletContainer", methodName : "onConfigurePortletInstance"});
-		haxe_Log.trace(this.get_portletInstance().instanceData.data,{ fileName : "../../haxe/core/components/portlets/PortletContainer.hx", lineNumber : 72, className : "core.components.portlets.PortletContainer", methodName : "onConfigurePortletInstance"});
-		haxe_Log.trace("-------------------------------",{ fileName : "../../haxe/core/components/portlets/PortletContainer.hx", lineNumber : 73, className : "core.components.portlets.PortletContainer", methodName : "onConfigurePortletInstance"});
+		haxe_Log.trace("BEFORE -------------------------------",{ fileName : "../../haxe/core/components/portlets/PortletContainer.hx", lineNumber : 72, className : "core.components.portlets.PortletContainer", methodName : "onConfigurePortletInstance"});
+		haxe_Log.trace(this.get_portletInstance().instanceData.data,{ fileName : "../../haxe/core/components/portlets/PortletContainer.hx", lineNumber : 73, className : "core.components.portlets.PortletContainer", methodName : "onConfigurePortletInstance"});
+		haxe_Log.trace("-------------------------------",{ fileName : "../../haxe/core/components/portlets/PortletContainer.hx", lineNumber : 74, className : "core.components.portlets.PortletContainer", methodName : "onConfigurePortletInstance"});
 		dialog.addConfigPage(this._portletInstance.get_configPage());
 		dialog.set_onChange(function(_) {
 			_gthis.applyPortletConfig(dialog.portletData.data);
@@ -9121,12 +9535,16 @@ core_components_portlets_PortletContainer.prototype = $extend(haxe_ui_containers
 		var _gthis = this;
 		if(this._portletInstance != null) {
 			this.get_portletInstance().instanceData.data = data;
-			haxe_Log.trace("AFTER -------------------------------",{ fileName : "../../haxe/core/components/portlets/PortletContainer.hx", lineNumber : 97, className : "core.components.portlets.PortletContainer", methodName : "applyPortletConfig"});
-			haxe_Log.trace(this.get_portletInstance().instanceData.data,{ fileName : "../../haxe/core/components/portlets/PortletContainer.hx", lineNumber : 98, className : "core.components.portlets.PortletContainer", methodName : "applyPortletConfig"});
-			haxe_Log.trace("-------------------------------",{ fileName : "../../haxe/core/components/portlets/PortletContainer.hx", lineNumber : 99, className : "core.components.portlets.PortletContainer", methodName : "applyPortletConfig"});
+			haxe_Log.trace("AFTER -------------------------------",{ fileName : "../../haxe/core/components/portlets/PortletContainer.hx", lineNumber : 98, className : "core.components.portlets.PortletContainer", methodName : "applyPortletConfig"});
+			haxe_Log.trace(this.get_portletInstance().instanceData.data,{ fileName : "../../haxe/core/components/portlets/PortletContainer.hx", lineNumber : 99, className : "core.components.portlets.PortletContainer", methodName : "applyPortletConfig"});
+			haxe_Log.trace("-------------------------------",{ fileName : "../../haxe/core/components/portlets/PortletContainer.hx", lineNumber : 100, className : "core.components.portlets.PortletContainer", methodName : "applyPortletConfig"});
 			this.get_page().preloadPortletInstance(this._portletInstance).then(function(r) {
 				_gthis._portletInstance.initPortlet();
 				_gthis._portletInstance.refreshView();
+				var event = new core_components_portlets_PortletEvent("portletConfigChanged");
+				event.portletContainer = _gthis;
+				event.data = data;
+				_gthis.dispatch(event);
 			});
 		}
 	}
@@ -9146,14 +9564,20 @@ core_components_portlets_PortletContainer.prototype = $extend(haxe_ui_containers
 				this._portletInstance.layoutData = new core_data_PortletInstanceLayoutData();
 			}
 			this._portletInstance.layoutData.set_portletContainerId(this.get_id());
+			this._controls.set_horizontalAlign(this._portletInstance.configureControlsHorizontalAlign);
+			this._controls.set_verticalAlign(this._portletInstance.configureControlsVerticalAlign);
 			this._portletInstance.set_percentWidth(100);
 			this._portletInstance.set_percentHeight(100);
 			this._portletContent.addComponent(this._portletInstance);
 			this._portletInstance.initPortlet();
 			this._portletInstance.refreshView();
 			var tmp = this._editable;
-		} else if(this._editable) {
-			this.addPortletAssignUI();
+		} else {
+			this._controls.set_horizontalAlign("right");
+			this._controls.set_verticalAlign("top");
+			if(this._editable) {
+				this.addPortletAssignUI();
+			}
 		}
 		return value;
 	}
@@ -9429,18 +9853,44 @@ core_components_portlets_QuickFilterPortletInstance.prototype = $extend(core_com
 	,__class__: core_components_portlets_QuickFilterPortletInstance
 });
 var core_components_portlets_SiteMapPortletInstance = function() {
+	this._tree = null;
 	core_components_portlets_PortletInstance.call(this);
 };
 $hxClasses["core.components.portlets.SiteMapPortletInstance"] = core_components_portlets_SiteMapPortletInstance;
 core_components_portlets_SiteMapPortletInstance.__name__ = "core.components.portlets.SiteMapPortletInstance";
 core_components_portlets_SiteMapPortletInstance.__super__ = core_components_portlets_PortletInstance;
 core_components_portlets_SiteMapPortletInstance.prototype = $extend(core_components_portlets_PortletInstance.prototype,{
-	onReady: function() {
+	_tree: null
+	,onReady: function() {
 		core_components_portlets_PortletInstance.prototype.onReady.call(this);
-		var button = new haxe_ui_components_Label();
-		button.set_percentWidth(100);
-		button.set_text(this.get_className());
-		this.addComponent(button);
+		this._tree = new haxe_ui_containers_TreeView();
+		this._tree.set_percentWidth(100);
+		this._tree.set_percentHeight(100);
+		this.addComponent(this._tree);
+		this.buildSiteMap();
+	}
+	,buildSiteMap: function() {
+		var siteId = this.get_page().pageDetails.get_siteId();
+		this.buildPageLinks(siteId,-1,null);
+	}
+	,buildPageLinks: function(siteId,parentPageId,node) {
+		var pages = core_data_InternalDB.pages.utils.sitePages(siteId,parentPageId);
+		if(pages.length == 0) {
+			return;
+		}
+		var _g = 0;
+		while(_g < pages.length) {
+			var page = pages[_g];
+			++_g;
+			var pageNode = null;
+			if(node == null) {
+				pageNode = this._tree.addNode({ text : page.get_name()});
+			} else {
+				pageNode = node.addNode({ text : page.get_name()});
+			}
+			pageNode.set_expanded(true);
+			this.buildPageLinks(siteId,page.get_pageId(),pageNode);
+		}
 	}
 	,registerBehaviours: function() {
 		core_components_portlets_PortletInstance.prototype.registerBehaviours.call(this);
@@ -15584,6 +16034,24 @@ core_data_PageUtils.prototype = {
 		}
 		return page;
 	}
+	,sitePages: function(siteId,parentPageId) {
+		var list = [];
+		var _g = 0;
+		var _g1 = core_data_InternalDB.pages.data;
+		while(_g < _g1.length) {
+			var page = _g1[_g];
+			++_g;
+			if(page.get_siteId() != siteId) {
+				continue;
+			}
+			if(parentPageId != null && page.get_parentPageId() == parentPageId) {
+				list.push(page);
+			} else if(parentPageId == null) {
+				list.push(page);
+			}
+		}
+		return list;
+	}
 	,portletInstances: function(pageId) {
 		var instances = [];
 		var _g = 0;
@@ -16672,10 +17140,15 @@ var core_data_PortletInstanceLayoutData = function() {
 };
 $hxClasses["core.data.PortletInstanceLayoutData"] = core_data_PortletInstanceLayoutData;
 core_data_PortletInstanceLayoutData.__name__ = "core.data.PortletInstanceLayoutData";
-core_data_PortletInstanceLayoutData.fomJsonString = function(s) {
+core_data_PortletInstanceLayoutData.fromJsonString = function(s) {
 	var data = new core_data_PortletInstanceLayoutData();
 	var object = JSON.parse(s);
 	data.data = object;
+	return data;
+};
+core_data_PortletInstanceLayoutData.fromJsonObject = function(o) {
+	var data = new core_data_PortletInstanceLayoutData();
+	data.data = o;
 	return data;
 };
 core_data_PortletInstanceLayoutData.toJsonString = function(o) {
@@ -16707,10 +17180,15 @@ var core_data_PortletInstancePortletData = function() {
 };
 $hxClasses["core.data.PortletInstancePortletData"] = core_data_PortletInstancePortletData;
 core_data_PortletInstancePortletData.__name__ = "core.data.PortletInstancePortletData";
-core_data_PortletInstancePortletData.fomJsonString = function(s) {
+core_data_PortletInstancePortletData.fromJsonString = function(s) {
 	var data = new core_data_PortletInstancePortletData();
 	var object = JSON.parse(s);
 	data.data = object;
+	return data;
+};
+core_data_PortletInstancePortletData.fromJsonObject = function(o) {
+	var data = new core_data_PortletInstancePortletData();
+	data.data = o;
 	return data;
 };
 core_data_PortletInstancePortletData.toJsonString = function(o) {
@@ -16735,6 +17213,15 @@ core_data_PortletInstancePortletData.prototype = {
 	}
 	,set_transform: function(value) {
 		return this.setValue("transform",value);
+	}
+	,getObjectValue: function(name,defaultValue) {
+		if(this.data == null) {
+			this.data = { };
+		}
+		if(!Object.prototype.hasOwnProperty.call(this.data,name)) {
+			return defaultValue;
+		}
+		return Reflect.field(this.data,name);
 	}
 	,getStringValue: function(name,defaultValue) {
 		if(this.data == null) {
@@ -22726,65 +23213,6 @@ dialogs_PermissionCheckerDialog.prototype = $extend(haxe_ui_containers_dialogs_D
 	,resourceSelector: null
 	,actionSelector: null
 	,__class__: dialogs_PermissionCheckerDialog
-});
-var dialogs_SelectPortletDialog = function() {
-	haxe_ui_containers_dialogs_Dialog.call(this);
-	var c0 = new haxe_ui_containers_ListView();
-	c0.set_id("portletTypeSelector");
-	c0.set_percentWidth(100.);
-	c0.set_percentHeight(100.);
-	c0.set_selectedIndex(0);
-	var ds0 = new haxe_ui_data_ArrayDataSource();
-	ds0.add({ text : "Nested Portlet", id : "item", className : "core.components.portlets.NestedPortletInstance"});
-	ds0.add({ text : "Bar Graph", id : "item", className : "core.components.portlets.BarGraphPortletInstance"});
-	ds0.add({ text : "Line Graph", id : "item", className : "core.components.portlets.LineGraphPortletInstance"});
-	ds0.add({ text : "Site Map", id : "item", className : "core.components.portlets.SiteMapPortletInstance"});
-	ds0.add({ text : "Image", id : "item", className : "core.components.portlets.StaticImagePortletInstance"});
-	ds0.add({ text : "Quick Filter", id : "item", className : "core.components.portlets.QuickFilterPortletInstance"});
-	c0.set_dataSource(ds0);
-	this.addComponent(c0);
-	this.set_width(300.);
-	this.set_height(300.);
-	this.set_title("Select Portlet");
-	this.bindingRoot = true;
-	this.portletTypeSelector = c0;
-	var larr = haxe_ui_containers_dialogs_DialogButton.toString("{{cancel}}").split("|");
-	var rarr = haxe_ui_containers_dialogs_DialogButton.toString("Select").split("|");
-	var _g = 0;
-	while(_g < rarr.length) {
-		var r = rarr[_g];
-		++_g;
-		if(larr.indexOf(r) == -1) {
-			larr.push(r);
-		}
-	}
-	this.buttons = larr.join("|");
-};
-$hxClasses["dialogs.SelectPortletDialog"] = dialogs_SelectPortletDialog;
-dialogs_SelectPortletDialog.__name__ = "dialogs.SelectPortletDialog";
-dialogs_SelectPortletDialog.__super__ = haxe_ui_containers_dialogs_Dialog;
-dialogs_SelectPortletDialog.prototype = $extend(haxe_ui_containers_dialogs_Dialog.prototype,{
-	registerBehaviours: function() {
-		haxe_ui_containers_dialogs_Dialog.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_containers_dialogs_Dialog.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new dialogs_SelectPortletDialog();
-	}
-	,portletTypeSelector: null
-	,__class__: dialogs_SelectPortletDialog
 });
 var dialogs_SelectRoleDialog = function() {
 	this.selectedRole = null;
@@ -56227,28 +56655,12 @@ var panels_PageDetailsPanel = function() {
 	this.findComponent("updateButton",haxe_ui_components_Button).set_onClick(function(_) {
 		_gthis.onUpdate();
 	});
-	this.pageLayoutPreview.registerEvent("assignPortletClicked",$bind(this,this.onPortletAssignPortletClicked));
 };
 $hxClasses["panels.PageDetailsPanel"] = panels_PageDetailsPanel;
 panels_PageDetailsPanel.__name__ = "panels.PageDetailsPanel";
 panels_PageDetailsPanel.__super__ = haxe_ui_containers_VBox;
 panels_PageDetailsPanel.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	pageDetails: null
-	,onPortletAssignPortletClicked: function(event) {
-		var _gthis = this;
-		var portletContainer = event.portletContainer;
-		var portletContainerId = portletContainer.get_id();
-		var dialog = new dialogs_SelectPortletDialog();
-		dialog.set_onDialogClosed(function(e) {
-			var larr = haxe_ui_containers_dialogs_DialogButton.toString(e.button).split("|");
-			if(larr.indexOf(haxe_ui_containers_dialogs_DialogButton.toString("Select")) != -1) {
-				var selectedClassName = dialog.portletTypeSelector.get_selectedItem().className;
-				var portletInstance = core_components_portlets_PortletFactory.get_instance().createInstance(selectedClassName);
-				_gthis.pageLayoutPreview.assignPortletInstance(portletContainerId,portletInstance);
-			}
-		});
-		dialog.show();
-	}
 	,onReady: function() {
 		haxe_ui_containers_VBox.prototype.onReady.call(this);
 		this.pageNameField.set_text(this.pageDetails.get_name());
@@ -56270,7 +56682,7 @@ panels_PageDetailsPanel.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 		this.layoutSelector.set_selectedIndex(indexToSelect);
 		var layout = core_data_InternalDB.layouts.utils.layout(this.pageDetails.get_layoutId());
 		this.pageLayoutPreview.set_layoutData(layout.get_layoutData());
-		this.pageLayoutPreview.assignPortletInstancesFromPage(this.pageDetails.get_pageId());
+		this.pageLayoutPreview.loadPage(this.pageDetails.get_pageId());
 	}
 	,_working: null
 	,onUpdate: function() {
@@ -59772,6 +60184,8 @@ haxe_ui_events_UIEvent.COMPONENT_ADDED = "componentadded";
 haxe_ui_events_UIEvent.COMPONENT_REMOVED = "componentremoved";
 core_components_portlets_PortletEvent.ASSIGN_PORTLET_CLICKED = "assignPortletClicked";
 core_components_portlets_PortletEvent.CONFIGURE_PORTLET_CLICKED = "configurePortletClicked";
+core_components_portlets_PortletEvent.PORTLET_ASSIGNED = "portletAssigned";
+core_components_portlets_PortletEvent.PORTLET_CONFIG_CHANGED = "portletConfigChanged";
 core_dashboards_DashboardInstanceEvent.FILTER_CHANGED = "filterChanged";
 core_data_ActionType.View = 1;
 core_data_ActionType.Update = 2;

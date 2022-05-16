@@ -1,5 +1,6 @@
 package core.components.portlets;
 
+import js.lib.Promise;
 import core.data.PortletInstancePortletData;
 import core.data.PortletInstanceLayoutData;
 import core.data.PortletInstanceData;
@@ -7,7 +8,9 @@ import core.data.PortletInstanceData;
 class PortletInstance extends Portlet {
     public var instanceData:PortletInstancePortletData;
     public var layoutData:PortletInstanceLayoutData;
-
+    public var configureControlsHorizontalAlign = "right";
+    public var configureControlsVerticalAlign = "top";
+    
     private override function onReady() {
         super.onReady();
         this.percentWidth = 100;
@@ -27,9 +30,15 @@ class PortletInstance extends Portlet {
     }
     private function set_portletDetails(value:PortletInstanceData):PortletInstanceData {
         _portletDetails = value;
-        instanceData = PortletInstancePortletData.fomJsonString(_portletDetails.portletData);
-        layoutData = PortletInstanceLayoutData.fomJsonString(_portletDetails.layoutData);
+        instanceData = PortletInstancePortletData.fromJsonString(_portletDetails.portletData);
+        layoutData = PortletInstanceLayoutData.fromJsonString(_portletDetails.layoutData);
         return value;
+    }
+
+    public function autoConfigure():Promise<Bool> {
+        return new Promise((resolve, reject) -> {
+            resolve(true);
+        });
     }
 
     public function initPortlet() {

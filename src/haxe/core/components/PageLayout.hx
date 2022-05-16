@@ -1,5 +1,6 @@
 package core.components;
 
+import core.data.PageData;
 import core.data.PortletInstancePortletData;
 import core.data.PortletInstanceLayoutData;
 import core.components.portlets.PortletInstance;
@@ -9,10 +10,31 @@ import haxe.ui.RuntimeComponentBuilder;
 import haxe.ui.containers.Box;
 import core.data.InternalDB;
 import core.components.portlets.PortletFactory;
+import haxe.ui.containers.dialogs.Dialog.DialogEvent;
+import core.components.dialogs.SelectPortletDialog;
+import core.components.portlets.PortletFactory;
 
 class PageLayout extends Page {
     public function new() {
         super();
+        //registerEvent(PortletEvent.ASSIGN_PORTLET_CLICKED, onPortletAssignPortletClicked);
+    }
+
+    private function onPortletAssignPortletClicked(event:PortletEvent) {
+        var portletContainer = event.portletContainer;
+        var portletContainerId:String = portletContainer.id;
+
+        var dialog = new SelectPortletDialog();
+        dialog.onDialogClosed = function(e:DialogEvent) {
+            if (e.button == "Select") {
+                var selectedClassName = dialog.portletTypeSelector.selectedItem.className;
+
+                var portletInstance = PortletFactory.instance.createInstance(selectedClassName);
+                assignPortletInstance(portletContainerId, portletInstance);
+            }
+        }
+        dialog.show();
+
     }
 
     private var _layoutData:String = null;
@@ -51,26 +73,59 @@ class PageLayout extends Page {
             return;
         }
 
-        preloadPortletInstance(portletInstance).then(function(e) {
+        _portletContainers.push(portletContainer);
+        portletInstance.autoConfigure().then(function(r) {
+            preloadPortletInstance(portletInstance).then(function(e) {
                 portletContainer.portletInstance = portletInstance;
+                portletContainer.registerEvent(PortletEvent.PORTLET_CONFIG_CHANGED, onPortletConfigChanged);
+                var newEvent = new PortletEvent(PortletEvent.PORTLET_ASSIGNED);
+                newEvent.portletContainer = portletContainer;
+                dispatch(newEvent);
+            });
         });
+    }
+
+    private function onPortletConfigChanged(event:PortletEvent) {
+        trace("Portlet Config Changed: ", event.data);
+        dispatch(event);
+    }
+
+    public function loadPage(pageId:Int) {
+        pageDetails = InternalDB.pages.utils.page(pageId);
+        if (pageDetails != null) {
+            assignPortletInstancesFromPage(pageId);
+        }
     }
 
     public function assignPortletInstancesFromPage(pageId:Int) {
         for (portletDetails in InternalDB.pages.utils.portletInstances(pageId)) {
-            var instanceData = PortletInstancePortletData.fomJsonString(portletDetails.portletData);
-            var layoutData = PortletInstanceLayoutData.fomJsonString(portletDetails.layoutData);
-            var portletInstance = PortletFactory.instance.createInstance(instanceData.portletClassName);
-            portletInstance.instanceData = instanceData;
-            portletInstance.layoutData = layoutData;
-            assignPortletInstance(layoutData.portletContainerId, portletInstance);
+            assignPortletFromStringData(portletDetails.portletData, portletDetails.layoutData);
         }
     }
 
+    public function assignPortletFromStringData(portletDataSting:String, layoutDataString:String) {
+        var instanceData = PortletInstancePortletData.fromJsonString(portletDataSting);
+        var layoutData = PortletInstanceLayoutData.fromJsonString(layoutDataString);
+        assignPortletFromData(instanceData, layoutData);
+    }
+
+    public function assignPortletFromObjectData(portletDataObject:Dynamic, layoutDataObject:Dynamic) {
+        var instanceData = PortletInstancePortletData.fromJsonObject(portletDataObject);
+        var layoutData = PortletInstanceLayoutData.fromJsonObject(layoutDataObject);
+        assignPortletFromData(instanceData, layoutData);
+    }
+
+    public function assignPortletFromData(instanceData:PortletInstancePortletData, layoutData:PortletInstanceLayoutData) {
+        var portletInstance = PortletFactory.instance.createInstance(instanceData.portletClassName);
+        portletInstance.instanceData = instanceData;
+        portletInstance.layoutData = layoutData;
+        assignPortletInstance(layoutData.portletContainerId, portletInstance);
+    }
+
+    private var _portletContainers:Array<PortletContainer> = [];
     public var portletContainers(get, null):Array<PortletContainer>;
     private function get_portletContainers():Array<PortletContainer> {
-        var containers = findComponents(PortletContainer, -1);
-        return containers;
+        return _portletContainers;
     }
 
     private function applyEditable() {
@@ -79,9 +134,5 @@ class PageLayout extends Page {
             portletContainer.editable = _editable;
             portletContainer.registerEvent(PortletEvent.ASSIGN_PORTLET_CLICKED, onPortletAssignPortletClicked);
         }
-    }
-
-    private function onPortletAssignPortletClicked(event:PortletEvent) {
-        dispatch(event);
     }
 }

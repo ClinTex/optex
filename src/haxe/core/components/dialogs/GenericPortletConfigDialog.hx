@@ -1,5 +1,6 @@
 package core.components.dialogs;
 
+import core.components.portlets.PortletEvent;
 import core.components.portlets.PortletConfigPage;
 import haxe.ui.containers.dialogs.Dialog;
 import core.data.PortletInstancePortletData;
@@ -15,6 +16,24 @@ class GenericPortletConfigDialog extends Dialog {
     public function new() {
         super();
         buttons = DialogButton.CLOSE;
+
+        portletConfigJsonField.onChange = function(_) {
+            try {
+                var json = Json.parse(portletConfigJsonField.text);
+                portletData.data = json;
+                dispatchPortletConfigChanged();
+            } catch (e:Dynamic) {
+            }
+        }
+    }
+
+    private function dispatchPortletConfigChanged() {
+        var event = new UIEvent(UIEvent.CHANGE);
+        dispatch(event);
+
+        var event = new PortletEvent(PortletEvent.PORTLET_CONFIG_CHANGED);
+        event.data = portletData.data;
+        dispatch(event);
     }
 
     private override function onReady() {

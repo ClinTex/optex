@@ -27,6 +27,10 @@ class PortletConfigPage extends VBox {
         if (dialog != null) {
             var event = new UIEvent(UIEvent.CHANGE);
             dialog.dispatch(event);
+
+            var event = new PortletEvent(PortletEvent.PORTLET_CONFIG_CHANGED);
+            dialog.dispatch(event);
         }
+
     }
 }

@@ -1,5 +1,6 @@
 package core.components;
 
+import haxe.ui.events.UIEvent;
 import haxe.ui.components.Button;
 import haxe.ui.containers.HBox;
 import haxe.ui.containers.VBox;
@@ -32,9 +33,15 @@ class MultiDatasourceFieldSelector extends VBox {
     private var _selectedFieldName:String = null;
     public var selectedFieldName(get, set):String;
     private function get_selectedFieldName():String {
+        var fields = [];
+        for (c in findComponents(DatasourceFieldSelector)) {
+            fields.push(c.selectedFieldName);
+        }
+        _selectedFieldName = fields.join(",");
         return _selectedFieldName;
     }
     private function set_selectedFieldName(value:String):String {
+        removeAllComponents();
         var fields = value.split(",");
         for (f in fields) {
             f = f.trim();
@@ -66,18 +73,28 @@ class MultiDatasourceFieldSelector extends VBox {
         selector.selectedDataSource = _selectedDataSource;
         selector.selectedFieldName = fieldName;
         selector.transformString = _transformString;
+        selector.onChange = function(_) {
+            var event = new UIEvent(UIEvent.CHANGE);
+            dispatch(event);
+        }
         hbox.addComponent(selector);
 
         var removeButton = new Button();
         removeButton.text = "-";
         hbox.addComponent(removeButton);
         removeButton.onClick = function(e) {
+            var index = this.getComponentIndex(e.target.parentComponent);
+            removeComponentAt(index);
+            var event = new UIEvent(UIEvent.CHANGE);
+            dispatch(event);
         }
 
         var addButton = new Button();
         addButton.text = "+";
         addButton.onClick = function(_) {
             addFieldSelector();
+            var event = new UIEvent(UIEvent.CHANGE);
+            dispatch(event);
         }
 
         hbox.addComponent(addButton);

@@ -18,6 +18,23 @@ class PageUtils {
         return page;
     }
 
+    public function sitePages(siteId:Int, parentPageId:Null<Int> = null):Array<PageData> {
+        var list = [];
+
+        for (page in InternalDB.pages.data) {
+            if (page.siteId != siteId) {
+                continue;
+            }
+            if (parentPageId != null && page.parentPageId == parentPageId) {
+                list.push(page);
+            } else if (parentPageId == null) {
+                list.push(page);
+            }
+        }
+
+        return list;
+    }
+
 
     public function portletInstances(pageId:Int):Array<PortletInstanceData> {
         var instances = [];

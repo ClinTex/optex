@@ -59,6 +59,13 @@ class ComplexTransformBuilder extends VBox {
         return value;
     }
 
+    private override function onReady() {
+        super.onReady();
+        if (findComponents(SimpleTransformBuilder).length == 0) {
+            addTransform();
+        }
+    }
+
     private function onPreviewResults(_) {
         var dialog = new TransformResultsPreviewDialog();
         dialog.transformString = transformString;

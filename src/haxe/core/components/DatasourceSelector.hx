@@ -95,6 +95,9 @@ class DatasourceSelector extends HBox {
             n++;
         }
         _databaseSelector.dataSource = ds;
+        if (selectedDataSource == null) {
+            _databaseSelector.selectedIndex = -1;
+        }
         _databaseSelector.selectedIndex = indexToSelect;
         refreshTables();
     }
@@ -123,6 +126,9 @@ class DatasourceSelector extends HBox {
             n++;
         }
         _tableSelector.dataSource = ds;
+        if (selectedDataSource == null) {
+            _tableSelector.selectedIndex = -1;
+        }
         _tableSelector.selectedIndex = indexToSelect;
     }
 }
