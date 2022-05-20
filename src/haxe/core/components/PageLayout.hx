@@ -47,6 +47,9 @@ class PageLayout extends Page {
             return value;
         }
 
+        removeAllPortlets();
+        removeAllComponents();
+
         _layoutData = value;
         var c = RuntimeComponentBuilder.fromString(_layoutData);
         addComponent(c);
@@ -83,6 +86,12 @@ class PageLayout extends Page {
                 dispatch(newEvent);
             });
         });
+    }
+
+    public function removeAllPortlets() {
+        for (container in _portletContainers) {
+            container.portletInstance = null;
+        }
     }
 
     private function onPortletConfigChanged(event:PortletEvent) {

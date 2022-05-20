@@ -3,14 +3,24 @@ package core.util.color;
 using StringTools;
 
 class ColorCalculatorFactory {
-    public static function getColorCalculator(id:String):IColorCalculator {
-        var id = id.replace("-", "").replace("_", "").toLowerCase();
+    public static function getColorCalculator(s:String):IColorCalculator {
+        if (s == null) {
+            return null;
+        }
+        var s = s.replace("-", "").replace("_", "").toLowerCase();
+        var details = new FunctionDetails(s);
 
-        switch (id) {
+        var inst:IColorCalculator = null;
+
+        switch (details.name) {
             case "range":
-                return new RangeColorCalculator();
+                inst = new RangeColorCalculator();
         }
 
-        return null;
+        if (inst != null) {
+            inst.configure(details.params);
+        }
+
+        return inst;
     }
 }

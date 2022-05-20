@@ -69,13 +69,11 @@ class PortletContainer extends Box {
         dialog.modal = false;
         dialog.page = page;
         dialog.portletData = portletInstance.instanceData;
-        trace("BEFORE -------------------------------");
-        trace(portletInstance.instanceData.data);
-        trace("-------------------------------");
         dialog.addConfigPage(_portletInstance.configPage);
         dialog.onChange = function(_) {
             applyPortletConfig(dialog.portletData.data);
         }
+
         dialog.onDialogClosed = function(event:DialogEvent) {
             if (event.button == DialogButton.APPLY) {
                 if (_portletInstance != null) {
@@ -95,9 +93,6 @@ class PortletContainer extends Box {
     private function applyPortletConfig(data:Dynamic) {
         if (_portletInstance != null) {
             portletInstance.instanceData.data = data;
-            trace("AFTER -------------------------------");
-            trace(portletInstance.instanceData.data);
-            trace("-------------------------------");
             page.preloadPortletInstance(_portletInstance).then(function(r) {
                 _portletInstance.initPortlet();
                 _portletInstance.refreshView();
@@ -141,6 +136,10 @@ class PortletContainer extends Box {
                 //_controls.show();
             }
         } else {
+            if (_portletInstance != null) {
+                _portletContent.removeComponent(_portletInstance);
+                _portletInstance = null;
+            }
             _controls.horizontalAlign = "right";
             _controls.verticalAlign = "top";
             if (_editable) {

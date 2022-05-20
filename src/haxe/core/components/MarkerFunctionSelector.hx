@@ -4,6 +4,7 @@ import haxe.ui.events.UIEvent;
 import haxe.ui.containers.dialogs.Dialog.DialogButton;
 import core.components.dialogs.markers.MarkerConfigDialog;
 import core.components.dialogs.markers.StaticYMarkerConfigDialog;
+import core.components.dialogs.markers.DeltaYMarkerConfigDialog;
 import haxe.ui.components.CheckBox;
 import haxe.ui.components.Button;
 import haxe.ui.data.ArrayDataSource;
@@ -37,6 +38,7 @@ class MarkerFunctionSelector extends VBox {
         var ds = new ArrayDataSource<Dynamic>();
         ds.add({ text: "None", functionId: "none"});
         ds.add({ text: "Static Line (Y-Axis)", functionId: "static-y"});
+        ds.add({ text: "Delta Line (Y-Axis)", functionId: "delta-y"});
         _functionSelector.dataSource = ds;
 
         var configButton = new Button();
@@ -125,9 +127,12 @@ class MarkerFunctionSelector extends VBox {
         switch (functionId) {
             case "static-y":
                 dialog = new StaticYMarkerConfigDialog();
+            case "delta-y":
+                dialog = new DeltaYMarkerConfigDialog();
         }
 
         if (dialog != null) {
+            dialog.markerParams = _markerParams;
             dialog.onDialogClosed = function(e) {
                 if (e.button == DialogButton.APPLY) {
                     _markerParams = dialog.markerParams;

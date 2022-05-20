@@ -112,6 +112,7 @@ class SimpleTransformBuilder extends Box {
                     params.push(p);
                 }
                 _transformParams = params;
+                _configButton.text = _transformParams.join(" and ").replace("'", "").replace("$", "");
             }
         }
         return value;

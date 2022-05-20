@@ -53,25 +53,20 @@ class NestedPortletInstance extends PortletInstance {
 
     private function onPortletAssigned(event:PortletEvent) {
         var portletContainer = event.portletContainer;
-        trace("===================== PORTLET ASSIGNED =======================");
-        trace(portletContainer.portletInstance.instanceData);
-        trace(portletContainer.portletInstance.layoutData);
         writePortletConfig();
     }
 
     private function onPortletConfigChanged(event:PortletEvent) {
         var portletContainer = event.portletContainer;
-        trace("===================== PORTLET CONFIG CHANGED =======================");
-        trace(portletContainer.portletInstance.instanceData);
-        trace(portletContainer.portletInstance.layoutData);
         writePortletConfig();
     }
 
     private function writePortletConfig() {
-        trace("==============================>>>>>>>>>>>>>>>>>>>>>>>>> " + _pageLayout.portletContainers.length);
         var portlets:Array<Dynamic> = [];
         for (portletContainer in _pageLayout.portletContainers) {
-            trace(portletContainer.portletInstance.instanceData, portletContainer.portletInstance.layoutData);
+            if (portletContainer.portletInstance == null) {
+                continue;
+            }
             portlets.push({
                 layoutData: portletContainer.portletInstance.layoutData.data,
                 portletData: portletContainer.portletInstance.instanceData.data

@@ -8,7 +8,7 @@ class ColorCalculator implements IColorCalculator {
 
     }
 
-    public function getColor(data:Dynamic):String {
+    public function getColor(data:Dynamic, index:Int = 0, graphInfo:Dynamic = null):String {
         return null;
     }
 }

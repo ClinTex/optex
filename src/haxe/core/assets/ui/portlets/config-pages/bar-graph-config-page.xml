@@ -14,5 +14,8 @@
 
         <label text="Marker" verticalAlign="top" style="padding-top: 6px;" />
         <marker-function-selector id="markerFunctionSelector" width="100%" />
+
+        <label text="Colors" verticalAlign="center" />
+        <color-calculator-selector id="colorCalculatorSelector" width="100%" />
     </grid>
 </vbox>

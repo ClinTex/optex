@@ -1,0 +1,30 @@
+<dialog width="420" title="Range Based Color Configuration">
+    <style>
+    #colorTable .even:hover, #colorTable .odd:hover {
+        background-color: none;
+    }
+    
+    #colorTable .even {
+        background-color: $tertiary-background-color;
+        cursor: pointer;
+    }
+
+    #colorTable .odd {
+        background-color: $solid-background-color-alt;
+        cursor: pointer;
+    }
+    </style>
+    <vbox width="100%">
+        <button id="addItemButton" text="Add Item" horizontalAlign="right" />
+        <tableview id="colorTable" styleName="no-selection" width="100%" selectionMode="disabled">
+            <header width="100%">
+                <column id="condition" text="Condition" width="100%" />
+                <column id="selectedColor" text="Color" width="100" style="text-align:center;" />
+            </header>
+            <colour-condition-builder-item-renderer id="condition" />
+            <item-renderer width="100%">
+                <color-selector id="selectedColor" width="100%" height="29" />
+            </item-renderer>
+        </tableview>
+    </vbox>    
+</dialog>

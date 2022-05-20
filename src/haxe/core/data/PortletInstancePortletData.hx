@@ -1,6 +1,5 @@
 package core.data;
 
-import js.lib.Reflect;
 import haxe.Json;
 
 class PortletInstancePortletData {
@@ -79,6 +78,14 @@ class PortletInstancePortletData {
         }
         Reflect.setField(data, name, value);
         return value;
+    }
+
+    public function removeValue(name:String) {
+        if (data == null) {
+            data = {};
+        }
+
+        Reflect.deleteField(data, name);
     }
 
     public static function fromJsonString(s:String):PortletInstancePortletData {

@@ -44,7 +44,15 @@ class DeltaDataY extends MarkerFunction {
         var index1:Int = params[0];
         var index2:Int = params[1];
         return function(data:Dynamic, index:Int) {
-            return Math.abs(data[index1].y - data[index2].y);
+            var d1 = 0;
+            if (data != null && data[index1] != null) {
+                d1 = data[index1].y;
+            }
+            var d2 = 0;
+            if (data != null && data[index2] != null) {
+                d2 = data[index2].y;
+            }
+            return Math.abs(d1 - d2);
         };
     }
 }

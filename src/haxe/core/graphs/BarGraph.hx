@@ -1,5 +1,7 @@
 package core.graphs;
 
+import core.util.color.IColorCalculator;
+import core.util.color.ColorCalculator;
 import core.d3.D3;
 import haxe.ui.Toolkit;
 import haxe.ui.backend.html5.util.StyleSheetHelper;
@@ -140,16 +142,18 @@ class BarGraph extends Component {
         invalidateComponentLayout();
     }
 
-    private var _colourCalculator:ColorCalculator_OLD = null;
-    public var colourCalculator(get, set):ColorCalculator_OLD;
-    private function get_colourCalculator():ColorCalculator_OLD {
+    private var _colourCalculator:IColorCalculator = null;
+    public var colourCalculator(get, set):IColorCalculator;
+    private function get_colourCalculator():IColorCalculator {
         return _colourCalculator;
     }
-    private function set_colourCalculator(value:ColorCalculator_OLD):ColorCalculator_OLD {
+    private function set_colourCalculator(value:IColorCalculator):IColorCalculator {
         _colourCalculator = value;
         if (_chart != null && value != null) {
             _chart.barColor(calculateColour);
             //this.data = _data;
+        } else if (_chart != null) {
+            _chart.barColor(null);
         }
         return value;
     }
@@ -226,7 +230,10 @@ class BarGraph extends Component {
     }
 
     private function calculateColour(data:Dynamic) {
-        return _colourCalculator.get(data, 0, {
+        if (_colourCalculator == null) {
+            return null;
+        }
+        return _colourCalculator.getColor(data, 0, {
             xAxisField: xAxisField,
             yAxisField: yAxisField,
         });

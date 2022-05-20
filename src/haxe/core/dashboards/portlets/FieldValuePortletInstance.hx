@@ -60,11 +60,13 @@ class FieldValuePortletInstance extends PortletInstance {
         var colorCalculator = config("colorCalculator");
         if (colorCalculator != null) {
             trace("------------------> " + colorCalculator);
+            /*
             var details = new FunctionDetails(colorCalculator);
             _colorCalculator = ColorCalculatorFactory.getColorCalculator(details.name);
             _colorCalculator.configure(details.params);
             trace(details.name);
             trace(details.params);
+            */
         }
     }
 

@@ -1,0 +1,9 @@
+<dialog title="'Delta Line (Y-Axis)' Config">
+    <grid>
+        <label text="1st Series Index" verticalAlign="center" />
+        <textfield id="series1Index" width="200" />
+
+        <label text="2nd Series Index" verticalAlign="center" />
+        <textfield id="series2Index" width="200" />
+    </grid>
+</dialog>

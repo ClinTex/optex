@@ -9,6 +9,7 @@ import core.graphs.MarkerFunctions;
 import haxe.ui.events.UIEvent;
 import core.data.PortletInstancePortletData;
 import js.lib.Promise;
+import core.util.color.ColorCalculatorFactory;
 
 using StringTools;
 
@@ -101,7 +102,7 @@ class BarGraphPortletInstance extends PortletInstance {
                 return 0;
             });
 
-            _bar.colourCalculator = getColourCalculator();
+            _bar.colourCalculator = ColorCalculatorFactory.getColorCalculator(_colorCalculator);
             _bar.getMarkerValueY = MarkerFunctions.get(_markerFunction);
             _bar.markerBehind = _markerBehind;
 
@@ -140,6 +141,7 @@ class BarGraphPortletInstance extends PortletInstance {
         });
     }
 
+    /*
     private function getColourCalculator():ColorCalculator_OLD {
         var s = _colorCalculator;
         if (s == null || s.trim() == "") {
@@ -156,6 +158,7 @@ class BarGraphPortletInstance extends PortletInstance {
 
         return cc;
     }
+    */
 
     private function onBarSelected(e:BarGraphEvent) {
     }
@@ -194,7 +197,6 @@ private class BarGraphConfigPage extends PortletConfigPage {
 
     private override function onReady() {
         super.onReady();
-        portletData.setValue("colorCalculator", "threshold:5.5");
 
         if (portletData.dataSourceId != null) {
             datasourceSelector.selectedDataSource = InternalDB.dataSources.utils.dataSource(portletData.dataSourceId);
@@ -221,6 +223,10 @@ private class BarGraphConfigPage extends PortletConfigPage {
             if (portletData.getStringValue("markerFunction") != null) {
                 markerFunctionSelector.markerString = portletData.getStringValue("markerFunction");
                 markerFunctionSelector.markerBehind = portletData.getBoolValue("markerBehind");
+            }
+
+            if (portletData.getStringValue("colorCalculator") != null) {
+                colorCalculatorSelector.colorCalcString = portletData.getStringValue("colorCalculator");
             }
         } else {
             onDataSourceSelected(null);
@@ -265,6 +271,17 @@ private class BarGraphConfigPage extends PortletConfigPage {
         if (markerFunctionSelector.markerString != null) {
             portletData.setValue("markerFunction", markerFunctionSelector.markerString);
             portletData.setValue("markerBehind", markerFunctionSelector.markerBehind);
+            dispatchPortletConfigChanged();
+        }
+    }
+
+    @:bind(colorCalculatorSelector, UIEvent.CHANGE)
+    private function onColorCalcChange(_) {
+        if (colorCalculatorSelector.colorCalcString != null) {
+            portletData.setValue("colorCalculator", colorCalculatorSelector.colorCalcString);
+            dispatchPortletConfigChanged();
+        } else {
+            portletData.removeValue("colorCalculator");
             dispatchPortletConfigChanged();
         }
     }

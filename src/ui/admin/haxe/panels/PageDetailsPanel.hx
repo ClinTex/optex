@@ -1,5 +1,6 @@
 package panels;
 
+import haxe.ui.events.UIEvent;
 import haxe.ui.data.ArrayDataSource;
 import core.data.PortletInstanceData;
 import core.components.portlets.PortletInstance;
@@ -7,6 +8,7 @@ import core.data.LayoutData;
 import views.OrganizationsView;
 import components.WorkingIndicator;
 import haxe.ui.components.Button;
+import haxe.ui.components.DropDown;
 import core.data.PageData;
 import haxe.ui.containers.VBox;
 import core.data.InternalDB;
@@ -21,6 +23,17 @@ class PageDetailsPanel extends VBox {
 			onUpdate();
 		}
 	}
+
+    @:bind(layoutSelector, UIEvent.CHANGE)
+    private function onLayoutSelectorChange(_) {
+        var selectedItem = layoutSelector.selectedItem;
+        if (selectedItem == null) {
+            return;
+        }
+
+        var layout:LayoutData = selectedItem.layout;
+        pageLayoutPreview.layoutData = layout.layoutData;
+    }
 
 	public override function onReady() {
 		super.onReady();
