@@ -95,7 +95,6 @@ class PageLayout extends Page {
     }
 
     private function onPortletConfigChanged(event:PortletEvent) {
-        trace("Portlet Config Changed: ", event.data);
         dispatch(event);
     }
 

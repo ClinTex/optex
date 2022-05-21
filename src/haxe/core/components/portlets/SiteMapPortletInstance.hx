@@ -29,10 +29,12 @@ class SiteMapPortletInstance extends PortletInstance {
 
         for (page in pages) {
             var pageNode = null;
+            var pageLabel = page.name;
+            var pageIcon = "themes/optex/" + InternalDB.icons.utils.icon(page.iconId).path;
             if (node == null) {
-                pageNode = _tree.addNode({text: page.name});
+                pageNode = _tree.addNode({text: pageLabel, icon: pageIcon, page: page});
             } else {
-                pageNode = node.addNode({text: page.name});
+                pageNode = node.addNode({text: pageLabel, icon: pageIcon, page: page});
             }
             pageNode.expanded = true;
             buildPageLinks(siteId, page.pageId, pageNode);

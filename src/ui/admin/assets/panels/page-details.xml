@@ -11,7 +11,7 @@
         <textfield id="pageNameField" text="" placeholder="" width="200"/>
 
         <label text="Layout" verticalAlign="center" />
-        <dropdown id="layoutSelector" width="200"/>
+        <dropdown id="layoutSelector" width="200" dropdownSize="-1"/>
     </grid>
 
     <page-layout id="pageLayoutPreview" width="100%" height="100%" editable="true" />

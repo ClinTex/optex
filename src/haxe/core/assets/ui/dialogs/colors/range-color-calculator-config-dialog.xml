@@ -1,4 +1,12 @@
-<dialog width="420" title="Range Based Color Configuration">
+<dialog width="420" title="Range Based Color Configuration" styleName="no-padding">
+    <menubar id="dialogMenu" width="100%">
+        <menu text="Preset">
+            <menu-item id="presetHighMediumLow" text="High/Medium/Low" />
+            <menu-item id="presetHighLow" text="High/Low" />
+        </menu>
+        <spacer width="100%" />
+        <button id="addItemButton" text="+" horizontalAlign="right" />
+    </menubar>
     <style>
     #colorTable .even:hover, #colorTable .odd:hover {
         background-color: none;
@@ -14,16 +22,19 @@
         cursor: pointer;
     }
     </style>
-    <vbox width="100%">
-        <button id="addItemButton" text="Add Item" horizontalAlign="right" />
+    <vbox width="100%" styleName="dialog-content-padding">
         <tableview id="colorTable" styleName="no-selection" width="100%" selectionMode="disabled">
             <header width="100%">
                 <column id="condition" text="Condition" width="100%" />
                 <column id="selectedColor" text="Color" width="100" style="text-align:center;" />
+                <column id="delete" text=" " width="45" style="text-align:center;" />
             </header>
             <colour-condition-builder-item-renderer id="condition" />
             <item-renderer width="100%">
                 <color-selector id="selectedColor" width="100%" height="29" />
+            </item-renderer>
+            <item-renderer width="100%">
+                <button id="delete" text="-" width="100%"/>
             </item-renderer>
         </tableview>
     </vbox>    

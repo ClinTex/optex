@@ -31,7 +31,7 @@ class RangeColorCalculator extends ColorCalculator {
                 case "gt":
                     value1 = Std.parseFloat(parts.shift());
             }
-            trace("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP = ", params[i * 2 + 1]);
+
             var color = "#" + StringTools.hex(Std.parseInt(Std.string(params[i * 2 + 1])), 6);
             _ranges.push({
                 type: type,

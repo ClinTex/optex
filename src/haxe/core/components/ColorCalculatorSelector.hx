@@ -39,9 +39,26 @@ class ColorCalculatorSelector extends VBox {
         hbox.addComponent(configButton);
     }
 
+    private var _cachedParams:Map<String, Array<String>> = [];
     private override function onReady() {
         super.onReady();
         _colorCalcSelector.onChange = function(_) {
+            if (_colorCalcSelector.selectedItem == null) {
+                return;
+            }
+
+            var colorCalcId:String = _colorCalcSelector.selectedItem.colorCalcId;
+            if (_cachedParams.exists(colorCalcId) == false) {
+                switch (colorCalcId) {
+                    case "range":
+                        _colorCalcParams = ["lt 40", "12582912", "btwn 40 60", "16704921", "gt 60", "11063437"];
+                    case _:
+                        _colorCalcParams = null;    
+                }
+            } else {
+                _colorCalcParams = _cachedParams.get(colorCalcId);
+            }
+
             var event = new UIEvent(UIEvent.CHANGE);
             dispatch(event);
         }
@@ -96,6 +113,7 @@ class ColorCalculatorSelector extends VBox {
                     break;
                 }
             }
+            _cachedParams.set(colorCalcId, _colorCalcParams);
             _colorCalcSelector.selectedIndex = n;
         }
         return value;
@@ -114,6 +132,7 @@ class ColorCalculatorSelector extends VBox {
             dialog.onDialogClosed = function(e) {
                 if (e.button == DialogButton.APPLY) {
                     _colorCalcParams = dialog.colorCalcParams;
+                    _cachedParams.set(colorCalcId, _colorCalcParams);
                     var event = new UIEvent(UIEvent.CHANGE);
                     dispatch(event);
                 }

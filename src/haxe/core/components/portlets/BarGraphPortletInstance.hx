@@ -81,16 +81,12 @@ class BarGraphPortletInstance extends PortletInstance {
 
     public override function refreshView() {
         super.refreshView();
-        trace("refreshing view");
 
         if (_dataSourceData == null) {
-            trace("data source data is null");
             return;
         }
 
         page.getTableData(this).then(function(table) {
-            trace("bar graph refresh view: " + table.records.length);
-
             var records = table.records;
             records.sort(function(o1, o2) {
                 if (Std.string(o1.getFieldValue(_axisX)) < Std.string(o2.getFieldValue(_axisX))) {
@@ -134,31 +130,11 @@ class BarGraphPortletInstance extends PortletInstance {
                 });
             }
 
-            trace(width, height);
             if (width > 0 && height > 0) {
                 _bar.data = graphData;
             }
         });
     }
-
-    /*
-    private function getColourCalculator():ColorCalculator_OLD {
-        var s = _colorCalculator;
-        if (s == null || s.trim() == "") {
-            return null;
-        }
-
-        var cc = null;
-        var parts = s.split(":");
-        var id = parts.shift();
-        switch (id) {
-            case "threshold":
-                cc = new ThresholdBasedColourCalculator(Std.parseFloat(parts[0]));
-        }
-
-        return cc;
-    }
-    */
 
     private function onBarSelected(e:BarGraphEvent) {
     }
