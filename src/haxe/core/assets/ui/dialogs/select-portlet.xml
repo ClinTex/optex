@@ -1,8 +1,9 @@
 <dialog width="300" height="300" title="Select Portlet">
     <listview id="portletTypeSelector" width="100%" height="100%" selectedIndex="0">
         <data>
-            <item text="Nested Portlet" className="core.components.portlets.NestedPortletInstance" />
-            <item text="Bar Graph" className="core.components.portlets.BarGraphPortletInstance" />
+            <item text="Nested Layout" className="core.components.portlets.NestedPortletInstance" />
+            <item text="Bar Graph (Vertical)" className="core.components.portlets.BarGraphPortletInstance" />
+            <item text="Bar Graph (Horizontal)" className="core.components.portlets.HorizontalBarGraphPortletInstance" />
             <item text="Line Graph" className="core.components.portlets.LineGraphPortletInstance" />
             <item text="Site Map" className="core.components.portlets.SiteMapPortletInstance" />
             <item text="Image" className="core.components.portlets.StaticImagePortletInstance" />

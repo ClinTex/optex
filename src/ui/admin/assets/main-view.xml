@@ -50,7 +50,9 @@
                 <stack id="mainStack" width="100%" height="100%">
                     <home-view id="homeView" />
                     <data-view id="dataView" />
+                    <!--
                     <dashboards-view id="dashboardsView" />
+                    -->
                     <organizations-view id="organizationsView" />
                     <!--
                     <portlets-view id="portletsView" />
@@ -62,8 +64,10 @@
             <button-bar id="mainButtons" direction="vertical" height="100%" selectedIndex="0" styleName="right-menu with-bottom-button" style="margin-top: -1px" onchange="mainStack.selectedId = this.selectedButton.userData">
                 <button text="Home" userData="homeView" icon="icons/icons8-top-menu-48.png" />
                 <button text="Data" userData="dataView" icon="icons/icons8-data-protection-48.png" />
+                <!--
                 <button text="Dashboards" userData="dashboardsView" icon="icons/icons8-dashboard-layout-48.png" />
-                <button text="Access" userData="organizationsView" icon="icons/icons8-data-protection-48.png" />
+                -->
+                <button text="Sites" userData="organizationsView" icon="icons/icons8-dashboard-layout-48.png" />
                 <!--
                 <button text="Portlets" userData="portletsView" icon="icons/icons8-laptop-48.png" />
                 -->

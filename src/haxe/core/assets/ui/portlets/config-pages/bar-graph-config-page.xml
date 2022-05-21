@@ -6,10 +6,10 @@
         <label text="Transform" verticalAlign="top" style="padding-top: 6px;" />
         <complex-transform-builder id="transformBuilder" width="100%" />
 
-        <label text="X Axis" verticalAlign="center" />
+        <label text="Key" verticalAlign="center" />
         <datasource-field-selector id="axisXSelector" width="100%" />
 
-        <label text="Y Axis" verticalAlign="top" style="padding-top: 6px;" />
+        <label text="Value(s)" verticalAlign="top" style="padding-top: 6px;" />
         <multi-datasource-field-selector id="axisYSelector" width="100%" />
 
         <label text="Marker" verticalAlign="top" style="padding-top: 6px;" />

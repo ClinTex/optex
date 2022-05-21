@@ -108,7 +108,7 @@ class BarGraph extends Component {
             _chart.showControls(false);
             _chart.noData(this.noDataLabel);
             _chart.showLegend(showLegend);
-            _chart.tooltip.enabled(false);
+            //_chart.tooltip.enabled(false);
             if (_colourCalculator != null) {
                 _chart.barColor(calculateColour);
             }

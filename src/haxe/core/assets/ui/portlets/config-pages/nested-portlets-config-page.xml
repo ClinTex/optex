@@ -1,6 +1,6 @@
 <vbox text="Nested Portlets" width="100%">
     <grid width="100%">
         <label text="Layout" verticalAlign="center" />
-        <dropdown id="layoutSelector" width="100%" />
+        <dropdown id="layoutSelector" width="100%" dropdownSize="-1" />
     </grid>
 </vbox>

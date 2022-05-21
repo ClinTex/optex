@@ -11,6 +11,8 @@ import js.html.CSSStyleSheet;
 import js.html.DivElement;
 import core.nvd3.NV;
 import haxe.ui.events.UIEvent;
+import core.util.color.IColorCalculator;
+import core.util.color.ColorCalculator;
 
 class HorizontalBarGraphEvent extends UIEvent {
     public static inline var BAR_SELECTED:String = "barSelected";
@@ -107,7 +109,7 @@ class HorizontalBarGraph extends Component {
             _chart.showControls(false);
             _chart.noData(this.noDataLabel);
             _chart.showLegend(showLegend);
-            _chart.tooltip.enabled(false);
+            //_chart.tooltip.enabled(false);
             if (_colourCalculator != null) {
                 _chart.barColor(calculateColour);
             }
@@ -137,16 +139,18 @@ class HorizontalBarGraph extends Component {
         invalidateComponentLayout();
     }
 
-    private var _colourCalculator:ColorCalculator_OLD = null;
-    public var colourCalculator(get, set):ColorCalculator_OLD;
-    private function get_colourCalculator():ColorCalculator_OLD {
+    private var _colourCalculator:IColorCalculator = null;
+    public var colourCalculator(get, set):IColorCalculator;
+    private function get_colourCalculator():IColorCalculator {
         return _colourCalculator;
     }
-    private function set_colourCalculator(value:ColorCalculator_OLD):ColorCalculator_OLD {
+    private function set_colourCalculator(value:IColorCalculator):IColorCalculator {
         _colourCalculator = value;
         if (_chart != null && value != null) {
             _chart.barColor(calculateColour);
             //this.data = _data;
+        } else if (_chart != null) {
+            _chart.barColor(null);
         }
         return value;
     }
@@ -215,7 +219,10 @@ class HorizontalBarGraph extends Component {
     }
 
     private function calculateColour(data:Dynamic) {
-        return _colourCalculator.get(data, 0, {
+        if (_colourCalculator == null) {
+            return null;
+        }
+        return _colourCalculator.getColor(data, 0, {
             xAxisField: xAxisField,
             yAxisField: yAxisField,
         });

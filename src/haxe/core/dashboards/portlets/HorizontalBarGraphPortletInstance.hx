@@ -91,7 +91,7 @@ class HorizontalBarGraphPortletInstance extends PortletInstance {
             return 0;
         });
 
-        _bar.colourCalculator = getColourCalculator();
+        //_bar.colourCalculator = getColourCalculator();
         _bar.getMarkerValueY = MarkerFunctions.get(config("markerFunction"));
         _bar.markerBehind = configBool("markerBehind");
 

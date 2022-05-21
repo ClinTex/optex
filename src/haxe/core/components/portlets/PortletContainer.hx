@@ -60,6 +60,17 @@ class PortletContainer extends Box {
         }
     }
 
+    public var containerDepth(get, null):Int;
+    private function get_containerDepth():Int {
+        var d = -1;
+        var ref = this;
+        while (ref != null) {
+            d++;
+            ref = ref.findAncestor(PortletContainer);
+        }
+        return d;
+    }
+
     private function onRemovePortletInstance(_) {
         this.portletInstance = null;
     }
@@ -126,6 +137,11 @@ class PortletContainer extends Box {
             _portletInstance.layoutData.portletContainerId = this.id;
             _controls.horizontalAlign = _portletInstance.configureControlsHorizontalAlign;
             _controls.verticalAlign = _portletInstance.configureControlsVerticalAlign;
+            if (_controls.verticalAlign == "top") {
+                //_controls.styleString = "margin: 10px;margin-top:" + (10 + containerDepth * 35) + "px";
+            } else if (_controls.verticalAlign == "bottom") {
+                _controls.styleString = "margin: 10px;margin-bottom:" + ( 10 + containerDepth * 35) + "px";
+            }
 
             _portletInstance.percentWidth = 100;
             _portletInstance.percentHeight = 100;

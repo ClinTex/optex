@@ -1,8 +1,10 @@
 package core.components.portlets;
 
 import core.data.DataSourceData;
-import core.graphs.BarGraph;
+import haxe.ui.components.Label;
+import core.graphs.HorizontalBarGraph;
 import core.data.InternalDB;
+import core.graphs.ColorCalculator_OLD;
 import core.graphs.MarkerFunctions;
 import haxe.ui.events.UIEvent;
 import core.data.PortletInstancePortletData;
@@ -11,8 +13,8 @@ import core.util.color.ColorCalculatorFactory;
 
 using StringTools;
 
-class BarGraphPortletInstance extends PortletInstance {
-    private var _bar:BarGraph = null;
+class HorizontalBarGraphPortletInstance extends PortletInstance {
+    private var _bar:HorizontalBarGraph = null;
 
     private var _dataSourceData:DataSourceData = null;
     private var _transform:String;
@@ -40,13 +42,13 @@ class BarGraphPortletInstance extends PortletInstance {
         _colorCalculator = getConfigValue("colorCalculator");
 
         if (_bar == null) {
-            _bar = new BarGraph();
+            _bar = new HorizontalBarGraph();
             _bar.percentWidth = 100;
             _bar.percentHeight = 100;
             _bar.labelRotation = -45;
 
-            _bar.registerEvent(BarGraphEvent.BAR_SELECTED, onBarSelected);
-            _bar.registerEvent(BarGraphEvent.BAR_UNSELECTED, onBarUnselected);
+            _bar.registerEvent(HorizontalBarGraphEvent.BAR_SELECTED, onBarSelected);
+            _bar.registerEvent(HorizontalBarGraphEvent.BAR_UNSELECTED, onBarUnselected);
 
             addComponent(_bar);
         }
@@ -134,10 +136,10 @@ class BarGraphPortletInstance extends PortletInstance {
         });
     }
 
-    private function onBarSelected(e:BarGraphEvent) {
+    private function onBarSelected(e:HorizontalBarGraphEvent) {
     }
 
-    private function onBarUnselected(e:BarGraphEvent) {
+    private function onBarUnselected(e:HorizontalBarGraphEvent) {
     }
 
     private var hasSize:Bool = false;
@@ -158,13 +160,13 @@ class BarGraphPortletInstance extends PortletInstance {
     }
 
     private override function get_configPage():PortletConfigPage {
-        var configPage = new BarGraphConfigPage();
+        var configPage = new HorizontalBarGraphConfigPage();
         return configPage;
     }
 }
 
 @:build(haxe.ui.ComponentBuilder.build("core/assets/ui/portlets/config-pages/bar-graph-config-page.xml"))
-private class BarGraphConfigPage extends PortletConfigPage {
+private class HorizontalBarGraphConfigPage extends PortletConfigPage {
     public function new() {
         super();
     }

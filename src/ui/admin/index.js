@@ -4625,56 +4625,48 @@ var AdminView = function() {
 	var c16 = new views_DataView();
 	c16.set_id("dataView");
 	c14.addComponent(c16);
-	var c17 = new views_DashboardsView();
-	c17.set_id("dashboardsView");
+	var c17 = new views_OrganizationsView();
+	c17.set_id("organizationsView");
 	c14.addComponent(c17);
-	var c18 = new views_OrganizationsView();
-	c18.set_id("organizationsView");
+	var c18 = new views_SettingsView();
+	c18.set_id("settingsView");
 	c14.addComponent(c18);
-	var c19 = new views_SettingsView();
-	c19.set_id("settingsView");
-	c14.addComponent(c19);
 	c13.addComponent(c14);
 	c12.addComponent(c13);
-	var c20 = new haxe_ui_containers_VerticalButtonBar();
-	c20.set_id("mainButtons");
-	c20.set_percentHeight(100.);
-	c20.set_styleNames("right-menu with-bottom-button");
-	c20.set_styleString("margin-top: -1px");
-	c20.set_selectedIndex(0);
+	var c19 = new haxe_ui_containers_VerticalButtonBar();
+	c19.set_id("mainButtons");
+	c19.set_percentHeight(100.);
+	c19.set_styleNames("right-menu with-bottom-button");
+	c19.set_styleString("margin-top: -1px");
+	c19.set_selectedIndex(0);
+	var c20 = new haxe_ui_components_Button();
+	c20.set_text("Home");
+	c20.userData = "homeView";
+	c20.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-top-menu-48.png"));
+	c19.addComponent(c20);
 	var c21 = new haxe_ui_components_Button();
-	c21.set_text("Home");
-	c21.userData = "homeView";
-	c21.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-top-menu-48.png"));
-	c20.addComponent(c21);
+	c21.set_text("Data");
+	c21.userData = "dataView";
+	c21.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-data-protection-48.png"));
+	c19.addComponent(c21);
 	var c22 = new haxe_ui_components_Button();
-	c22.set_text("Data");
-	c22.userData = "dataView";
-	c22.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-data-protection-48.png"));
-	c20.addComponent(c22);
-	var c23 = new haxe_ui_components_Button();
-	c23.set_text("Dashboards");
-	c23.userData = "dashboardsView";
-	c23.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-dashboard-layout-48.png"));
-	c20.addComponent(c23);
+	c22.set_text("Sites");
+	c22.userData = "organizationsView";
+	c22.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-dashboard-layout-48.png"));
+	c19.addComponent(c22);
+	var c23 = new haxe_ui_components_Spacer();
+	c23.set_percentHeight(100.);
+	c19.addComponent(c23);
 	var c24 = new haxe_ui_components_Button();
-	c24.set_text("Access");
-	c24.userData = "organizationsView";
-	c24.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-data-protection-48.png"));
-	c20.addComponent(c24);
-	var c25 = new haxe_ui_components_Spacer();
-	c25.set_percentHeight(100.);
-	c20.addComponent(c25);
-	var c26 = new haxe_ui_components_Button();
-	c26.set_text("Settings");
-	c26.userData = "settingsView";
-	c26.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-services-48.png"));
-	c20.addComponent(c26);
-	c12.addComponent(c20);
+	c24.set_text("Settings");
+	c24.userData = "settingsView";
+	c24.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-services-48.png"));
+	c19.addComponent(c24);
+	c12.addComponent(c19);
 	c0.addComponent(c12);
 	this.addComponent(c0);
-	c20.registerEvent("change",function(event) {
-		var __this__ = c20;
+	c19.registerEvent("change",function(event) {
+		var __this__ = c19;
 		var mainStack = c14;
 		mainStack.set_selectedId(__this__.get_selectedButton().userData);
 	});
@@ -4685,20 +4677,19 @@ var AdminView = function() {
 	this.bindingRoot = true;
 	this.userMenu = c9;
 	this.transformBrowser = c5;
-	this.settingsView = c19;
+	this.settingsView = c18;
 	this.removeCurrentDatabase = c3;
 	this.permissionChecker = c6;
-	this.organizationsView = c18;
+	this.organizationsView = c17;
 	this.myRoles = c10;
 	this.mainStack = c14;
 	this.mainMenu = c1;
 	this.mainContent = c13;
-	this.mainButtons = c20;
+	this.mainButtons = c19;
 	this.logout = c11;
 	this.homeView = c15;
 	this.exportCurrentTable = c7;
 	this.dataView = c16;
-	this.dashboardsView = c17;
 	this.clearAll = c4;
 	this.adminMenu = c2;
 	AdminView.instance = this;
@@ -4791,7 +4782,6 @@ AdminView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
 	,homeView: null
 	,exportCurrentTable: null
 	,dataView: null
-	,dashboardsView: null
 	,clearAll: null
 	,adminMenu: null
 	,__class__: AdminView
@@ -7475,43 +7465,6 @@ core_components_ComplexTransformBuilder.prototype = $extend(haxe_ui_containers_V
 	,__class__: core_components_ComplexTransformBuilder
 	,__properties__: $extend(haxe_ui_containers_VBox.prototype.__properties__,{set_selectedDataSource:"set_selectedDataSource",get_selectedDataSource:"get_selectedDataSource",set_transformString:"set_transformString",get_transformString:"get_transformString"})
 });
-var core_components_DashboardGroupSelector = function() {
-	haxe_ui_components_DropDown.call(this);
-	var ds = new haxe_ui_data_ArrayDataSource();
-	var _g = 0;
-	var _g1 = core_data_InternalDB.dashboardGroups.data;
-	while(_g < _g1.length) {
-		var group = _g1[_g];
-		++_g;
-		ds.add({ text : group.get_name(), groupData : group});
-	}
-	this.set_dataSource(ds);
-};
-$hxClasses["core.components.DashboardGroupSelector"] = core_components_DashboardGroupSelector;
-core_components_DashboardGroupSelector.__name__ = "core.components.DashboardGroupSelector";
-core_components_DashboardGroupSelector.__super__ = haxe_ui_components_DropDown;
-core_components_DashboardGroupSelector.prototype = $extend(haxe_ui_components_DropDown.prototype,{
-	registerBehaviours: function() {
-		haxe_ui_components_DropDown.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_components_DropDown.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new core_components_DashboardGroupSelector();
-	}
-	,__class__: core_components_DashboardGroupSelector
-});
 var core_components_DatasourceFieldSelector = function() {
 	this._selectedFieldName = null;
 	this._selectedDataSource = null;
@@ -8931,8 +8884,9 @@ var core_components_dialogs_SelectPortletDialog = function() {
 	c0.set_percentHeight(100.);
 	c0.set_selectedIndex(0);
 	var ds0 = new haxe_ui_data_ArrayDataSource();
-	ds0.add({ text : "Nested Portlet", id : "item", className : "core.components.portlets.NestedPortletInstance"});
-	ds0.add({ text : "Bar Graph", id : "item", className : "core.components.portlets.BarGraphPortletInstance"});
+	ds0.add({ text : "Nested Layout", id : "item", className : "core.components.portlets.NestedPortletInstance"});
+	ds0.add({ text : "Bar Graph (Vertical)", id : "item", className : "core.components.portlets.BarGraphPortletInstance"});
+	ds0.add({ text : "Bar Graph (Horizontal)", id : "item", className : "core.components.portlets.HorizontalBarGraphPortletInstance"});
 	ds0.add({ text : "Line Graph", id : "item", className : "core.components.portlets.LineGraphPortletInstance"});
 	ds0.add({ text : "Site Map", id : "item", className : "core.components.portlets.SiteMapPortletInstance"});
 	ds0.add({ text : "Image", id : "item", className : "core.components.portlets.StaticImagePortletInstance"});
@@ -10153,7 +10107,7 @@ var core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage = func
 	c4.set_percentWidth(100.);
 	c0.addComponent(c4);
 	var c5 = new haxe_ui_components_Label();
-	c5.set_text("X Axis");
+	c5.set_text("Key");
 	c5.set_verticalAlign("center");
 	c0.addComponent(c5);
 	var c6 = new core_components_DatasourceFieldSelector();
@@ -10161,7 +10115,7 @@ var core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage = func
 	c6.set_percentWidth(100.);
 	c0.addComponent(c6);
 	var c7 = new haxe_ui_components_Label();
-	c7.set_text("Y Axis");
+	c7.set_text("Value(s)");
 	c7.set_styleString("padding-top: 6px;");
 	c7.set_verticalAlign("top");
 	c0.addComponent(c7);
@@ -10336,19 +10290,513 @@ core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage.prototype 
 	,axisXSelector: null
 	,__class__: core_components_portlets__$BarGraphPortletInstance_BarGraphConfigPage
 });
+var core_components_portlets_HorizontalBarGraphPortletInstance = function() {
+	this.hasSize = false;
+	this._init = false;
+	this._dataSourceData = null;
+	this._bar = null;
+	core_components_portlets_PortletInstance.call(this);
+};
+$hxClasses["core.components.portlets.HorizontalBarGraphPortletInstance"] = core_components_portlets_HorizontalBarGraphPortletInstance;
+core_components_portlets_HorizontalBarGraphPortletInstance.__name__ = "core.components.portlets.HorizontalBarGraphPortletInstance";
+core_components_portlets_HorizontalBarGraphPortletInstance.__super__ = core_components_portlets_PortletInstance;
+core_components_portlets_HorizontalBarGraphPortletInstance.prototype = $extend(core_components_portlets_PortletInstance.prototype,{
+	_bar: null
+	,_dataSourceData: null
+	,_transform: null
+	,_axisX: null
+	,_axisY: null
+	,_markerFunction: null
+	,_markerBehind: null
+	,_colorCalculator: null
+	,_init: null
+	,initPortlet: function() {
+		var tmp = this._init == true;
+		core_components_portlets_PortletInstance.prototype.initPortlet.call(this);
+		this._init = true;
+		this._dataSourceData = core_data_InternalDB.dataSources.utils.dataSource(this.instanceData.get_dataSourceId());
+		this._transform = this.getConfigValue("transform");
+		this._axisX = this.getConfigValue("axisX");
+		this._axisY = this.getConfigValue("axisY");
+		this._markerFunction = this.getConfigValue("markerFunction");
+		this._markerBehind = this.getConfigBoolValue("markerBehind");
+		this._colorCalculator = this.getConfigValue("colorCalculator");
+		if(this._bar == null) {
+			this._bar = new core_graphs_HorizontalBarGraph();
+			this._bar.set_percentWidth(100);
+			this._bar.set_percentHeight(100);
+			this._bar.labelRotation = -45;
+			this._bar.registerEvent("barSelected",$bind(this,this.onBarSelected));
+			this._bar.registerEvent("barUnselected",$bind(this,this.onBarUnselected));
+			this.addComponent(this._bar);
+		}
+	}
+	,autoConfigure: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			if(_gthis.instanceData == null) {
+				_gthis.instanceData = new core_data_PortletInstancePortletData();
+			}
+			if(_gthis.instanceData.get_dataSourceId() == null) {
+				if(core_data_InternalDB.dataSources.data.length > 0) {
+					var firstDataSource = core_data_InternalDB.dataSources.data[0];
+					core_components_portlets_PortletDataUtils.fetchTableData(firstDataSource.get_databaseName(),firstDataSource.get_tableName()).then(function(r) {
+						var firstField = r.info.fieldDefinitions[0];
+						var secondField = r.info.fieldDefinitions[1];
+						_gthis.instanceData.set_dataSourceId(firstDataSource.get_dataSourceId());
+						_gthis.instanceData.setValue("axisX",firstField.fieldName);
+						_gthis.instanceData.setValue("axisY",secondField.fieldName);
+						resolve(true);
+					});
+				} else {
+					resolve(true);
+				}
+			} else {
+				resolve(true);
+			}
+		});
+	}
+	,refreshView: function() {
+		var _gthis = this;
+		core_components_portlets_PortletInstance.prototype.refreshView.call(this);
+		if(this._dataSourceData == null) {
+			return;
+		}
+		this.get_page().getTableData(this).then(function(table) {
+			var records = table.records;
+			records.sort(function(o1,o2) {
+				if(Std.string(o1.getFieldValue(_gthis._axisX)) < Std.string(o2.getFieldValue(_gthis._axisX))) {
+					return -1;
+				}
+				if(Std.string(o1.getFieldValue(_gthis._axisX)) > Std.string(o2.getFieldValue(_gthis._axisX))) {
+					return 1;
+				}
+				return 0;
+			});
+			_gthis._bar.set_colourCalculator(core_util_color_ColorCalculatorFactory.getColorCalculator(_gthis._colorCalculator));
+			_gthis._bar.getMarkerValueY = core_graphs_MarkerFunctions.get(_gthis._markerFunction);
+			_gthis._bar.markerBehind = _gthis._markerBehind;
+			var graphData = [];
+			var axisYParts = _gthis._axisY.split(",");
+			var _g = 0;
+			while(_g < axisYParts.length) {
+				var part = axisYParts[_g];
+				++_g;
+				part = StringTools.trim(part);
+				if(part.length == 0) {
+					continue;
+				}
+				var values = [];
+				var n = 0;
+				var _g1 = 0;
+				while(_g1 < records.length) {
+					var row = records[_g1];
+					++_g1;
+					var valueX = row.getFieldValue(_gthis._axisX);
+					var valueY = parseFloat(row.getFieldValue(part));
+					values.push({ x : valueX, y : valueY});
+					++n;
+				}
+				graphData.push({ key : part, values : values});
+			}
+			if(_gthis.get_width() > 0 && _gthis.get_height() > 0) {
+				_gthis._bar.set_data(graphData);
+			}
+		});
+	}
+	,onBarSelected: function(e) {
+	}
+	,onBarUnselected: function(e) {
+	}
+	,hasSize: null
+	,validateComponentLayout: function() {
+		var b = core_components_portlets_PortletInstance.prototype.validateComponentLayout.call(this);
+		if(this.get_width() > 0 && this.get_height() > 0) {
+			if(this.hasSize == false) {
+				this.hasSize = true;
+				this.refreshView();
+			}
+		}
+		return b;
+	}
+	,get_configPage: function() {
+		var configPage = new core_components_portlets__$HorizontalBarGraphPortletInstance_HorizontalBarGraphConfigPage();
+		return configPage;
+	}
+	,registerBehaviours: function() {
+		core_components_portlets_PortletInstance.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = core_components_portlets_PortletInstance.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_components_portlets_HorizontalBarGraphPortletInstance();
+	}
+	,__class__: core_components_portlets_HorizontalBarGraphPortletInstance
+});
+var core_components_portlets__$HorizontalBarGraphPortletInstance_HorizontalBarGraphConfigPage = function() {
+	core_components_portlets_PortletConfigPage.call(this);
+	var c0 = new haxe_ui_containers_Grid();
+	c0.set_percentWidth(100.);
+	var c1 = new haxe_ui_components_Label();
+	c1.set_text("Data Source");
+	c1.set_verticalAlign("center");
+	c0.addComponent(c1);
+	var c2 = new core_components_DatasourceSelector();
+	c2.set_id("datasourceSelector");
+	c2.set_percentWidth(100.);
+	c0.addComponent(c2);
+	var c3 = new haxe_ui_components_Label();
+	c3.set_text("Transform");
+	c3.set_styleString("padding-top: 6px;");
+	c3.set_verticalAlign("top");
+	c0.addComponent(c3);
+	var c4 = new core_components_ComplexTransformBuilder();
+	c4.set_id("transformBuilder");
+	c4.set_percentWidth(100.);
+	c0.addComponent(c4);
+	var c5 = new haxe_ui_components_Label();
+	c5.set_text("Key");
+	c5.set_verticalAlign("center");
+	c0.addComponent(c5);
+	var c6 = new core_components_DatasourceFieldSelector();
+	c6.set_id("axisXSelector");
+	c6.set_percentWidth(100.);
+	c0.addComponent(c6);
+	var c7 = new haxe_ui_components_Label();
+	c7.set_text("Value(s)");
+	c7.set_styleString("padding-top: 6px;");
+	c7.set_verticalAlign("top");
+	c0.addComponent(c7);
+	var c8 = new core_components_MultiDatasourceFieldSelector();
+	c8.set_id("axisYSelector");
+	c8.set_percentWidth(100.);
+	c0.addComponent(c8);
+	var c9 = new haxe_ui_components_Label();
+	c9.set_text("Marker");
+	c9.set_styleString("padding-top: 6px;");
+	c9.set_verticalAlign("top");
+	c0.addComponent(c9);
+	var c10 = new core_components_MarkerFunctionSelector();
+	c10.set_id("markerFunctionSelector");
+	c10.set_percentWidth(100.);
+	c0.addComponent(c10);
+	var c11 = new haxe_ui_components_Label();
+	c11.set_text("Colors");
+	c11.set_verticalAlign("center");
+	c0.addComponent(c11);
+	var c12 = new core_components_ColorCalculatorSelector();
+	c12.set_id("colorCalculatorSelector");
+	c12.set_percentWidth(100.);
+	c0.addComponent(c12);
+	this.addComponent(c0);
+	this.set_percentWidth(100.);
+	this.set_text("Bar Graph");
+	this.bindingRoot = true;
+	this.transformBuilder = c4;
+	this.markerFunctionSelector = c10;
+	this.datasourceSelector = c2;
+	this.colorCalculatorSelector = c12;
+	this.axisYSelector = c8;
+	this.axisXSelector = c6;
+	var c = this.datasourceSelector;
+	if(c != null) {
+		c.registerEvent("change",$bind(this,this.onDataSourceSelected));
+	} else {
+		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "datasourceSelector" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "core.components.portlets._HorizontalBarGraphPortletInstance.HorizontalBarGraphConfigPage", methodName : "new"});
+	}
+	var c = this.transformBuilder;
+	if(c != null) {
+		c.registerEvent("change",$bind(this,this.onTransformBuilderChange));
+	} else {
+		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "transformBuilder" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "core.components.portlets._HorizontalBarGraphPortletInstance.HorizontalBarGraphConfigPage", methodName : "new"});
+	}
+	var c = this.axisXSelector;
+	if(c != null) {
+		c.registerEvent("change",$bind(this,this.onAxisXChange));
+	} else {
+		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "axisXSelector" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "core.components.portlets._HorizontalBarGraphPortletInstance.HorizontalBarGraphConfigPage", methodName : "new"});
+	}
+	var c = this.axisYSelector;
+	if(c != null) {
+		c.registerEvent("change",$bind(this,this.onAxisYChange));
+	} else {
+		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "axisYSelector" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "core.components.portlets._HorizontalBarGraphPortletInstance.HorizontalBarGraphConfigPage", methodName : "new"});
+	}
+	var c = this.markerFunctionSelector;
+	if(c != null) {
+		c.registerEvent("change",$bind(this,this.onMarkerFunctionChange));
+	} else {
+		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "markerFunctionSelector" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "core.components.portlets._HorizontalBarGraphPortletInstance.HorizontalBarGraphConfigPage", methodName : "new"});
+	}
+	var c = this.colorCalculatorSelector;
+	if(c != null) {
+		c.registerEvent("change",$bind(this,this.onColorCalcChange));
+	} else {
+		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "colorCalculatorSelector" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "core.components.portlets._HorizontalBarGraphPortletInstance.HorizontalBarGraphConfigPage", methodName : "new"});
+	}
+};
+$hxClasses["core.components.portlets._HorizontalBarGraphPortletInstance.HorizontalBarGraphConfigPage"] = core_components_portlets__$HorizontalBarGraphPortletInstance_HorizontalBarGraphConfigPage;
+core_components_portlets__$HorizontalBarGraphPortletInstance_HorizontalBarGraphConfigPage.__name__ = "core.components.portlets._HorizontalBarGraphPortletInstance.HorizontalBarGraphConfigPage";
+core_components_portlets__$HorizontalBarGraphPortletInstance_HorizontalBarGraphConfigPage.__super__ = core_components_portlets_PortletConfigPage;
+core_components_portlets__$HorizontalBarGraphPortletInstance_HorizontalBarGraphConfigPage.prototype = $extend(core_components_portlets_PortletConfigPage.prototype,{
+	onReady: function() {
+		core_components_portlets_PortletConfigPage.prototype.onReady.call(this);
+		if(this.portletData.get_dataSourceId() != null) {
+			this.datasourceSelector.set_selectedDataSource(core_data_InternalDB.dataSources.utils.dataSource(this.portletData.get_dataSourceId()));
+			this.axisXSelector.set_selectedDataSource(this.datasourceSelector.get_selectedDataSource());
+			this.axisYSelector.set_selectedDataSource(this.datasourceSelector.get_selectedDataSource());
+		}
+		if(this.portletData.get_dataSourceId() != null) {
+			if(this.portletData.get_transform() != null) {
+				this.transformBuilder.set_selectedDataSource(core_data_InternalDB.dataSources.utils.dataSource(this.portletData.get_dataSourceId()));
+				this.transformBuilder.set_transformString(this.portletData.get_transform());
+			}
+			if(this.portletData.getStringValue("axisX") != null) {
+				this.axisXSelector.set_selectedFieldName(this.portletData.getStringValue("axisX"));
+				this.axisXSelector.set_transformString(this.portletData.get_transform());
+			}
+			if(this.portletData.getStringValue("axisY") != null) {
+				this.axisYSelector.set_selectedFieldName(this.portletData.getStringValue("axisY"));
+				this.axisYSelector.set_transformString(this.portletData.get_transform());
+			}
+			if(this.portletData.getStringValue("markerFunction") != null) {
+				this.markerFunctionSelector.set_markerString(this.portletData.getStringValue("markerFunction"));
+				this.markerFunctionSelector.set_markerBehind(this.portletData.getBoolValue("markerBehind"));
+			}
+			if(this.portletData.getStringValue("colorCalculator") != null) {
+				this.colorCalculatorSelector.set_colorCalcString(this.portletData.getStringValue("colorCalculator"));
+			}
+		} else {
+			this.onDataSourceSelected(null);
+		}
+	}
+	,onDataSourceSelected: function(_) {
+		this.transformBuilder.set_selectedDataSource(this.datasourceSelector.get_selectedDataSource());
+		this.portletData.set_dataSourceId(this.datasourceSelector.get_selectedDataSource().get_dataSourceId());
+		this.axisXSelector.set_selectedDataSource(this.datasourceSelector.get_selectedDataSource());
+		this.axisYSelector.set_selectedDataSource(this.datasourceSelector.get_selectedDataSource());
+		this.dispatchPortletConfigChanged();
+	}
+	,onTransformBuilderChange: function(_) {
+		this.portletData.set_transform(this.transformBuilder.get_transformString());
+		this.axisXSelector.set_transformString(this.portletData.get_transform());
+		this.axisYSelector.set_transformString(this.portletData.get_transform());
+		this.dispatchPortletConfigChanged();
+	}
+	,onAxisXChange: function(_) {
+		if(this.axisXSelector.get_selectedFieldName() != null) {
+			this.portletData.setValue("axisX",this.axisXSelector.get_selectedFieldName());
+			this.dispatchPortletConfigChanged();
+		}
+	}
+	,onAxisYChange: function(_) {
+		if(this.axisYSelector.get_selectedFieldName() != null) {
+			this.portletData.setValue("axisY",this.axisYSelector.get_selectedFieldName());
+			this.dispatchPortletConfigChanged();
+		}
+	}
+	,onMarkerFunctionChange: function(_) {
+		if(this.markerFunctionSelector.get_markerString() != null) {
+			this.portletData.setValue("markerFunction",this.markerFunctionSelector.get_markerString());
+			this.portletData.setValue("markerBehind",this.markerFunctionSelector.get_markerBehind());
+			this.dispatchPortletConfigChanged();
+		}
+	}
+	,onColorCalcChange: function(_) {
+		if(this.colorCalculatorSelector.get_colorCalcString() != null) {
+			this.portletData.setValue("colorCalculator",this.colorCalculatorSelector.get_colorCalcString());
+			this.dispatchPortletConfigChanged();
+		} else {
+			this.portletData.removeValue("colorCalculator");
+			this.dispatchPortletConfigChanged();
+		}
+	}
+	,registerBehaviours: function() {
+		core_components_portlets_PortletConfigPage.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = core_components_portlets_PortletConfigPage.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_components_portlets__$HorizontalBarGraphPortletInstance_HorizontalBarGraphConfigPage();
+	}
+	,transformBuilder: null
+	,markerFunctionSelector: null
+	,datasourceSelector: null
+	,colorCalculatorSelector: null
+	,axisYSelector: null
+	,axisXSelector: null
+	,__class__: core_components_portlets__$HorizontalBarGraphPortletInstance_HorizontalBarGraphConfigPage
+});
 var core_components_portlets_LineGraphPortletInstance = function() {
+	this.hasSize = false;
+	this._init = false;
+	this._dataSourceData = null;
+	this._graph = null;
 	core_components_portlets_PortletInstance.call(this);
 };
 $hxClasses["core.components.portlets.LineGraphPortletInstance"] = core_components_portlets_LineGraphPortletInstance;
 core_components_portlets_LineGraphPortletInstance.__name__ = "core.components.portlets.LineGraphPortletInstance";
 core_components_portlets_LineGraphPortletInstance.__super__ = core_components_portlets_PortletInstance;
 core_components_portlets_LineGraphPortletInstance.prototype = $extend(core_components_portlets_PortletInstance.prototype,{
-	onReady: function() {
+	_graph: null
+	,_dataSourceData: null
+	,_transform: null
+	,_axisX: null
+	,_axisY: null
+	,_colorCalculator: null
+	,onReady: function() {
 		core_components_portlets_PortletInstance.prototype.onReady.call(this);
-		var button = new haxe_ui_components_Label();
-		button.set_percentWidth(100);
-		button.set_text(this.get_className());
-		this.addComponent(button);
+	}
+	,_init: null
+	,initPortlet: function() {
+		var tmp = this._init == true;
+		core_components_portlets_PortletInstance.prototype.initPortlet.call(this);
+		this._init = true;
+		this._dataSourceData = core_data_InternalDB.dataSources.utils.dataSource(this.instanceData.get_dataSourceId());
+		this._transform = this.getConfigValue("transform");
+		this._axisX = this.getConfigValue("axisX");
+		this._axisY = this.getConfigValue("axisY");
+		this._colorCalculator = this.getConfigValue("colorCalculator");
+		if(this._graph == null) {
+			this._graph = new core_graphs_LineGraph();
+			this._graph.set_percentWidth(100);
+			this._graph.set_percentHeight(100);
+			this.addComponent(this._graph);
+		}
+	}
+	,autoConfigure: function() {
+		var _gthis = this;
+		return new Promise(function(resolve,reject) {
+			if(_gthis.instanceData == null) {
+				_gthis.instanceData = new core_data_PortletInstancePortletData();
+			}
+			if(_gthis.instanceData.get_dataSourceId() == null) {
+				if(core_data_InternalDB.dataSources.data.length > 0) {
+					var firstDataSource = core_data_InternalDB.dataSources.data[0];
+					core_components_portlets_PortletDataUtils.fetchTableData(firstDataSource.get_databaseName(),firstDataSource.get_tableName()).then(function(r) {
+						var firstField = r.info.fieldDefinitions[0];
+						var secondField = r.info.fieldDefinitions[1];
+						_gthis.instanceData.set_dataSourceId(firstDataSource.get_dataSourceId());
+						_gthis.instanceData.setValue("axisX",firstField.fieldName);
+						_gthis.instanceData.setValue("axisY",secondField.fieldName);
+						resolve(true);
+					});
+				} else {
+					resolve(true);
+				}
+			} else {
+				resolve(true);
+			}
+		});
+	}
+	,refreshView: function() {
+		var _gthis = this;
+		core_components_portlets_PortletInstance.prototype.refreshView.call(this);
+		if(this._dataSourceData == null) {
+			return;
+		}
+		this.get_page().getTableData(this).then(function(table) {
+			if(_gthis.get_width() > 0 && _gthis.get_height() > 0) {
+				_gthis._graph.set_data(_gthis.buildRandomLineData());
+			}
+		});
+	}
+	,hasSize: null
+	,validateComponentLayout: function() {
+		var b = core_components_portlets_PortletInstance.prototype.validateComponentLayout.call(this);
+		if(this.get_width() > 0 && this.get_height() > 0) {
+			if(this.hasSize == false) {
+				this.hasSize = true;
+				this.refreshView();
+			}
+		}
+		return b;
+	}
+	,buildRandomLineData: function() {
+		var n = 100;
+		var data = [];
+		var values1 = [];
+		var lastValue = null;
+		var _g = 0;
+		var _g1 = n;
+		while(_g < _g1) {
+			var i = _g++;
+			var v = this.getRandomInt(0,100);
+			if(lastValue != null) {
+				v = lastValue + this.getRandomInt(-10,10);
+			}
+			values1.push({ x : i, y : v});
+			lastValue = v;
+		}
+		var values2 = [];
+		var lastValue = null;
+		var _g = 0;
+		var _g1 = n;
+		while(_g < _g1) {
+			var i = _g++;
+			var v = this.getRandomInt(0,100);
+			if(lastValue != null) {
+				v = lastValue + this.getRandomInt(-10,10);
+			}
+			values2.push({ x : i, y : v});
+			lastValue = v;
+		}
+		var values3 = [];
+		var lastValue = null;
+		var _g = 0;
+		var _g1 = n;
+		while(_g < _g1) {
+			var i = _g++;
+			var v = this.getRandomInt(0,100);
+			if(lastValue != null) {
+				v = lastValue + this.getRandomInt(-10,10);
+			}
+			values3.push({ x : i, y : v});
+			lastValue = v;
+		}
+		var values4 = [];
+		var lastValue = null;
+		var _g = 0;
+		var _g1 = n;
+		while(_g < _g1) {
+			var i = _g++;
+			var v = this.getRandomInt(0,100);
+			if(lastValue != null) {
+				v = lastValue + this.getRandomInt(-10,10);
+			}
+			values4.push({ x : i, y : v});
+			lastValue = v;
+		}
+		data.push({ key : "Series 1", values : values1});
+		data.push({ key : "Series 2", values : values2});
+		data.push({ key : "Series 3", values : values3});
+		data.push({ key : "Series 4", values : values4});
+		return data;
+	}
+	,getRandomInt: function(min,max) {
+		return Math.floor(Math.random() * (max - min)) + min;
 	}
 	,registerBehaviours: function() {
 		core_components_portlets_PortletInstance.prototype.registerBehaviours.call(this);
@@ -10491,6 +10939,7 @@ var core_components_portlets__$NestedPortletInstance_NestedPortletConfigPage = f
 	var c2 = new haxe_ui_components_DropDown();
 	c2.set_id("layoutSelector");
 	c2.set_percentWidth(100.);
+	c2.set_dropdownSize(-1);
 	c0.addComponent(c2);
 	this.addComponent(c0);
 	this.set_percentWidth(100.);
@@ -10605,6 +11054,16 @@ core_components_portlets_PortletContainer.__super__ = haxe_ui_containers_Box;
 core_components_portlets_PortletContainer.prototype = $extend(haxe_ui_containers_Box.prototype,{
 	_portletContent: null
 	,_controls: null
+	,containerDepth: null
+	,get_containerDepth: function() {
+		var d = -1;
+		var ref = this;
+		while(ref != null) {
+			++d;
+			ref = ref.findAncestor(null,core_components_portlets_PortletContainer);
+		}
+		return d;
+	}
 	,onRemovePortletInstance: function(_) {
 		this.set_portletInstance(null);
 	}
@@ -10660,6 +11119,11 @@ core_components_portlets_PortletContainer.prototype = $extend(haxe_ui_containers
 			this._portletInstance.layoutData.set_portletContainerId(this.get_id());
 			this._controls.set_horizontalAlign(this._portletInstance.configureControlsHorizontalAlign);
 			this._controls.set_verticalAlign(this._portletInstance.configureControlsVerticalAlign);
+			if(this._controls.get_verticalAlign() != "top") {
+				if(this._controls.get_verticalAlign() == "bottom") {
+					this._controls.set_styleString("margin: 10px;margin-bottom:" + (10 + this.get_containerDepth() * 35) + "px");
+				}
+			}
 			this._portletInstance.set_percentWidth(100);
 			this._portletInstance.set_percentHeight(100);
 			this._portletContent.addComponent(this._portletInstance);
@@ -10742,7 +11206,7 @@ core_components_portlets_PortletContainer.prototype = $extend(haxe_ui_containers
 		return new core_components_portlets_PortletContainer();
 	}
 	,__class__: core_components_portlets_PortletContainer
-	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{get_page:"get_page",set_editable:"set_editable",get_editable:"get_editable",set_portletInstance:"set_portletInstance",get_portletInstance:"get_portletInstance"})
+	,__properties__: $extend(haxe_ui_containers_Box.prototype.__properties__,{get_page:"get_page",set_editable:"set_editable",get_editable:"get_editable",set_portletInstance:"set_portletInstance",get_portletInstance:"get_portletInstance",get_containerDepth:"get_containerDepth"})
 });
 var core_components_portlets_PortletDataUtils = function() { };
 $hxClasses["core.components.portlets.PortletDataUtils"] = core_components_portlets_PortletDataUtils;
@@ -10892,6 +11356,9 @@ core_components_portlets_PortletFactory.prototype = {
 		case "core.components.portlets.BarGraphPortletInstance":
 			instance = new core_components_portlets_BarGraphPortletInstance();
 			break;
+		case "core.components.portlets.HorizontalBarGraphPortletInstance":
+			instance = new core_components_portlets_HorizontalBarGraphPortletInstance();
+			break;
 		case "core.components.portlets.LineGraphPortletInstance":
 			instance = new core_components_portlets_LineGraphPortletInstance();
 			break;
@@ -10909,7 +11376,7 @@ core_components_portlets_PortletFactory.prototype = {
 			break;
 		}
 		if(instance == null) {
-			haxe_Log.trace("WARNING: could not create portlet instance class: " + type,{ fileName : "../../haxe/core/components/portlets/PortletFactory.hx", lineNumber : 30, className : "core.components.portlets.PortletFactory", methodName : "createInstance"});
+			haxe_Log.trace("WARNING: could not create portlet instance class: " + type,{ fileName : "../../haxe/core/components/portlets/PortletFactory.hx", lineNumber : 31, className : "core.components.portlets.PortletFactory", methodName : "createInstance"});
 		}
 		return instance;
 	}
@@ -12467,7 +12934,6 @@ core_dashboards_portlets_HorizontalBarGraphPortletInstance.prototype = $extend(c
 			}
 			return 0;
 		});
-		this._bar.set_colourCalculator(this.getColourCalculator());
 		var tmp = this.config("markerFunction");
 		this._bar.getMarkerValueY = core_graphs_MarkerFunctions.get(tmp);
 		this._bar.markerBehind = this.configBool("markerBehind");
@@ -23165,7 +23631,6 @@ core_graphs_BarGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
 			_gthis._chart.showControls(false);
 			_gthis._chart.noData(_gthis.get_noDataLabel());
 			_gthis._chart.showLegend(_gthis.get_showLegend());
-			_gthis._chart.tooltip.enabled(false);
 			if(_gthis._colourCalculator != null) {
 				_gthis._chart.barColor($bind(_gthis,_gthis.calculateColour));
 			}
@@ -23699,7 +24164,6 @@ core_graphs_HorizontalBarGraph.prototype = $extend(haxe_ui_core_Component.protot
 			_gthis._chart.showControls(false);
 			_gthis._chart.noData(_gthis.get_noDataLabel());
 			_gthis._chart.showLegend(_gthis.get_showLegend());
-			_gthis._chart.tooltip.enabled(false);
 			if(_gthis._colourCalculator != null) {
 				_gthis._chart.barColor($bind(_gthis,_gthis.calculateColour));
 			}
@@ -23732,6 +24196,8 @@ core_graphs_HorizontalBarGraph.prototype = $extend(haxe_ui_core_Component.protot
 		this._colourCalculator = value;
 		if(this._chart != null && value != null) {
 			this._chart.barColor($bind(this,this.calculateColour));
+		} else if(this._chart != null) {
+			this._chart.barColor(null);
 		}
 		return value;
 	}
@@ -23796,7 +24262,10 @@ core_graphs_HorizontalBarGraph.prototype = $extend(haxe_ui_core_Component.protot
 		});
 	}
 	,calculateColour: function(data) {
-		return this._colourCalculator.get(data,0,{ xAxisField : this.xAxisField, yAxisField : this.yAxisField});
+		if(this._colourCalculator == null) {
+			return null;
+		}
+		return this._colourCalculator.getColor(data,0,{ xAxisField : this.xAxisField, yAxisField : this.yAxisField});
 	}
 	,markerBehind: null
 	,getMarkerValueY: null
@@ -23968,6 +24437,101 @@ core_graphs_HorizontalBarGraph.prototype = $extend(haxe_ui_core_Component.protot
 	}
 	,__class__: core_graphs_HorizontalBarGraph
 	,__properties__: $extend(haxe_ui_core_Component.prototype.__properties__,{set_data:"set_data",get_data:"get_data",set_colourCalculator:"set_colourCalculator",get_colourCalculator:"get_colourCalculator",set_noDataLabel:"set_noDataLabel",get_noDataLabel:"get_noDataLabel",set_showLegend:"set_showLegend",get_showLegend:"get_showLegend"})
+});
+var core_graphs_LineGraph = function() {
+	this._data = [];
+	this._graph = null;
+	this._container = null;
+	haxe_ui_core_Component.call(this);
+};
+$hxClasses["core.graphs.LineGraph"] = core_graphs_LineGraph;
+core_graphs_LineGraph.__name__ = "core.graphs.LineGraph";
+core_graphs_LineGraph.__super__ = haxe_ui_core_Component;
+core_graphs_LineGraph.prototype = $extend(haxe_ui_core_Component.prototype,{
+	_container: null
+	,_graph: null
+	,_chart: null
+	,_data: null
+	,get_data: function() {
+		return this._data;
+	}
+	,set_data: function(value) {
+		this._data = value;
+		if(this._graph != null) {
+			this._graph.datum(this._data);
+		}
+		if(this._chart != null) {
+			this._chart.update();
+		}
+		return value;
+	}
+	,update: function() {
+		if(this._graph != null) {
+			this._graph.datum(this._data);
+		}
+		if(this._chart != null) {
+			this._chart.update();
+		}
+	}
+	,onReady: function() {
+		var _gthis = this;
+		haxe_ui_core_Component.prototype.onReady.call(this);
+		if(this.get_id() == null) {
+			this.set_id(haxe_ui_util_GUID.uuid());
+		}
+		var containerId = this.get_id() + "-container";
+		this._container = window.document.createElement("div");
+		this._container.id = containerId;
+		this.element.appendChild(this._container);
+		this._graph = d3.select(this._container).append("svg");
+		this.onThemeChanged();
+		nv.addGraph(function() {
+			_gthis._chart = nv.models.lineChart();
+			_gthis._graph.datum(_gthis._data).call(_gthis._chart);
+			return _gthis._chart;
+		});
+		if(!(this._layout == null || this._layoutLocked == true)) {
+			this.invalidateComponent("layout",false);
+		}
+	}
+	,validateComponentLayout: function() {
+		var b = haxe_ui_core_Component.prototype.validateComponentLayout.call(this);
+		this.resizeGraph();
+		return b;
+	}
+	,resizeGraph: function() {
+		if(this.get_width() > 0 && this.get_height() > 0 && this._graph != null) {
+			var cx = this.get_width() | 0;
+			var cy = this.get_height() | 0;
+			this._graph.attr("width",cx).attr("height",cy);
+			if(this._chart != null) {
+				this._chart.width(cx | 0);
+				this._chart.height(cy | 0);
+				this._chart.update();
+			}
+		}
+	}
+	,registerBehaviours: function() {
+		haxe_ui_core_Component.prototype.registerBehaviours.call(this);
+	}
+	,cloneComponent: function() {
+		var c = haxe_ui_core_Component.prototype.cloneComponent.call(this);
+		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
+			var _g = 0;
+			var _g1 = this._children == null ? [] : this._children;
+			while(_g < _g1.length) {
+				var child = _g1[_g];
+				++_g;
+				c.addComponent(child.cloneComponent());
+			}
+		}
+		return c;
+	}
+	,self: function() {
+		return new core_graphs_LineGraph();
+	}
+	,__class__: core_graphs_LineGraph
+	,__properties__: $extend(haxe_ui_core_Component.prototype.__properties__,{set_data:"set_data",get_data:"get_data"})
 });
 var core_graphs_MarkerFunctions = function() { };
 $hxClasses["core.graphs.MarkerFunctions"] = core_graphs_MarkerFunctions;
@@ -58438,240 +59002,6 @@ sidebars_DataObjectSidebar.prototype = $extend(haxe_ui_containers_SideBar.protot
 	}
 	,__class__: sidebars_DataObjectSidebar
 });
-var sidebars_CreateDashboardSidebar = function() {
-	sidebars_DataObjectSidebar.call(this);
-	var c0 = new haxe_ui_containers_VBox();
-	c0.set_percentWidth(100.);
-	c0.set_percentHeight(100.);
-	var c1 = new haxe_ui_components_Label();
-	c1.set_text("New Dashboard");
-	c1.set_styleString("font-size: 22px;color:#888888;");
-	c1.set_horizontalAlign("right");
-	c0.addComponent(c1);
-	var c2 = new haxe_ui_components_HorizontalRule();
-	c0.addComponent(c2);
-	var c3 = new haxe_ui_containers_VBox();
-	c3.set_percentWidth(100.);
-	c3.set_percentHeight(100.);
-	c3.set_styleString("padding: 10px;spacing: 10px;");
-	var c4 = new haxe_ui_containers_Frame();
-	c4.set_percentWidth(100.);
-	c4.set_text("Dashboard Group");
-	var c5 = new haxe_ui_containers_Grid();
-	c5.set_percentWidth(100.);
-	c5.set_columns(2);
-	var c6 = new haxe_ui_components_OptionBox();
-	c6.set_id("createNewGroupOption");
-	c6.set_width(175.);
-	c6.set_text("Create new group");
-	c6.set_verticalAlign("top");
-	c6.set_selected(true);
-	c6.set_componentGroup("groupOption");
-	c5.addComponent(c6);
-	var c7 = new haxe_ui_containers_VBox();
-	c7.set_percentWidth(100.);
-	var c8 = new haxe_ui_components_TextField();
-	c8.set_id("newGroupName");
-	c8.set_percentWidth(100.);
-	c8.set_placeholder("Group name");
-	c7.addComponent(c8);
-	var c9 = new core_components_IconSelector();
-	c9.set_id("newGroupIcon");
-	c9.set_percentWidth(100.);
-	c7.addComponent(c9);
-	c5.addComponent(c7);
-	var c10 = new haxe_ui_components_OptionBox();
-	c10.set_id("addToExistingGroupOption");
-	c10.set_width(175.);
-	c10.set_text("Add to existing group");
-	c10.set_verticalAlign("center");
-	c10.set_hidden(true);
-	c10.set_componentGroup("groupOption");
-	c5.addComponent(c10);
-	var c11 = new core_components_DashboardGroupSelector();
-	c11.set_id("existingGroupSelector");
-	c11.set_percentWidth(100.);
-	c11.set_hidden(true);
-	c11.set_disabled(true);
-	c5.addComponent(c11);
-	c4.addComponent(c5);
-	c3.addComponent(c4);
-	var c12 = new haxe_ui_containers_Frame();
-	c12.set_percentWidth(100.);
-	c12.set_text("Dashboard Details");
-	var c13 = new haxe_ui_containers_Grid();
-	c13.set_percentWidth(100.);
-	c13.set_columns(2);
-	var c14 = new haxe_ui_components_Label();
-	c14.set_text("Name");
-	c14.set_verticalAlign("center");
-	c13.addComponent(c14);
-	var c15 = new haxe_ui_components_TextField();
-	c15.set_id("dashboardNameField");
-	c15.set_percentWidth(100.);
-	c15.set_placeholder("Enter name");
-	c13.addComponent(c15);
-	var c16 = new haxe_ui_components_Label();
-	c16.set_text("Icon");
-	c16.set_verticalAlign("center");
-	c13.addComponent(c16);
-	var c17 = new core_components_IconSelector();
-	c17.set_id("dashboardIconField");
-	c17.set_percentWidth(100.);
-	c13.addComponent(c17);
-	var c18 = new haxe_ui_components_Label();
-	c18.set_text("Template");
-	c18.set_verticalAlign("center");
-	c13.addComponent(c18);
-	var c19 = new haxe_ui_components_DropDown();
-	c19.set_id("dashboardTemplateField");
-	c19.set_percentWidth(100.);
-	var ds19 = new haxe_ui_data_ArrayDataSource();
-	ds19.add({ text : "Blank", id : "item", file : "data/blank-dashboard.xml"});
-	ds19.add({ text : "Test1 (bar graphs)", id : "item", file : "data/test-dashboads-bars.xml"});
-	ds19.add({ text : "Test2 (scatter graphs)", id : "item", file : "data/test-dashboads-scatter.xml"});
-	c19.set_dataSource(ds19);
-	c13.addComponent(c19);
-	c12.addComponent(c13);
-	c3.addComponent(c12);
-	var c20 = new haxe_ui_components_Spacer();
-	c20.set_percentHeight(100.);
-	c3.addComponent(c20);
-	var c21 = new haxe_ui_containers_HBox();
-	c21.set_horizontalAlign("right");
-	var c22 = new haxe_ui_components_Button();
-	c22.set_id("cancelButton");
-	c22.set_text("Cancel");
-	c21.addComponent(c22);
-	var c23 = new haxe_ui_components_Button();
-	c23.set_id("createButton");
-	c23.set_text("Create");
-	c21.addComponent(c23);
-	c3.addComponent(c21);
-	c0.addComponent(c3);
-	this.addComponent(c0);
-	this.set_width(450.);
-	this.set_percentHeight(100.);
-	this.bindingRoot = true;
-	this.newGroupName = c8;
-	this.newGroupIcon = c9;
-	this.existingGroupSelector = c11;
-	this.dashboardTemplateField = c19;
-	this.dashboardNameField = c15;
-	this.dashboardIconField = c17;
-	this.createNewGroupOption = c6;
-	this.createButton = c23;
-	this.cancelButton = c22;
-	this.addToExistingGroupOption = c10;
-	var c = this.createNewGroupOption;
-	if(c != null) {
-		c.registerEvent("change",$bind(this,this.onCreateOrExistingChanged));
-	} else {
-		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "createNewGroupOption" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "sidebars.CreateDashboardSidebar", methodName : "new"});
-	}
-	var c = this.addToExistingGroupOption;
-	if(c != null) {
-		c.registerEvent("change",$bind(this,this.onCreateOrExistingChanged));
-	} else {
-		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "addToExistingGroupOption" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "sidebars.CreateDashboardSidebar", methodName : "new"});
-	}
-	var c = this.createNewGroupOption;
-	if(c != null) {
-		c.registerEvent("change",$bind(this,this.onCreateOrExistingChanged));
-	} else {
-		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "createNewGroupOption" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "sidebars.CreateDashboardSidebar", methodName : "new"});
-	}
-	var c = this.addToExistingGroupOption;
-	if(c != null) {
-		c.registerEvent("change",$bind(this,this.onCreateOrExistingChanged));
-	} else {
-		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "addToExistingGroupOption" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "sidebars.CreateDashboardSidebar", methodName : "new"});
-	}
-};
-$hxClasses["sidebars.CreateDashboardSidebar"] = sidebars_CreateDashboardSidebar;
-sidebars_CreateDashboardSidebar.__name__ = "sidebars.CreateDashboardSidebar";
-sidebars_CreateDashboardSidebar.__super__ = sidebars_DataObjectSidebar;
-sidebars_CreateDashboardSidebar.prototype = $extend(sidebars_DataObjectSidebar.prototype,{
-	onReady: function() {
-		sidebars_DataObjectSidebar.prototype.onReady.call(this);
-		if(core_data_InternalDB.dashboardGroups.data.length > 0) {
-			this.addToExistingGroupOption.show();
-			this.existingGroupSelector.show();
-		}
-		this.get_value();
-	}
-	,onCreateOrExistingChanged: function(e) {
-		if(this.createNewGroupOption.get_selected() == true) {
-			this.newGroupName.set_disabled(false);
-			this.newGroupIcon.set_disabled(false);
-			this.existingGroupSelector.set_disabled(true);
-		} else if(this.addToExistingGroupOption.get_selected() == true) {
-			this.newGroupName.set_disabled(true);
-			this.newGroupIcon.set_disabled(true);
-			this.existingGroupSelector.set_disabled(false);
-		}
-	}
-	,createObject: function() {
-		var _gthis = this;
-		var dashboard = core_data_InternalDB.dashboards.createObject();
-		var promises = [];
-		if(this.createNewGroupOption.get_selected() == true) {
-			var iconData = this.newGroupIcon.get_selectedItem().iconData;
-			var group = core_data_InternalDB.dashboardGroups.createObject();
-			group.set_name(this.newGroupName.get_text());
-			group.set_order(0);
-			group.set_iconId(iconData.get_iconId());
-			dashboard.set_group(group);
-			dashboard.set_dashboardGroupId(group.get_dashboardGroupId());
-			promises.push(core_data_InternalDB.dashboardGroups.addObject(group));
-		} else if(this.addToExistingGroupOption.get_selected() == true) {
-			var group = this.existingGroupSelector.get_selectedItem().groupData;
-			dashboard.set_dashboardGroupId(group.get_dashboardGroupId());
-		}
-		var iconData = this.dashboardIconField.get_selectedItem().iconData;
-		dashboard.set_name(this.dashboardNameField.get_text());
-		dashboard.set_order(0);
-		var dashboardTemplate = this.dashboardTemplateField.get_selectedItem().file;
-		var dashboardLayoutData = haxe_ui_ToolkitAssets.get_instance().getText(dashboardTemplate);
-		dashboard.set_layoutData(dashboardLayoutData);
-		dashboard.set_iconId(iconData.get_iconId());
-		promises.push(core_data_InternalDB.dashboards.addObject(dashboard));
-		core_data_utils_PromiseUtils.runSequentially(promises,function() {
-			_gthis.createComplete();
-			views_DashboardsView.instance.refreshDashboardSelector(dashboard.get_dashboardId());
-		});
-	}
-	,registerBehaviours: function() {
-		sidebars_DataObjectSidebar.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = sidebars_DataObjectSidebar.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new sidebars_CreateDashboardSidebar();
-	}
-	,newGroupName: null
-	,newGroupIcon: null
-	,existingGroupSelector: null
-	,dashboardTemplateField: null
-	,dashboardNameField: null
-	,dashboardIconField: null
-	,createNewGroupOption: null
-	,createButton: null
-	,cancelButton: null
-	,addToExistingGroupOption: null
-	,__class__: sidebars_CreateDashboardSidebar
-});
 var sidebars_CreateLayoutSidebar = function() {
 	sidebars_DataObjectSidebar.call(this);
 	var c0 = new haxe_ui_containers_VBox();
@@ -60193,426 +60523,6 @@ sidebars_ImportDataSourceSidebar.prototype = $extend(haxe_ui_containers_SideBar.
 	,addToExistingCoreOption: null
 	,__class__: sidebars_ImportDataSourceSidebar
 	,__properties__: $extend(haxe_ui_containers_SideBar.prototype.__properties__,{set_databases:"set_databases"})
-});
-var views_DashboardsView = function() {
-	this._firstLoad = true;
-	haxe_ui_containers_VBox.call(this);
-	haxe_ui_Toolkit.styleSheet.parse("\n            #layoutDataField {\n                border: none;\n                filter: none;\n            }\n\n            #dashboardTree {\n                border: none;\n                background-color: $solid-background-color;\n                border-radius: 0;\n            }\n        ","user");
-	var c0 = new haxe_ui_containers_HBox();
-	c0.set_percentWidth(100.);
-	c0.set_percentHeight(100.);
-	var c1 = new haxe_ui_containers_VBox();
-	c1.set_width(230.);
-	c1.set_percentHeight(100.);
-	c1.set_styleString("spacing:0;border-right: 1px solid $normal-border-color;padding-right: 1px;");
-	var c2 = new haxe_ui_containers_VBox();
-	c2.set_percentWidth(100.);
-	c2.set_styleString("padding:7px;background-color: $solid-background-color;border-bottom:1px solid $normal-border-color;");
-	var c3 = new haxe_ui_components_TextField();
-	c3.set_percentWidth(100.);
-	c3.set_placeholder("Filter dashboards");
-	c2.addComponent(c3);
-	c1.addComponent(c2);
-	var c4 = new haxe_ui_containers_TreeView();
-	c4.set_id("dashboardTree");
-	c4.set_percentWidth(100.);
-	c4.set_percentHeight(100.);
-	c1.addComponent(c4);
-	var c5 = new haxe_ui_containers_HBox();
-	c5.set_id("bottomButtons");
-	c5.set_height(67.);
-	c5.set_percentWidth(100.);
-	c5.set_styleNames("bottom-buttons");
-	c5.set_styleString("padding:0px;spacing:0px;border-top: 1px solid $normal-border-color;padding-top: 1px;border-bottom:1px solid $normal-border-color;padding-bottom:1px;");
-	var c6 = new haxe_ui_components_Button();
-	c6.set_id("addDashboardButton");
-	c6.set_percentWidth(33.);
-	c6.set_percentHeight(100.);
-	c6.set_text("Add");
-	c6.set_iconPosition("top");
-	c6.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-plus-+-32.png"));
-	c5.addComponent(c6);
-	var c7 = new haxe_ui_core_Component();
-	c7.set_width(1.);
-	c7.set_percentHeight(100.);
-	c7.set_styleString("background-color: $normal-border-color");
-	c5.addComponent(c7);
-	var c8 = new haxe_ui_components_Button();
-	c8.set_percentWidth(34.);
-	c8.set_percentHeight(100.);
-	c8.set_text("Update");
-	c8.set_iconPosition("top");
-	c8.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-edit-32(1).png"));
-	c5.addComponent(c8);
-	var c9 = new haxe_ui_core_Component();
-	c9.set_width(1.);
-	c9.set_percentHeight(100.);
-	c9.set_styleString("background-color: $normal-border-color");
-	c5.addComponent(c9);
-	var c10 = new haxe_ui_components_Button();
-	c10.set_id("removeDashboardButton");
-	c10.set_percentWidth(33.);
-	c10.set_percentHeight(100.);
-	c10.set_text("Delete");
-	c10.set_iconPosition("top");
-	c10.set_icon(haxe_ui_util_Variant.fromString("icons/icons8-delete-32.png"));
-	c5.addComponent(c10);
-	c1.addComponent(c5);
-	c0.addComponent(c1);
-	var c11 = new haxe_ui_containers_VBox();
-	c11.set_id("detailsContainer");
-	c11.set_percentWidth(100.);
-	c11.set_percentHeight(100.);
-	c11.set_styleString("padding: 10px;");
-	var c12 = new haxe_ui_containers_TabView();
-	c12.set_id("dashboardDetailsTabs");
-	c12.set_percentWidth(100.);
-	c12.set_percentHeight(100.);
-	c12.set_tabPosition("bottom");
-	var c13 = new haxe_ui_containers_VBox();
-	c13.set_percentWidth(100.);
-	c13.set_percentHeight(100.);
-	c13.set_text("Details");
-	var c14 = new haxe_ui_containers_VBox();
-	c14.set_percentWidth(100.);
-	c14.set_percentHeight(100.);
-	c14.set_styleString("padding: 10px;");
-	c14.set_horizontalAlign("right");
-	var c15 = new haxe_ui_containers_Box();
-	c15.set_percentWidth(100.);
-	c15.set_percentHeight(100.);
-	var c16 = new haxe_ui_containers_Box();
-	c16.set_id("dashboardGroupDetails");
-	c16.set_percentWidth(100.);
-	c16.set_percentHeight(100.);
-	var c17 = new haxe_ui_containers_VBox();
-	c17.set_percentWidth(100.);
-	var c18 = new haxe_ui_components_Label();
-	c18.set_id("dashboardGroupNameLabel");
-	c18.set_text("Group Details");
-	c18.set_styleString("font-size: 22px;color:#888888;");
-	c18.set_horizontalAlign("right");
-	c17.addComponent(c18);
-	var c19 = new haxe_ui_components_HorizontalRule();
-	c17.addComponent(c19);
-	var c20 = new haxe_ui_containers_Grid();
-	c20.set_percentWidth(100.);
-	var c21 = new haxe_ui_components_Label();
-	c21.set_text("Id");
-	c20.addComponent(c21);
-	var c22 = new haxe_ui_components_Label();
-	c22.set_id("dashboardGroupIdField");
-	c22.set_text("-");
-	c20.addComponent(c22);
-	var c23 = new haxe_ui_components_Label();
-	c23.set_text("Name");
-	c23.set_verticalAlign("center");
-	c20.addComponent(c23);
-	var c24 = new haxe_ui_components_TextField();
-	c24.set_id("dashboardGroupNameField");
-	c24.set_width(200.);
-	c20.addComponent(c24);
-	var c25 = new haxe_ui_components_Label();
-	c25.set_text("Icon");
-	c25.set_verticalAlign("center");
-	c20.addComponent(c25);
-	var c26 = new core_components_IconSelector();
-	c26.set_id("dashboardGroupIconField");
-	c26.set_width(200.);
-	c20.addComponent(c26);
-	c17.addComponent(c20);
-	c16.addComponent(c17);
-	c15.addComponent(c16);
-	var c27 = new haxe_ui_containers_Box();
-	c27.set_id("dashboardDetails");
-	c27.set_percentWidth(100.);
-	c27.set_percentHeight(100.);
-	var c28 = new haxe_ui_containers_VBox();
-	c28.set_percentWidth(100.);
-	c28.set_percentHeight(100.);
-	var c29 = new haxe_ui_components_Label();
-	c29.set_id("dashboardNameLabel");
-	c29.set_text("Dashboard Details");
-	c29.set_styleString("font-size: 22px;color:#888888;");
-	c29.set_horizontalAlign("right");
-	c28.addComponent(c29);
-	var c30 = new haxe_ui_components_HorizontalRule();
-	c28.addComponent(c30);
-	var c31 = new haxe_ui_containers_Grid();
-	c31.set_percentWidth(100.);
-	var c32 = new haxe_ui_components_Label();
-	c32.set_text("Id");
-	c31.addComponent(c32);
-	var c33 = new haxe_ui_components_Label();
-	c33.set_id("dashboardIdField");
-	c33.set_text("-");
-	c31.addComponent(c33);
-	var c34 = new haxe_ui_components_Label();
-	c34.set_text("Name");
-	c34.set_verticalAlign("center");
-	c31.addComponent(c34);
-	var c35 = new haxe_ui_components_TextField();
-	c35.set_id("dashboardNameField");
-	c35.set_width(200.);
-	c31.addComponent(c35);
-	var c36 = new haxe_ui_components_Label();
-	c36.set_text("Group");
-	c36.set_verticalAlign("center");
-	c31.addComponent(c36);
-	var c37 = new core_components_DashboardGroupSelector();
-	c37.set_id("dashboardGroupField");
-	c37.set_width(200.);
-	c31.addComponent(c37);
-	var c38 = new haxe_ui_components_Label();
-	c38.set_text("Icon");
-	c38.set_verticalAlign("center");
-	c31.addComponent(c38);
-	var c39 = new core_components_IconSelector();
-	c39.set_id("dashboardIconField");
-	c39.set_width(200.);
-	c31.addComponent(c39);
-	c28.addComponent(c31);
-	var c40 = new haxe_ui_components_TextArea();
-	c40.set_id("dashboardDataField");
-	c40.set_percentWidth(100.);
-	c40.set_percentHeight(100.);
-	c28.addComponent(c40);
-	c27.addComponent(c28);
-	c15.addComponent(c27);
-	c14.addComponent(c15);
-	var c41 = new haxe_ui_components_Button();
-	c41.set_id("updateDetailsButton");
-	c41.set_text("Update");
-	c41.set_horizontalAlign("right");
-	c14.addComponent(c41);
-	c13.addComponent(c14);
-	c12.addComponent(c13);
-	var c42 = new haxe_ui_containers_VBox();
-	c42.set_id("previewTab");
-	c42.set_percentWidth(100.);
-	c42.set_percentHeight(100.);
-	c42.set_text("Preview");
-	var c43 = new core_dashboards_DashboardInstance();
-	c43.set_id("dashboardPreviewInstance");
-	c43.set_percentWidth(100.);
-	c43.set_percentHeight(100.);
-	c43.set_styleString("padding: 15px;");
-	c42.addComponent(c43);
-	c12.addComponent(c42);
-	c11.addComponent(c12);
-	c0.addComponent(c11);
-	this.addComponent(c0);
-	this.set_percentWidth(100.);
-	this.set_percentHeight(100.);
-	this.bindingRoot = true;
-	this.updateDetailsButton = c41;
-	this.removeDashboardButton = c10;
-	this.previewTab = c42;
-	this.detailsContainer = c11;
-	this.dashboardTree = c4;
-	this.dashboardPreviewInstance = c43;
-	this.dashboardNameLabel = c29;
-	this.dashboardNameField = c35;
-	this.dashboardIdField = c33;
-	this.dashboardIconField = c39;
-	this.dashboardGroupNameLabel = c18;
-	this.dashboardGroupNameField = c24;
-	this.dashboardGroupIdField = c22;
-	this.dashboardGroupIconField = c26;
-	this.dashboardGroupField = c37;
-	this.dashboardGroupDetails = c16;
-	this.dashboardDetailsTabs = c12;
-	this.dashboardDetails = c27;
-	this.dashboardDataField = c40;
-	this.bottomButtons = c5;
-	this.addDashboardButton = c6;
-	views_DashboardsView.instance = this;
-	this.dashboardDetails.hide();
-	this.refreshDashboardSelector();
-	var c = this.addDashboardButton;
-	if(c != null) {
-		c.registerEvent("click",$bind(this,this.onAddDataButton));
-	} else {
-		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "addDashboardButton" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "views.DashboardsView", methodName : "new"});
-	}
-	var c = this.updateDetailsButton;
-	if(c != null) {
-		c.registerEvent("click",$bind(this,this.onUpdateDetailsButton));
-	} else {
-		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "updateDetailsButton" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "views.DashboardsView", methodName : "new"});
-	}
-	var c = this.dashboardTree;
-	if(c != null) {
-		c.registerEvent("change",$bind(this,this.onDashboardTreeSelectionChange));
-	} else {
-		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "dashboardTree" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "views.DashboardsView", methodName : "new"});
-	}
-	var c = this.dashboardDetailsTabs;
-	if(c != null) {
-		c.registerEvent("change",$bind(this,this.onDashboardDetailsTabsChange));
-	} else {
-		haxe_Log.trace("WARNING: could not find component to regsiter event (" + "dashboardDetailsTabs" + ")",{ fileName : "haxe/ui/macros/Macros.hx", lineNumber : 303, className : "views.DashboardsView", methodName : "new"});
-	}
-};
-$hxClasses["views.DashboardsView"] = views_DashboardsView;
-views_DashboardsView.__name__ = "views.DashboardsView";
-views_DashboardsView.__super__ = haxe_ui_containers_VBox;
-views_DashboardsView.prototype = $extend(haxe_ui_containers_VBox.prototype,{
-	refreshDashboardSelector: function(groupId,dashboardId) {
-		var _gthis = this;
-		var map = core_data_InternalDB.dashboards.utils.get_byGroup();
-		this.dashboardTree.clearNodes();
-		var firstNode = null;
-		var nodeToSelect = null;
-		var group = map.keys();
-		while(group.hasNext()) {
-			var group1 = group.next();
-			var groupNode = this.dashboardTree.addNode({ text : group1.get_name(), icon : "themes/optex/" + group1.get_icon().get_path(), groupData : group1});
-			if(firstNode == null) {
-				firstNode = groupNode;
-			}
-			if(groupId != null && group1.get_dashboardGroupId() == groupId) {
-				nodeToSelect = groupNode;
-			}
-			groupNode.set_expanded(true);
-			var dashboards = map.h[group1.__id__];
-			var _g = 0;
-			while(_g < dashboards.length) {
-				var dashboard = dashboards[_g];
-				++_g;
-				var dashboardNode = groupNode.addNode({ text : dashboard.get_name(), icon : "themes/optex/" + dashboard.get_icon().get_path(), dashboardData : dashboard});
-				if(dashboardId != null && dashboard.get_dashboardId() == dashboardId) {
-					nodeToSelect = dashboardNode;
-				}
-			}
-		}
-		if(nodeToSelect == null) {
-			nodeToSelect = firstNode;
-		}
-		if(nodeToSelect != null) {
-			haxe_ui_Toolkit.callLater(function() {
-				_gthis.dashboardTree.set_selectedNode(nodeToSelect);
-			});
-		}
-	}
-	,onAddDataButton: function(e) {
-		var sidebar = new sidebars_CreateDashboardSidebar();
-		sidebar.set_position("right");
-		sidebar.modal = true;
-		sidebar.show();
-	}
-	,onUpdateDetailsButton: function(e) {
-		var _gthis = this;
-		var selectedItem = this.dashboardTree.get_selectedNode();
-		if(selectedItem == null) {
-			return;
-		}
-		if(selectedItem.get_data().groupData != null) {
-			var groupData = selectedItem.get_data().groupData;
-			var iconData = this.dashboardGroupIconField.get_selectedItem().iconData;
-			groupData.set_name(this.dashboardGroupNameField.get_text());
-			groupData.set_iconId(iconData.get_iconId());
-			var working = new components_WorkingIndicator();
-			working.showWorking();
-			core_data_InternalDB.dashboardGroups.updateObject(groupData).then(function(r) {
-				core_data_InternalDB.dashboards.fillCache().then(function(r) {
-					working.workComplete();
-					_gthis.refreshDashboardSelector(groupData.get_dashboardGroupId(),null);
-				});
-			});
-		} else if(selectedItem.get_data().dashboardData != null) {
-			var dashboardData = selectedItem.get_data().dashboardData;
-			var iconData = this.dashboardIconField.get_selectedItem().iconData;
-			dashboardData.set_name(this.dashboardNameField.get_text());
-			dashboardData.set_layoutData(this.dashboardDataField.get_text());
-			dashboardData.set_iconId(iconData.get_iconId());
-			var working1 = new components_WorkingIndicator();
-			working1.showWorking();
-			core_data_InternalDB.dashboards.updateObject(dashboardData).then(function(r) {
-				working1.workComplete();
-				_gthis.refreshDashboardSelector(null,dashboardData.get_dashboardId());
-			});
-		}
-	}
-	,_firstLoad: null
-	,onDashboardTreeSelectionChange: function(e) {
-		var selectedItem = this.dashboardTree.get_selectedNode();
-		if(selectedItem == null || selectedItem.get_data() == null) {
-			return;
-		}
-		if(selectedItem.get_data().groupData != null) {
-			var groupData = selectedItem.get_data().groupData;
-			this.dashboardGroupNameLabel.set_text(groupData.get_name() + " Details");
-			this.dashboardGroupIdField.set_text("" + groupData.get_dashboardGroupId());
-			this.dashboardGroupNameField.set_text(groupData.get_name());
-			this.dashboardGroupIconField.set_selectedItem(groupData.get_icon().get_name());
-			this.dashboardGroupDetails.show();
-			this.dashboardDetails.hide();
-		} else if(selectedItem.get_data().dashboardData != null) {
-			var dashboardData = selectedItem.get_data().dashboardData;
-			this.dashboardNameLabel.set_text(dashboardData.get_name() + " Details");
-			this.dashboardIdField.set_text("" + dashboardData.get_dashboardId());
-			this.dashboardNameField.set_text(dashboardData.get_name());
-			this.dashboardIconField.set_selectedItem(dashboardData.get_icon().get_name());
-			this.dashboardGroupField.set_selectedItem(dashboardData.get_group().get_name());
-			this.dashboardDataField.set_text(dashboardData.get_layoutData());
-			this.dashboardGroupDetails.hide();
-			this.dashboardDetails.show();
-		}
-	}
-	,onDashboardDetailsTabsChange: function(e) {
-		var selectedItem = this.dashboardTree.get_selectedNode();
-		if(selectedItem == null || selectedItem.get_data() == null) {
-			return;
-		}
-		if(selectedItem.get_data().dashboardData != null) {
-			var dashboardData = selectedItem.get_data().dashboardData;
-			this.dashboardPreviewInstance.buildDashboard(dashboardData);
-		} else {
-			this.dashboardPreviewInstance.clearDashboard();
-		}
-	}
-	,registerBehaviours: function() {
-		haxe_ui_containers_VBox.prototype.registerBehaviours.call(this);
-	}
-	,cloneComponent: function() {
-		var c = haxe_ui_containers_VBox.prototype.cloneComponent.call(this);
-		if((this._children == null ? [] : this._children).length != (c._children == null ? [] : c._children).length) {
-			var _g = 0;
-			var _g1 = this._children == null ? [] : this._children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
-				c.addComponent(child.cloneComponent());
-			}
-		}
-		return c;
-	}
-	,self: function() {
-		return new views_DashboardsView();
-	}
-	,updateDetailsButton: null
-	,removeDashboardButton: null
-	,previewTab: null
-	,detailsContainer: null
-	,dashboardTree: null
-	,dashboardPreviewInstance: null
-	,dashboardNameLabel: null
-	,dashboardNameField: null
-	,dashboardIdField: null
-	,dashboardIconField: null
-	,dashboardGroupNameLabel: null
-	,dashboardGroupNameField: null
-	,dashboardGroupIdField: null
-	,dashboardGroupIconField: null
-	,dashboardGroupField: null
-	,dashboardGroupDetails: null
-	,dashboardDetailsTabs: null
-	,dashboardDetails: null
-	,dashboardDataField: null
-	,bottomButtons: null
-	,addDashboardButton: null
-	,__class__: views_DashboardsView
 });
 var views_DataView = function() {
 	this._showInternalDatabases = true;
